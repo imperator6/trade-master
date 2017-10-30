@@ -1,13 +1,17 @@
 package tradingmaster.exchange.bittrex;
 
-import java.io.*;
-import java.util.*;
-
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.stereotype.Component;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Scanner;
 
 @Component
 public class BittrexApi {
@@ -298,7 +302,7 @@ public class BittrexApi {
 
         try {
 
-            HttpClient client = HttpClientBuilder.create().build();
+            HttpClient client = HttpClientBuilder.create().setProxy(new HttpHost("proxy.rwe.com",8080)).build();
             HttpGet request = new HttpGet(url);
 
             if(!publicRequest)

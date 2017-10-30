@@ -4,15 +4,21 @@ import groovy.util.logging.Commons
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
-import tradingmaster.model.ITrade
+import tradingmaster.model.TradeBatch
 
 @Commons
 class TradeWriter implements MessageHandler {
 
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
-        List<ITrade> trades = message.getPayload()
 
-        log.info("Writing trades!")
+        TradeBatch tradeBatch = message.getPayload()
+
+        log.info("Writing ${tradeBatch.trades.size()} trades from ${tradeBatch.exchange} for market ${tradeBatch.market.name}")
+
+        // TODO..
+
+
+
     }
 }
