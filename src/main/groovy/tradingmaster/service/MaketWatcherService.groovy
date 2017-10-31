@@ -1,0 +1,109 @@
+package tradingmaster.service
+
+import groovy.util.logging.Commons
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.integration.core.MessageSource
+import org.springframework.integration.dsl.IntegrationFlow
+import org.springframework.integration.dsl.IntegrationFlows
+import org.springframework.integration.dsl.context.IntegrationFlowContext
+import org.springframework.integration.dsl.context.IntegrationFlowRegistration
+import org.springframework.integration.dsl.core.Pollers
+import org.springframework.integration.endpoint.AbstractMessageSource
+import org.springframework.integration.transformer.AbstractTransformer
+import org.springframework.integration.transformer.Transformer
+import org.springframework.messaging.Message
+import org.springframework.messaging.MessageChannel
+import org.springframework.stereotype.Service
+import tradingmaster.exchange.ExchangeService
+import tradingmaster.model.IExchangeAdapter
+import tradingmaster.model.IMarket
+import tradingmaster.model.ITrade
+import tradingmaster.model.TradeBatch
+
+import java.util.stream.Collectors
+
+@Service
+@Commons
+class MaketWatcherService {
+
+     @Autowired
+     MessageChannel tradeChannel
+
+     @Autowired
+     IntegrationFlowContext integrationFlowContext
+
+     @Autowired
+     ExchangeService exchangeService
+
+     @Autowired
+     TradeIdService tradeIdService
+
+     String createMarketWatcher(final IMarket market, String exchangeName, long interval) {
+          IExchangeAdapter exchange = exchangeService.getExchangyByName(exchangeName)
+          return createMarketWatcher(market, exchange, interval)
+     }
+
+     String createMarketWatcher(final IMarket market, final IExchangeAdapter exchange, long interval) {
+
+
+          // new message source
+          MessageSource<TradeBatch> tradeMessageSource = new AbstractMessageSource<TradeBatch>() {
+
+               public String getComponentType() {
+                    return "inbound-channel-adapter"
+               }
+
+               @Override
+               protected TradeBatch doReceive() {
+                    return exchange.getTrades(null, null, market)
+               }
+          }
+
+
+          // periodic call the source and forward to the trade channel
+          IntegrationFlow myFlow = IntegrationFlows.from(tradeMessageSource, {c ->
+                  c.poller(Pollers.fixedRate(interval)) })
+                  //.transform({s -> filterNewTrades((TradeBatch) s)})
+                   // .transform( new AbstractTransformer() {
+                   //      Object doTransform(Message<?> message) {
+                   //           return filterNewTrades(message.getPayload())
+                   //      }
+                   // })
+                  .transform(this, "filterNewTrades")
+                  .transform(this, "filterZeroQuantityTrades")
+                  .channel(tradeChannel)
+                  .get()
+
+          // register and start the flow
+          IntegrationFlowContext.IntegrationFlowRegistrationBuilder b = integrationFlowContext.registration(myFlow)
+          IntegrationFlowRegistration r = b.autoStartup(true).register()
+
+
+          // return id for removal  -->  integrationFlowContext.remove(id)
+          return r.getId()
+     }
+
+     TradeBatch filterNewTrades(TradeBatch all) {
+
+          def maxTradeId = tradeIdService.getMaxTradeId(all.getExchange(), all.getMarket())
+
+          all.trades = all.trades.findAll { (it.extId as Long) > maxTradeId }
+
+          def newMaxTradeId = all.trades.max { (it.extId as Long) }?.extId as Long
+
+          log.info(newMaxTradeId)
+
+          tradeIdService.setMaxTradeId(all.getExchange(), all.getMarket(), newMaxTradeId)
+
+          return all
+     }
+
+     TradeBatch filterZeroQuantityTrades(TradeBatch all) {
+
+          all.trades = all.trades.findAll { it.quantity > 0.0 }
+
+          return all
+     }
+
+
+}

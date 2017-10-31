@@ -302,7 +302,9 @@ public class BittrexApi {
 
         try {
 
-            HttpClient client = HttpClientBuilder.create().setProxy(new HttpHost("proxy.rwe.com",8080)).build();
+            HttpClient client = HttpClientBuilder.create()
+                    //.setProxy(new HttpHost("proxy.rwe.com",8080))
+                    .build();
             HttpGet request = new HttpGet(url);
 
             if(!publicRequest)

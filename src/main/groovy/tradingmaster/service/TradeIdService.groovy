@@ -6,7 +6,7 @@ import tradingmaster.model.IMarket
 @Service
 class TradeIdService {
 
-    Map exchangeMap = [:];
+    Map exchangeMap = [:]
 
     synchronized Long getMaxTradeId(String exchange, IMarket market ) {
         Map exchangeEntry = exchangeMap.get(exchange)

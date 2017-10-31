@@ -21,7 +21,7 @@ public class Application {
 
         maketWatcherService.createMarketWatcher(new CrypoMarket("USDT", "NEO"), "Bittrex", 10000 );
 
-        maketWatcherService.createMarketWatcher(new CrypoMarket("USDT", "ETH"), "Bittrex", 10000 );
+        //maketWatcherService.createMarketWatcher(new CrypoMarket("USDT", "ETH"), "Bittrex", 10000 );
 
 
        /* PublishSubscribeChannel tradeChannel = ctx.getBean("tradeChannel", PublishSubscribeChannel.class);
