@@ -1,7 +1,5 @@
-package tradingmaster.db;
+package tradingmaster.model;
 
-import tradingmaster.model.IMarket;
-import tradingmaster.model.TradeBatch;
 
 public interface ITradeStore {
 

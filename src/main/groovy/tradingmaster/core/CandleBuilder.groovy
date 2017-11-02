@@ -2,6 +2,8 @@ package tradingmaster.core
 
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.integration.channel.PublishSubscribeChannel
+import org.springframework.integration.support.MessageBuilder
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
@@ -15,13 +17,16 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 @Commons
-class CandelBuilder implements MessageHandler {
+class CandleBuilder implements MessageHandler {
 
     @Autowired
     PreviousTradeCacheService tradeCache
 
     @Autowired
     PreviousCandleCacheService candleCache
+
+    @Autowired
+    PublishSubscribeChannel candelChannel1Minute
 
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
@@ -61,6 +66,7 @@ class CandelBuilder implements MessageHandler {
                 List<ITrade> tradesForCandel = tradesByMinute.get(current) ?: []
 
                 Candle candle = new Candle()
+                candle.market = tb.market
                 candle.start = current
                 candle.end = current.plus(59, ChronoUnit.SECONDS)
 
@@ -109,6 +115,8 @@ class CandelBuilder implements MessageHandler {
                 current = current.plus(1, ChronoUnit.MINUTES)
 
                 log.info("new minute candel: $candle")
+
+                candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
                 // Todo: publish new candel !
             }
 

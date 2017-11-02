@@ -1,7 +1,7 @@
 package tradingmaster.db.couchdb
 
 import org.springframework.beans.factory.annotation.Autowired
-import tradingmaster.db.ITradeStore
+import tradingmaster.model.ITradeStore
 import tradingmaster.model.IMarket
 import tradingmaster.model.TradeBatch
 import javax.annotation.PostConstruct

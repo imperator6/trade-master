@@ -26,7 +26,7 @@ public class Application {
 
        /* PublishSubscribeChannel tradeChannel = ctx.getBean("tradeChannel", PublishSubscribeChannel.class);
 
-        tradeChannel.subscribe(new CandelBuilder());
+        tradeChannel.subscribe(new CandleBuilder());
 
         tradeChannel.subscribe(new TradeWriter()); */
 

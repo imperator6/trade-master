@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
-import tradingmaster.db.ITradeStore
+import tradingmaster.model.ITradeStore
 import tradingmaster.model.TradeBatch
 
 @Commons

@@ -7,6 +7,8 @@ import java.time.Instant
 @ToString
 class Candle {
 
+    IMarket market
+
     Instant start
     Instant end
 

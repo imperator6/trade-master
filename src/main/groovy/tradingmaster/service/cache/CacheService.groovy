@@ -1,9 +1,7 @@
 package tradingmaster.service.cache
 
 import groovy.util.logging.Commons
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import tradingmaster.db.ITradeStore
 import tradingmaster.model.IMarket
 
 @Service

@@ -2,11 +2,8 @@ package tradingmaster.service
 
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.config.BeanDefinition
-import org.springframework.context.annotation.Scope
-import org.springframework.context.annotation.ScopedProxyMode
 import org.springframework.stereotype.Service
-import tradingmaster.db.ITradeStore
+import tradingmaster.model.ITradeStore
 import tradingmaster.model.IMarket
 
 @Service
