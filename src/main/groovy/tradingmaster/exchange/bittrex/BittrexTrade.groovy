@@ -12,7 +12,7 @@ class BittrexTrade implements ITrade{
     String extId
 
     @JsonProperty("Quantity")
-    Double quantity
+    BigDecimal quantity
 
     @JsonProperty("Price")
     BigDecimal price

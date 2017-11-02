@@ -6,6 +6,7 @@ buildscript {
         springBootVersion = '1.5.8.RELEASE'
     }
     repositories {
+        maven { url 'http://dl.bintray.com/gesellix/couchdb' }
         mavenCentral()
     }
     dependencies {
@@ -34,6 +35,13 @@ dependencies {
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.9.2'
     compile 'org.springframework.integration:spring-integration-core:4.3.12.RELEASE'
     compile 'org.springframework.integration:spring-integration-java-dsl'
+    compile 'com.google.code.gson:gson:2.4'
+    compile 'org.mariadb.jdbc:mariadb-java-client:2.1.2'
+    compile 'com.squareup.okhttp3:okhttp:3.9.0'
+    compile 'joda-time:joda-time:2.9.9'
+    compile 'com.zaxxer:HikariCP:2.5.1'
+
+    //compile fileTree(dir: 'lib', include: ['*.jar'])
 
 
     testCompile group: 'junit', name: 'junit', version: '4.12'

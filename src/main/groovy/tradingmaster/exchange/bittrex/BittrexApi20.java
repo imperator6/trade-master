@@ -13,8 +13,10 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Scanner;
 
-@Component
-public class BittrexApi {
+/**
+ * https://github.com/platelminto/java-bittrex
+ */
+public class BittrexApi20 {
 
     public static final String ORDER_LIMIT = "LIMIT", ORDER_MARKET = "MARKET";
     public static final String TRADE_BUY = "BUY", TRADE_SELL = "SELL";
@@ -28,12 +30,12 @@ public class BittrexApi {
     private String apikey = "";
     private String secret = "";
 
-    public BittrexApi(String apikey, String secret) {
+    public BittrexApi20(String apikey, String secret) {
         this.apikey = apikey;
         this.secret = secret;
     }
 
-    public BittrexApi() {
+    public BittrexApi20() {
 
     }
 

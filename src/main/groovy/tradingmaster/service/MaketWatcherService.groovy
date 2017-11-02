@@ -38,8 +38,12 @@ class MaketWatcherService {
      @Autowired
      TradeIdService tradeIdService
 
-     String createMarketWatcher(final IMarket market, String exchangeName, long interval) {
-          IExchangeAdapter exchange = exchangeService.getExchangyByName(exchangeName)
+     MaketWatcherService() {
+          log.info("New MaketWatcherService!")
+     }
+
+     String createMarketWatcher(final IMarket market, long interval) {
+          IExchangeAdapter exchange = exchangeService.getExchangyByName(market.getExchange())
           return createMarketWatcher(market, exchange, interval)
      }
 
@@ -85,15 +89,20 @@ class MaketWatcherService {
 
      TradeBatch filterNewTrades(TradeBatch all) {
 
-          def maxTradeId = tradeIdService.getMaxTradeId(all.getExchange(), all.getMarket())
+          def maxTradeId = tradeIdService.getMaxTradeId(all.getMarket())
 
-          all.trades = all.trades.findAll { (it.extId as Long) > maxTradeId }
+          //log.info("maxTradeId: $maxTradeId  trades befor: ${all.trades.size()}")
 
           def newMaxTradeId = all.trades.max { (it.extId as Long) }?.extId as Long
 
-          log.info(newMaxTradeId)
+          //log.info("newMaxTradeId: $newMaxTradeId")
 
-          tradeIdService.setMaxTradeId(all.getExchange(), all.getMarket(), newMaxTradeId)
+          all.trades = all.trades.findAll { (it.extId as Long) > maxTradeId }
+
+          //log.info("trades after: ${all.trades.size()}")
+
+
+          tradeIdService.setMaxTradeId(all.getMarket(), newMaxTradeId)
 
           return all
      }

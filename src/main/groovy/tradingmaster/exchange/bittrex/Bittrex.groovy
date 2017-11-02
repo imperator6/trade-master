@@ -3,6 +3,8 @@ package tradingmaster.exchange.bittrex
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import groovy.json.JsonBuilder
+import groovy.json.JsonSlurper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
@@ -15,26 +17,31 @@ import tradingmaster.model.TradeBatch
 class Bittrex implements IExchangeAdapter {
 
     @Autowired
-    BittrexApi api
+    BittrexApi11 api
 
 
     @Override
     TradeBatch getTrades(Date startDate, Date endDate, IMarket market) {
 
         List tradeList = []
+        String jsonRes = api.getMarketHistory(market.getName())
 
+        ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        BittrexResponse res = objectMapper.readValue(jsonRes, new TypeReference<BittrexResponse>(){})
 
-        BittrexApi.Response res = api.getMarketHistory(market.getName())
+        //def jsonSlurper= new JsonSlurper()
+        //def res = jsonSlurper.parseText(jsonRes)
 
         if(res.success) {
 
-            ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-            tradeList = objectMapper.readValue(res.result, new TypeReference<List<BittrexTrade>>(){})
+           // res.result.collect { objectMapper.}
+
+            tradeList = res.result
 
         } else {
             log.error("getTrades was not successful. message: $res.message" )
         }
 
-        return new TradeBatch(market, this.getClass().getSimpleName(), tradeList )
+        return new TradeBatch(market, tradeList)
     }
 }

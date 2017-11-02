@@ -6,7 +6,6 @@ import groovy.transform.TupleConstructor
 class TradeBatch {
 
     IMarket market
-    String exchange
     List<ITrade> trades
 
 }

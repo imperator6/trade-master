@@ -1,0 +1,16 @@
+bittrex:
+      apikey: key
+      secret: secret
+
+# ---- database
+couchDB:
+    host: 192.168.0.167
+    port: 5984
+    user: admin
+    password: admin123
+
+mariaDB:
+     jdbc-url: jdbc:mysql://192.168.0.167/trading_master
+     username: root
+     password: admin123
+     pool-size: 30

@@ -4,4 +4,6 @@ interface IMarket {
 
     String getName()
 
+    String getExchange()
+
 }
