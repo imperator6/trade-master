@@ -7,6 +7,7 @@ import tradingmaster.model.ITradeStore
 import tradingmaster.model.IMarket
 import tradingmaster.model.TradeBatch
 
+import javax.annotation.PostConstruct
 import javax.sql.DataSource
 
 @Commons
@@ -19,6 +20,13 @@ class MariaTradeStore implements ITradeStore {
 
     @Autowired
     DataSource dataSource
+
+    @PostConstruct
+    init() {
+        //Sql sql = new Sql(dataSource)
+        // TODO: init tables if not exsist
+
+    }
 
     @Override
     Long getMaxTradeId(IMarket market) {

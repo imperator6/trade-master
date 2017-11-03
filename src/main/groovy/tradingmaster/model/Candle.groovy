@@ -2,6 +2,7 @@ package tradingmaster.model
 
 import groovy.transform.ToString
 
+import java.time.Duration
 import java.time.Instant
 
 @ToString
@@ -22,6 +23,8 @@ class Candle {
 
     Integer tradeCount = 0
 
-
+    Long getDurationInMinutes() {
+        return Duration.between(start, end).toMinutes() + 1
+    }
 
 }

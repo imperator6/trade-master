@@ -9,18 +9,12 @@ import org.springframework.integration.dsl.context.IntegrationFlowContext
 import org.springframework.integration.dsl.context.IntegrationFlowRegistration
 import org.springframework.integration.dsl.core.Pollers
 import org.springframework.integration.endpoint.AbstractMessageSource
-import org.springframework.integration.transformer.AbstractTransformer
-import org.springframework.integration.transformer.Transformer
-import org.springframework.messaging.Message
 import org.springframework.messaging.MessageChannel
 import org.springframework.stereotype.Service
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.model.IExchangeAdapter
 import tradingmaster.model.IMarket
-import tradingmaster.model.ITrade
 import tradingmaster.model.TradeBatch
-
-import java.util.stream.Collectors
 
 @Service
 @Commons
@@ -53,13 +47,23 @@ class MaketWatcherService {
           // new message source
           MessageSource<TradeBatch> tradeMessageSource = new AbstractMessageSource<TradeBatch>() {
 
-               public String getComponentType() {
+               boolean first = true;
+
+               String getComponentType() {
                     return "inbound-channel-adapter"
                }
 
                @Override
-               protected TradeBatch doReceive() {
-                    return exchange.getTrades(null, null, market)
+               protected synchronized TradeBatch doReceive() {
+
+                    TradeBatch batch = exchange.getTrades(null, null, market)
+
+                    if(first) {
+                         // TODO: merge with existing trades from db if needed
+                         first = false
+                    }
+
+                    return batch
                }
           }
 
