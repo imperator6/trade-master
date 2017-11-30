@@ -1,0 +1,11 @@
+
+
+div.timeStyle {
+    display: felx;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #424242;
+    background-color: #e0e0e0;
+    width: 100px;
+    height: 37px;
+}

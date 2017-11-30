@@ -1,0 +1,92 @@
+{
+  "_id": "config_R883708",
+  "_rev": "12-00db4fc82bbbb8c04893953a230b4ce1",
+  "products": [
+    "GERMANY,BASE,POWER,ALL",
+    "GERMANY,PEAK,POWER,ALL",
+    "EUROPE,CO2,EMISSION,ALL",
+    "TTF,NATURAL GAS (H & L),GAS,ALL",
+    "NBP,NATURAL GAS (H & L),GAS,ALL",
+    "ARA,API#2,COAL,ALL"
+  ],
+  "periodGroups": [
+    {
+      "groupName": "Day",
+      "periods": [
+        "1cd",
+        "2cd",
+        "3cd",
+        "4cd"
+      ]
+    },
+    {
+      "groupName": "Weekend",
+      "periods": [
+        "WkEnd 1",
+        "WkEnd 2",
+        "WkEnd 3"
+      ]
+    },
+    {
+      "groupName": "Week",
+      "periods": [
+        "Wk 1",
+        "Wk 2",
+        "Wk 3"
+      ]
+    },
+    {
+      "groupName": "Month",
+      "periods": [
+        "Nov-17",
+        "Dec-17",
+        "Jan-18"
+      ]
+    },
+    {
+      "groupName": "Quarter",
+      "periods": [
+        "1Q18",
+        "2Q18",
+        "3Q18"
+      ]
+    },
+    {
+      "groupName": "Year",
+      "periods": [
+        "Cal18",
+        "Cal19",
+        "Cal20"
+      ]
+    },
+    {
+      "groupName": "EUA Contracts",
+      "periods": [
+        "EUA Spot",
+        "EUA 17",
+        "EUA 18",
+        "EUA 19"
+      ]
+    }
+  ]
+}
+
+
+{
+  "_id": "config_coins",
+  "_rev": "4-b920bda73e5734eebc2dd9f50e59fbac",
+  "products": [
+    "Bittrex, USDT-BTC",
+    "Bittrex, USDT-ETH",
+    "Bittrex, USDT-OMG",
+    "Bittrex, USDT-NEO"
+  ],
+  "periodGroups": [
+    {
+      "groupName": "Spot",
+      "periods": [
+        "now"
+      ]
+    }
+  ]
+}

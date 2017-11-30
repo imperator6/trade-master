@@ -15,6 +15,7 @@ import tradingmaster.exchange.ExchangeService
 import tradingmaster.model.IExchangeAdapter
 import tradingmaster.model.IMarket
 import tradingmaster.model.TradeBatch
+import tradingmaster.rest.TradeContoller
 
 @Service
 @Commons
@@ -22,6 +23,9 @@ class MaketWatcherService {
 
      @Autowired
      MessageChannel tradeChannel
+
+     @Autowired
+     TradeContoller tradeController
 
      @Autowired
      IntegrationFlowContext integrationFlowContext
@@ -47,7 +51,7 @@ class MaketWatcherService {
           // new message source
           MessageSource<TradeBatch> tradeMessageSource = new AbstractMessageSource<TradeBatch>() {
 
-               boolean first = true;
+               boolean first = true
 
                String getComponentType() {
                     return "inbound-channel-adapter"

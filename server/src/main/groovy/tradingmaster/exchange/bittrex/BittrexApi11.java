@@ -1,17 +1,25 @@
 package tradingmaster.exchange.bittrex;
 
 
-import java.io.*;
-import java.net.*;
-import java.util.*;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.reflect.TypeToken;
+import org.apache.http.HttpHost;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.*;
+import org.apache.http.impl.client.DefaultHttpRequestRetryHandler;
+import org.apache.http.impl.client.HttpClientBuilder;
 
-import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Scanner;
 
 /**
  * https://github.com/platelminto/java-bittrex
@@ -336,7 +344,9 @@ public class BittrexApi11 {
 
         try {
 
-            HttpClient client = HttpClientBuilder.create().setRetryHandler(new DefaultHttpRequestRetryHandler(0, false)).build();
+            HttpClient client = HttpClientBuilder.create()
+                    .setProxy(new HttpHost("proxy.rwe.com",8080))
+                    .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false)).build();
 
             HttpGet request = new HttpGet(url);
             request.addHeader("apisign", EncryptionUtility.calculateHash(secret, url, encryptionAlgorithm)); // Attaches signature as a header

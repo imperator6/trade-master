@@ -1,0 +1,11 @@
+.idea
+*.iml
+build
+target
+.project
+.settings
+.classpath
+out
+logs
+.gradle
+.log

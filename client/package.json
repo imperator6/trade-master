@@ -1,0 +1,65 @@
+{
+  "name": "mobx-react-boilerplate",
+  "version": "1.0.0",
+  "description": "Boilerplate for MobX + React project with JSX, ES6 and decorator compilation",
+  "scripts": {
+    "start2": "webpack-dev-server --hot --open --host 0.0.0.0 --port 8081",
+    "start": "webpack-dev-server --hot --open",
+    "lint": "eslint src",
+    "storybook": "start-storybook -p 9001 -c .storybook"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mobxjs/mobx-react-boilerplate.git"
+  },
+  "keywords": [
+    "react",
+    "reactjs",
+    "boilerplate",
+    "mobx",
+    "starter-kit"
+  ],
+  "author": "Michel Weststrate <mweststrate@gmail.com> (http://github.com/mweststrate)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mobxjs/mobx/issues"
+  },
+  "homepage": "http://mobxjs.github.com/mobx",
+  "devDependencies": {
+    "@storybook/addon-actions": "^3.2.12",
+    "@storybook/addon-links": "^3.2.12",
+    "@storybook/react": "^3.2.13",
+    "babel-core": "^6.9.1",
+    "babel-loader": "^7.1.2",
+    "babel-plugin-import": "^1.6.2",
+    "babel-plugin-transform-decorators-legacy": "^1.3.4",
+    "babel-preset-es2015": "^6.9.0",
+    "babel-preset-react": "^6.5.0",
+    "babel-preset-stage-1": "^6.5.0",
+    "css-loader": "^0.28.7",
+    "less": "^2.7.3",
+    "less-loader": "^4.0.5",
+    "less-vars-to-js": "^1.2.0",
+    "storybook-addon-jsx": "^5.0.0",
+    "style-loader": "^0.19.0",
+    "webpack": "^3.5.5",
+    "webpack-dev-server": "^2.7.1"
+  },
+  "dependencies": {
+    "accounting": "^0.4.1",
+    "antd": "^2.13.7",
+    "lodash": "^4.17.4",
+    "mobx": "^3.0.0",
+    "mobx-react": "^4.1.0",
+    "mobx-react-devtools": "^4.2.11",
+    "moment": "^2.18.1",
+    "pouchdb": "^6.3.4",
+    "pouchdb-server": "^2.3.7",
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
+    "sockjs-client": "^1.1.4",
+    "stompjs": "^2.3.3",
+    "styled-components": "^2.2.2",
+    "webstomp-client": "^1.2.0"
+  }
+}

@@ -71,6 +71,7 @@ public class Config {
         return cb;
     }
 
+
     @Bean
     CouchDBClient couchDBClient() {
         return new CouchDBClient(
