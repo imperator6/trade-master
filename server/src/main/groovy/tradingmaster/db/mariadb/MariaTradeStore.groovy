@@ -3,12 +3,12 @@ package tradingmaster.db.mariadb
 import groovy.sql.Sql
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import tradingmaster.model.ITradeStore
-import tradingmaster.model.IMarket
-import tradingmaster.model.TradeBatch
+import tradingmaster.model.*
 
 import javax.annotation.PostConstruct
 import javax.sql.DataSource
+import java.sql.Timestamp
+import java.time.LocalDateTime
 
 @Commons
 class MariaTradeStore implements ITradeStore {
@@ -56,5 +56,31 @@ class MariaTradeStore implements ITradeStore {
                 ps.addBatch(data)
             }
         }
+    }
+
+    TradeBatch loadTrades(String exchange, String market, LocalDateTime startDate, LocalDateTime endDate) {
+
+        Sql sql = new Sql(dataSource)
+
+        exchange = exchange.capitalize()
+
+        List<ITrade> trades = []
+
+        String query = "select * from trades where date between ? and ? and exchange = ? and market = ?"
+
+        sql.eachRow(query.toString(),  [Timestamp.valueOf(startDate), Timestamp.valueOf(endDate), exchange, market]) { row ->
+            ITrade t = new CryptoTrade()
+            t.date = new Date(row.date.getTime())
+            t.extId = row.ext_id
+            t.price = row.price
+            t.quantity = row.quantity
+            trades << t
+        }
+
+        TradeBatch tb = new TradeBatch()
+        tb.setMarket(new CryptoMarket(exchange, market))
+        tb.setTrades(trades)
+
+        return tb
     }
 }

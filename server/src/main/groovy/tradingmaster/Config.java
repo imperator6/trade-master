@@ -14,9 +14,12 @@ import tradingmaster.core.CandleAggregator;
 import tradingmaster.core.CandleBuilder;
 import tradingmaster.core.TradeWriter;
 import tradingmaster.db.couchdb.CouchDBClient;
-import tradingmaster.model.ITradeStore;
 import tradingmaster.db.mariadb.MariaTradeStore;
 import tradingmaster.exchange.bittrex.BittrexApi11;
+import tradingmaster.model.ITradeStore;
+
+import javax.annotation.PostConstruct;
+import java.util.TimeZone;
 
 @Configuration
 @EnableIntegration
@@ -92,6 +95,11 @@ public class Config {
     public HikariDataSource dataSource() {
         return (HikariDataSource) DataSourceBuilder.create()
                 .type(HikariDataSource.class).build();
+    }
+
+    @PostConstruct
+    void started() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Etc/UTC")); // let's use UTC by default
     }
 
 

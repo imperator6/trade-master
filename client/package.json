@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Boilerplate for MobX + React project with JSX, ES6 and decorator compilation",
   "scripts": {
-    "start2": "webpack-dev-server --hot --open --host 0.0.0.0 --port 8081",
-    "start": "webpack-dev-server --hot --open",
+    "start2": "webpack-dev-server --hot --open --host 0.0.0.0",
+    "start": "webpack-dev-server --hot --open  --port 8081",
     "lint": "eslint src",
     "storybook": "start-storybook -p 9001 -c .storybook"
   },
@@ -57,6 +57,7 @@
     "pouchdb-server": "^2.3.7",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
+    "react-highcharts": "^15.0.0",
     "sockjs-client": "^1.1.4",
     "stompjs": "^2.3.3",
     "styled-components": "^2.2.2",

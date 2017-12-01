@@ -9,7 +9,7 @@ class DefaultMarket implements IMarket {
     String exchange // exchange or broker
 
     DefaultMarket(exchange, name) {
-        this.exchange = exchange
+        this.exchange = exchange.capitalize()
         this.name = name
     }
 }

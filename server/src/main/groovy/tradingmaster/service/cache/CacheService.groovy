@@ -6,7 +6,7 @@ import tradingmaster.model.IMarket
 
 @Service
 @Commons
-abstract class CacheService<T> {
+public class CacheService<T> {
 
 
     Map<String,T> cacheMap = [:]

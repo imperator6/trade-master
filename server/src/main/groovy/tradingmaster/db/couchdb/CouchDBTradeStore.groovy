@@ -5,6 +5,7 @@ import tradingmaster.model.ITradeStore
 import tradingmaster.model.IMarket
 import tradingmaster.model.TradeBatch
 import javax.annotation.PostConstruct
+import java.time.LocalDateTime
 
 
 @groovy.util.logging.Commons
@@ -47,12 +48,17 @@ class CouchDBTradeStore implements ITradeStore {
                     date:     it.date,
                     price:  it.price,
                     market: batch.market.name,
-                    exchange: batch.exchange
+                    exchange: batch.market.exchange
                 ]
 
             }
 
             couch.updateBulk(TRADE_TABLE_NAME, trades)
         }
+    }
+
+    @Override
+    TradeBatch loadTrades(String exchange, String market, LocalDateTime startDate, LocalDateTime endDate) {
+        return null
     }
 }

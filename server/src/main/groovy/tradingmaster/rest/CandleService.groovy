@@ -1,47 +1,45 @@
-package tradingmaster.core
+package tradingmaster.rest
 
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.integration.channel.PublishSubscribeChannel
-import org.springframework.integration.support.MessageBuilder
-import org.springframework.messaging.Message
-import org.springframework.messaging.MessageHandler
-import org.springframework.messaging.MessagingException
-import tradingmaster.model.Candle
-import tradingmaster.model.ITrade
-import tradingmaster.model.TradeBatch
-import tradingmaster.service.cache.PreviousCandleCacheService
-import tradingmaster.service.cache.PreviousTradeCacheService
+import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.web.bind.annotation.*
+import tradingmaster.model.*
+import tradingmaster.service.cache.CacheService
 
 import java.time.Instant
+import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
+@RestController
+@RequestMapping("/api/candles")
 @Commons
-class CandleBuilder implements MessageHandler {
+class CandleService {
 
     @Autowired
-    PreviousTradeCacheService tradeCache
+    ITradeStore store
 
-    @Autowired
-    PreviousCandleCacheService candleCache
+    @RequestMapping(value = "/{exchange}/{market}", method = RequestMethod.GET)
+    List<Candle> list(@PathVariable String exchange, @PathVariable String market,
+                      @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") LocalDateTime  start,
+                      @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") LocalDateTime  end) {
 
-    @Autowired
-    PublishSubscribeChannel candelChannel1Minute
+        log.info("loading candles for $exchange, $market, $start, $end")
 
-    @Override
-    void handleMessage(Message<?> message) throws MessagingException {
-        TradeBatch tb = message.getPayload()
+        TradeBatch tb = store.loadTrades(exchange, market, start, end)
 
-        def allTrades = tb.trades != null ? tb.trades : []
+        //convert to candels
 
-        log.info("Building next minute candles for ${allTrades.size()} trade $tb.market")
+        List<Candle> candles = tradesToCandle(tb.market, tb.trades)
 
-        List<ITrade> prev = tradeCache.get(tb.market)
 
-        if(prev) {
-            log.info("Previous trades: ${prev.size()} for minute ${prev.first().date.toInstant().truncatedTo(ChronoUnit.MINUTES)} $tb.market" )
-            allTrades = allTrades + prev
-        }
+
+        return candles
+    }
+
+    List<Candle> tradesToCandle(IMarket market, List<ITrade> allTrades) {
+
+        List<Candle> candleList = []
 
         if(allTrades) {
 
@@ -54,19 +52,19 @@ class CandleBuilder implements MessageHandler {
             Instant firstMinute = sortedMinutes.first()
             Instant lastMinute = sortedMinutes.last()
 
-            def tradesForLastMinute = tradesByMinute.remove(lastMinute)
-
-            tradeCache.set(tb.market, tradesForLastMinute)
-
             Instant current = firstMinute
-            while(current.getEpochSecond() < lastMinute.getEpochSecond()) {
+
+
+            CacheService candleCache = new CacheService<Candle>()
+
+            while(current.getEpochSecond() <= lastMinute.getEpochSecond()) {
 
                 log.debug("start candle loop")
 
                 List<ITrade> tradesForCandel = tradesByMinute.get(current) ?: []
 
                 Candle candle = new Candle()
-                candle.market = tb.market
+                //candle.market = market // not needed in response will blow up the transfer data size
                 candle.start = Date.from(current)
                 candle.end = Date.from(current.plus(59, ChronoUnit.SECONDS))
 
@@ -92,7 +90,7 @@ class CandleBuilder implements MessageHandler {
                     // - open, high, close, low, vwp are the same as the close of the previous candle.
                     // - trades, volume are 0
 
-                    Candle prevCandel = candleCache.get(tb.market)
+                    Candle prevCandel = candleCache.get(market)
 
                     if(prevCandel) {
 
@@ -106,32 +104,24 @@ class CandleBuilder implements MessageHandler {
                         candle.volume = 0.0
 
                     } else {
-                      log.error("No previous candle found for market ${tb.market} for minute ${current}")
+                        log.error("No previous candle found for market ${tb.market} for minute ${current}")
                     }
                 }
 
-                candleCache.set(tb.market, candle)
+                candleCache.set(market, candle)
 
                 current = current.plus(1, ChronoUnit.MINUTES)
 
                 log.info("new minute candel: $candle")
 
-                candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
+                candleList << candle
 
             } // last candle is excluded !
 
-        } else {
-
-            // no trades in list
-
-            // TODO: clean the cache after a given timeout ?
-
-            log.debug("no trades!")
-
-
         }
 
-        //log.info("Candel Builder recevived ${trades.trades.size()} new trades!")
+        return candleList
     }
+
 
 }
