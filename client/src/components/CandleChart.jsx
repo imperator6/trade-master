@@ -14,13 +14,8 @@ class CandleChart extends React.Component {
       rangeSelector: {
         buttons: [
           {
-            type: "minute",
-            count: 1,
-            text: "1min"
-          },
-          {
             type: "day",
-            count: 1,
+            count: 0.5,
             text: "1d"
           },
           {
@@ -49,6 +44,28 @@ class CandleChart extends React.Component {
       title: {
         text: "AAPL Stock Price"
       },
+
+      plotOptions: {
+        candlestick: {
+          color: "green",
+          upColor: "red",
+          dataGrouping: {
+            enabled: true,
+            forced: true,
+            units: [
+            //  ["millisecond", []],
+            //  ["second", []],
+             ["minute", [30]]
+            //   ["hour", [1]],
+           //   ["day", []],
+           //   ["week", []],
+           //   ["month", []],
+           //   ["year", null]
+            ]
+          }
+        }
+      },
+
       series: [
         {
           type: "candlestick",
@@ -115,7 +132,7 @@ class CandleChart extends React.Component {
 
           let candle = JSON.parse(data.body);
 
-          console.log(candle)
+          console.log(candle);
           this.updateChart(this.candleToChartData(candle));
         }.bind(this)
       );
