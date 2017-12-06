@@ -5,7 +5,7 @@ import moment from "moment";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 
-import { Row, Col, DatePicker , Select, Button} from "antd";
+import { Row, Col, DatePicker, Select, Button } from "antd";
 const Option = Select.Option;
 
 const OuterDiv = styled.div`
@@ -24,10 +24,13 @@ const cityData = {
   Jiangsu: ["Nanjing", "Suzhou", "Zhenjiang"]
 };
 
-@inject("rootStore") @observer
+@inject("rootStore")
+@observer
 class MarketSelectorForm extends React.Component {
   constructor(props) {
     super(props);
+
+    this.store = this.props.rootStore.marketSelectionStore;
 
     this.state = {
       cities: cityData[provinceData[0]],
@@ -36,7 +39,7 @@ class MarketSelectorForm extends React.Component {
   }
 
   componentDidMount() {
-    console.log(this)
+    console.log(this);
   }
 
   handleProvinceChange = value => {
@@ -51,24 +54,22 @@ class MarketSelectorForm extends React.Component {
     });
   };
 
-  onOk= (value) => {
-  console.log('onOk: ', value);
-}
+  onOk = value => {
+    console.log("onOk: ", value);
+  };
 
-onChange2 = (value, dateString) => {
-  console.log('Selected Time: ', value);
-  console.log('Formatted Selected Time: ', dateString);
-}
-
-  
+  onChange2 = (value, dateString) => {
+    console.log("Selected Time: ", value);
+    console.log("Formatted Selected Time: ", dateString);
+  };
 
   render() {
-    const provinceOptions = provinceData.map(province => (
-      <Option key={province}>{province}</Option>
+    const exchangeOptions = this.store.exchangeList.map(exc => (
+      <Option key={exc}>{exc}</Option>
     ));
-    const cityOptions = this.state.cities.map(city => (
-      <Option key={city}>{city}</Option>
-    ));
+    const assetOptions = this.store.assetList[this.store.selectedExchange].map(
+      a => <Option key={a}>{a}</Option>
+    );
     return (
       <div>
         <table>
@@ -79,52 +80,72 @@ onChange2 = (value, dateString) => {
               <th>Period</th>
               <th>Start</th>
               <th>End</th>
-              <th></th>
+              <th />
             </tr>
           </thead>
           <tbody>
             <tr>
               <td>
                 <Select
-                  defaultValue={provinceData[0]}
-                  style={{ width: 90 }}
-                  onChange={this.handleProvinceChange}
+                  defaultValue={this.store.selectedExchange}
+                  style={{ width: 130 }}
+                  //onChange={this.handleProvinceChange}
                 >
-                  {provinceOptions}
+                  {exchangeOptions}
                 </Select>
               </td>
               <td>
                 <Select
-                  value={this.state.secondCity}
-                  style={{ width: 90 }}
-                  onChange={this.onSecondCityChange}
+                  value={this.store.selectedAsset}
+                  style={{ width: 130 }}
+                  onChange={this.store.onAssetChange}
                 >
-                  {cityOptions}
+                  {assetOptions}
                 </Select>
               </td>
               <td>
-                <Select style={{ width: 80 }}  defaultValue={this.props.rootStore.strategyStore.selectedPeriod}>{
-                    this.props.rootStore.strategyStore.periodList.map((p) => {
-                      return <Option key={p} value={p}>{p}</Option>
-                    })
-                  }
+                <Select
+                  style={{ width: 80 }}
+                  defaultValue={this.store.selectedPeriod}
+                  onChange={this.store.onPeriodChange}
+                >
+                  {this.store.periodList.map(p => {
+                    return (
+                      <Option key={p} value={p}>
+                        {p}
+                      </Option>
+                    );
+                  })}
                 </Select>
               </td>
-              <td ><DatePicker
-      showTime
-      format="YYYY-MM-DD HH:mm"
-      placeholder="Select Time"
-      onChange={this.onChange2}
-      onOk={this.onOk}
-    /></td>
-    <td ><DatePicker
-      showTime
-      format="YYYY-MM-DD HH:mm"
-      placeholder="Select Time"
-      onChange={this.onChange2}
-      onOk={this.onOk}
-    /></td>
-    <td><Button type="primary" shape="circle" icon="reload" /></td>
+              <td>
+                <DatePicker
+                  showTime
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="Select Time"
+                  value={this.store.startDate}
+                  onChange={this.onChange2}
+                  onOk={this.onOk}
+                />
+              </td>
+              <td>
+                <DatePicker
+                  showTime
+                  format="YYYY-MM-DD HH:mm"
+                  placeholder="Select Time"
+                  value={this.store.endDate}
+                  onChange={this.onChange2}
+                  onOk={this.onOk}
+                />
+              </td>
+              <td>
+                <Button
+                  type="primary"
+                  shape="circle"
+                  icon="reload"
+                  onClick={this.store.load}
+                />
+              </td>
             </tr>
           </tbody>
         </table>

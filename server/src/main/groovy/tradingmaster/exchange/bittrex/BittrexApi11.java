@@ -345,7 +345,7 @@ public class BittrexApi11 {
         try {
 
             HttpClient client = HttpClientBuilder.create()
-                    .setProxy(new HttpHost("proxy.rwe.com",8080))
+                    //.setProxy(new HttpHost("proxy.rwe.com",8080))
                     .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false)).build();
 
             HttpGet request = new HttpGet(url);

@@ -2,13 +2,13 @@ import { observable, computed, action } from "mobx";
 import moment from 'moment';
 var _ = require("lodash");
 
-export default class StrategyStore {
+export default class MarketSelectionStore {
 
       constructor(rootStore) {
             this.rootStore = rootStore
       }
 
-      @observable periodList = ['1m','5m','15m','30m','1h','2h','4h','1d','3d'];
+      @observable periodList = ['1 m','5 m','15 m','30 m','1 h','2 h','4 h','1 d','3 d'];
 
       @observable selectedPeriod = this.periodList[1]
 
@@ -30,6 +30,18 @@ export default class StrategyStore {
       onAssetChange = (newValue) => {
             console.log(newValue)
             this.selectedAsset = newValue
+      }
+
+      @action
+      onPeriodChange = (newValue) => {
+            console.log(newValue)
+            this.selectedPeriod = newValue
+      }
+
+      @action
+      load = () => {
+          this.rootStore.chartStore.loadChart(this)
+
       }
 
 

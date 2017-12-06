@@ -112,7 +112,7 @@ class CandleService {
 
                 current = current.plus(1, ChronoUnit.MINUTES)
 
-                log.info("new minute candel: $candle")
+                log.debug("new minute candel: $candle")
 
                 candleList << candle
 

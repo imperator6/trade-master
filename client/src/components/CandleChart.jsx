@@ -6,123 +6,43 @@ import StompClient from "./../StompService";
 import ReactHighstock from "react-highcharts/ReactHighstock";
 import moment from "moment";
 
+import { observer, inject } from "mobx-react";
+
+@inject("rootStore") @observer
 class CandleChart extends React.Component {
   constructor(props) {
     super(props);
 
-    let chartConfig = {
-      rangeSelector: {
-        buttons: [
-          {
-            type: "day",
-            count: 0.5,
-            text: "1d"
-          },
-          {
-            type: "week",
-            count: 1,
-            text: "1w"
-          },
-          {
-            type: "month",
-            count: 1,
-            text: "1m"
-          },
-          {
-            type: "year",
-            count: 1,
-            text: "1y"
-          },
-          {
-            type: "all",
-            text: "All"
-          }
-        ],
-        selected: 1,
-        inputEnabled: false
-      },
-      title: {
-        text: "AAPL Stock Price"
-      },
+    this.store = this.props.rootStore.chartStore
 
-      plotOptions: {
-        candlestick: {
-          color: "green",
-          upColor: "red",
-          dataGrouping: {
-            enabled: true,
-            forced: true,
-            units: [
-            //  ["millisecond", []],
-            //  ["second", []],
-             ["minute", [30]]
-            //   ["hour", [1]],
-           //   ["day", []],
-           //   ["week", []],
-           //   ["month", []],
-           //   ["year", null]
-            ]
-          }
-        }
-      },
-
-      series: [
-        {
-          type: "candlestick",
-          name: "AAPL",
-          data: [],
-          tooltip: {
-            valueDecimals: 2
-          }
-        }
-      ]
-    };
+    console.log(this.store)
 
     this.state = {
       firstCandle: true,
       loaded: false,
-      chartConfig: chartConfig
+      chartConfig: this.store.config
     };
+  }
+
+  showLoading = () => {
+      if(!this.store.loaded) {
+        let chart = this.refs.chart.getChart();
+        chart.showLoading();
+      }
+  }
+
+  componentDidUpdate() {
+    console.log("Chart did update.");
+
+    this.showLoading();
   }
 
   componentDidMount() {
     console.log("Chart did mount.");
 
-    let params = {
-      start: moment()
-        .utc()
-        .add(-100, "d")
-        .toDate()
-        .toISOString(),
-      end: new Date().toISOString()
-    };
+    this.showLoading()
 
-    console.log(params.start);
-    console.log(params.end);
-
-    let esc = encodeURIComponent;
-    let query = Object.keys(params)
-      .map(k => esc(k) + "=" + esc(params[k]))
-      .join("&");
-
-    let url = "http://127.0.0.1:8080/api/candles/bittrex/USDT-BTC?" + query;
-
-    fetch(url)
-      .then(result => result.json())
-      .then(candles => {
-        const newState = {
-          ...this.state,
-          loaded: true
-        };
-
-        let initData = candles.map(c => {
-          return this.candleToChartData(c);
-        });
-
-        newState.chartConfig.series[0].data = initData;
-
-        this.setState(newState);
-      });
+    this.store.loadChart(this.store.rootStore.marketSelectionStore)
 
     StompClient.connect({}, frame => {
       StompClient.subscribe(
@@ -158,25 +78,17 @@ class CandleChart extends React.Component {
   updateChart = data => {
     let chart = this.refs.chart.getChart();
 
-    if (false /*this.state.firstCandle && this.state.loaded */) {
-      console.log("First Candle for chart.");
-
-      // reredner chart via react state change
-      const newState = {
-        ...this.state
-      };
-
-      newState.firstCandle = false;
-      newState.chartConfig.series[0].data = [data];
-
-      this.setState(newState);
-    } else {
+    if (this.store.loaded) {
       chart.series[0].addPoint(data, true, true);
     }
   };
 
   render() {
-    return <ReactHighstock config={this.state.chartConfig} ref="chart" />;
+    if(this.store.loaded) {
+      return <ReactHighstock config={this.store.config} ref="chart" />;
+    } else {
+      return <ReactHighstock config={this.store.config} ref="chart" />;
+    }
   }
 }
 

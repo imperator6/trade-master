@@ -34,12 +34,12 @@ class CandleBuilder implements MessageHandler {
 
         def allTrades = tb.trades != null ? tb.trades : []
 
-        log.info("Building next minute candles for ${allTrades.size()} trade $tb.market")
+        log.debug("Building next minute candles for ${allTrades.size()} trade $tb.market")
 
         List<ITrade> prev = tradeCache.get(tb.market)
 
         if(prev) {
-            log.info("Previous trades: ${prev.size()} for minute ${prev.first().date.toInstant().truncatedTo(ChronoUnit.MINUTES)} $tb.market" )
+            log.debug("Previous trades: ${prev.size()} for minute ${prev.first().date.toInstant().truncatedTo(ChronoUnit.MINUTES)} $tb.market" )
             allTrades = allTrades + prev
         }
 
@@ -114,7 +114,7 @@ class CandleBuilder implements MessageHandler {
 
                 current = current.plus(1, ChronoUnit.MINUTES)
 
-                log.info("new minute candel: $candle")
+                log.debug("new minute candel: $candle")
 
                 candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
 
