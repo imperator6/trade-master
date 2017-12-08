@@ -5,11 +5,11 @@ import groovy.transform.ToString
 @ToString
 class Strategy implements IStrategy {
 
-    BigDecimal id = ""
+    String id = ""
     String name = ""
     String language = ""
     String script = ""
-    BigDecimal version = ""
+    String version = ""
 
     Strategy() {
     }

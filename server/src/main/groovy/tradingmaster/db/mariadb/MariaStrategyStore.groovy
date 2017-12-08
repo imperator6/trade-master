@@ -41,6 +41,7 @@ WHERE s1.version =
             s.name = row.name
             s.language = row.language
             s.script = row.script
+            s.version = row.version
             strategies << s
         }
 
