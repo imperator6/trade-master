@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*
 import tradingmaster.model.*
 import tradingmaster.service.cache.CacheService
 
+import java.time.Duration
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -38,6 +39,8 @@ class CandleService {
     }
 
     List<Candle> tradesToCandle(IMarket market, List<ITrade> allTrades) {
+
+        def start = Instant.now()
 
         List<Candle> candleList = []
 
@@ -119,6 +122,10 @@ class CandleService {
             } // last candle is excluded !
 
         }
+
+        def duration = Duration.between(start, Instant.now())
+
+        log.info("building ${candleList.size()} candles from ${allTrades.size()} trades took ${duration.getSeconds()}")
 
         return candleList
     }

@@ -3,17 +3,26 @@ import styled from "styled-components";
 import PropTypes from "prop-types";
 import moment from "moment";
 //import ThemeProvider from 'styled-components';
-import { observer } from "mobx-react";
+import { observer, inject } from "mobx-react";
 
 import CandleChart from "./CandleChart";
 import MarketSelectorForm from "./MarketSelectorForm";
 
+import AceEditor from 'react-ace';
+import brace from 'brace';
+
+import 'brace/mode/javascript';
+import 'brace/theme/monokai';
+
 import { Row, Col, Tabs } from "antd";
-const TabPane = Tabs.TabPane;
+
+import StrategyForm from "./StrategyForm"
 
 import { Layout, Menu, Breadcrumb, Icon, Timeline } from "antd";
 const { Header, Content, Footer, Sider } = Layout;
 const SubMenu = Menu.SubMenu;
+
+const TabPane = Tabs.TabPane;
 
 const Logo = styled.div`
   height: 32px;
@@ -31,14 +40,22 @@ const Scrollarea = styled.div`
   height: 300px;
 `;
 
+@inject("rootStore")
 @observer
 class StrategyPage extends React.Component {
   constructor(props) {
     super(props);
+
+    this.store = this.props.rootStore.strategyStore;
   }
 
   tabChangeCallback = key => {
     console.log(key);
+  };
+
+  onScriptChange = newScript => {
+    //console.log(this.refs.strategyEditor);
+    this.script = newScript
   };
 
   render() {
@@ -53,7 +70,10 @@ class StrategyPage extends React.Component {
       </Row>,
       <Row>
         <Col span={1}>col-6</Col>
-        <Col span={11}>col-6</Col>
+            
+        <Col span={11}>
+          <StrategyForm />
+        </Col>
         <Col span={11}>
           <Tabs onChange={this.tabChangeCallback} type="card">
             <TabPane tab="Logs" key="1">

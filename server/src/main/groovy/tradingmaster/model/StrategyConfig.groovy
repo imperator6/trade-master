@@ -3,7 +3,6 @@ package tradingmaster.model
 import groovy.transform.ToString
 import groovy.transform.TupleConstructor
 
-import javax.script.Invocable
 import javax.script.ScriptEngine
 
 @ToString
@@ -14,7 +13,7 @@ class StrategyConfig {
 
     IPortfolio portfolio
 
-    IStrategyScript script
+    IStrategy script
 
     ScriptEngine scriptHandler
 

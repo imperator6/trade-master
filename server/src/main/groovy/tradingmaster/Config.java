@@ -14,8 +14,10 @@ import tradingmaster.core.CandleAggregator;
 import tradingmaster.core.CandleBuilder;
 import tradingmaster.core.TradeWriter;
 import tradingmaster.db.couchdb.CouchDBClient;
+import tradingmaster.db.mariadb.MariaStrategyStore;
 import tradingmaster.db.mariadb.MariaTradeStore;
 import tradingmaster.exchange.bittrex.BittrexApi11;
+import tradingmaster.model.IStrategyStore;
 import tradingmaster.model.ITradeStore;
 
 import javax.annotation.PostConstruct;
@@ -87,6 +89,11 @@ public class Config {
     @Bean
     ITradeStore tradeStore() {
         return new MariaTradeStore();
+    }
+
+    @Bean
+    IStrategyStore strategyStore() {
+        return new MariaStrategyStore();
     }
 
 

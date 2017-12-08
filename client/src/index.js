@@ -9,6 +9,8 @@ import RootStore from "./store/RootStore"
 
 import enUS from 'antd/lib/locale-provider/en_US';
 
+import "babel-polyfill"
+
 
 
 

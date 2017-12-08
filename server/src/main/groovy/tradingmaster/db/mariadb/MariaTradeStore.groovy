@@ -8,6 +8,8 @@ import tradingmaster.model.*
 import javax.annotation.PostConstruct
 import javax.sql.DataSource
 import java.sql.Timestamp
+import java.time.Duration
+import java.time.Instant
 import java.time.LocalDateTime
 
 @Commons
@@ -62,6 +64,8 @@ class MariaTradeStore implements ITradeStore {
 
         Sql sql = new Sql(dataSource)
 
+        def start = Instant.now()
+
         exchange = exchange.capitalize()
 
         List<ITrade> trades = []
@@ -80,6 +84,10 @@ class MariaTradeStore implements ITradeStore {
         TradeBatch tb = new TradeBatch()
         tb.setMarket(new CryptoMarket(exchange, market))
         tb.setTrades(trades)
+
+        def duration = Duration.between(start, Instant.now())
+
+        log.info("loading ${trades.size()} trades took ${duration.getSeconds()}")
 
         return tb
     }

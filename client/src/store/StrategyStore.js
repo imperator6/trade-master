@@ -1,44 +1,91 @@
 import { observable, computed, action } from "mobx";
-import moment from 'moment';
+import moment from "moment";
+import axios from "axios";
+
 var _ = require("lodash");
 
 export default class StrategyStore {
+  constructor(rootStore) {
+    this.rootStore = rootStore;
+  }
 
-      constructor(rootStore) {
-            this.rootStore = rootStore
-      }
+  @observable loaded = false;
 
-      @observable periodList = ['1m','5m','15m','30m','1h','2h','4h','1d','3d'];
+  @observable strategyList = [];
 
-      @observable selectedPeriod = this.periodList[1]
+  @observable strategyNameList = [];
 
-      @observable exchangeList = ["Bittrex"];
+  @observable selectedStrategyName = "";
 
-      @observable selectedExchange = this.exchangeList[0]
-      
-      @observable assetList = {
-        Bittrex: ["USDT-BTC", "USDT-ETH", "USDT-NEO"]
-      };
+  @observable selectedStrategy = null;
 
-      @observable selectedAsset = this.assetList[this.selectedExchange][0]
+  @action
+  selectStrategyByName = name => {
+    let next = this.strategyList.find(s => {
+      return s.name === name;
+    });
+    this.selectedStrategy = next;
+  };
 
-      @observable startDate = moment().subtract(2, 'month')
+  @action
+  saveScript = (newScript) => {
 
-      @observable endDate = moment()
+    let url = this.rootStore.remoteApiUrl + "/strategy/saveScript";
 
-      @action
-      onAssetChange = (newValue) => {
-            console.log(newValue)
-            this.selectedAsset = newValue
-      }
+    console.log('newscript');
+    console.log(newScript);
 
+    axios
+      .post(url, {
+        id: this.selectedStrategy.id,
+        name: this.selectedStrategy.name,
+        script: newScript,
+        language: this.selectedStrategy.language,
+        version: this.selectedStrategy.version
+      })
+      .then(function(response) {
+        console.log(response);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  }
+
+  @action
+  loadStrategies = () => {
+    console.log("loading strategies");
+
+    this.loaded = false;
+
+    let url = this.rootStore.remoteApiUrl + "/strategy/";
+
+    axios
+      .get(url)
+      .then((response) => {
+        let strategies = response.data
+
+        console.log('axios')
+        console.log(strategies)
+
+        this.strategyList = strategies.map(s => {
+          return {
+            ...s,
+            key: s.id
+          };
+        });
+
+        this.strategyNameList = strategies.map(s => s.name);
+
+        if (this.selectedStrategy == null) {
+          this.selectedStrategy = strategies[0];
+        }
+
+        this.loaded = true;
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
 
     
-  
-    
-
-
-
-    
+  };
 }
-    

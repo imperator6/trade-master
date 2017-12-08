@@ -1,6 +1,6 @@
 package tradingmaster.model;
 
-public interface IStrategyScript {
+public interface IStrategy {
 
 
     String getScript();

@@ -64,9 +64,6 @@ class App extends Component {
           <Content style={{ margin: '8px 8px' }}>
                  <StrategyPage />
           </Content>
-          <Footer style={{ textAlign: 'center' }}>
-            Ant Design ©2016 Created by Ant UED
-          </Footer>
         </Layout>
       </Layout>    
       <DevTools />       

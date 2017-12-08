@@ -32,40 +32,25 @@ class MarketSelectorForm extends React.Component {
 
     this.store = this.props.rootStore.marketSelectionStore;
 
-    this.state = {
-      cities: cityData[provinceData[0]],
-      secondCity: cityData[provinceData[0]][0]
-    };
+    
   }
 
   componentDidMount() {
     console.log(this);
   }
 
-  handleProvinceChange = value => {
-    this.setState({
-      cities: cityData[value],
-      secondCity: cityData[value][0]
-    });
-  };
-  onSecondCityChange = value => {
-    this.setState({
-      secondCity: value
-    });
-  };
-
   onOk = value => {
     console.log("onOk: ", value);
-  };
+  }
 
   onChange2 = (value, dateString) => {
     console.log("Selected Time: ", value);
     console.log("Formatted Selected Time: ", dateString);
-  };
+  }
 
   render() {
     const exchangeOptions = this.store.exchangeList.map(exc => (
-      <Option key={exc}>{exc}</Option>
+      <Option key={exc} key={exc}>{exc}</Option>
     ));
     const assetOptions = this.store.assetList[this.store.selectedExchange].map(
       a => <Option key={a}>{a}</Option>

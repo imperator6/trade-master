@@ -7,7 +7,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.util.StreamUtils;
 import tradingmaster.model.CryptoMarket;
 import tradingmaster.model.PaperPortfolio;
-import tradingmaster.model.StrategyScript;
+import tradingmaster.model.Strategy;
 import tradingmaster.service.MaketWatcherService;
 import tradingmaster.service.StrategyRunnerService;
 
@@ -37,7 +37,7 @@ public class Application {
         String script = StreamUtils.copyToString( new ClassPathResource("/strategy/dema.js").getInputStream(), Charset.defaultCharset() );
 
 
-        strategyRunnerService.startStrategy(new CryptoMarket("Bittrex","USDT", "BTC"), new PaperPortfolio(), new StrategyScript( script, "javascript"));
+        strategyRunnerService.startStrategy(new CryptoMarket("Bittrex","USDT", "BTC"), new PaperPortfolio(), new Strategy( script, "javascript"));
 
 
 

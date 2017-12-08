@@ -10,3 +10,14 @@ CREATE TABLE `trades` (
 )
 ENGINE=InnoDB
 ;
+
+CREATE TABLE `strategy` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`name` VARCHAR(100) NULL DEFAULT null,
+	`language` VARCHAR(50) NULL DEFAULT 'javascript',
+	`script` MEDIUMTEXT NULL DEFAULT NULL,
+	`version` INT(11) NULL DEFAULT '1',
+	PRIMARY KEY (`id`)
+)
+ENGINE=InnoDB
+;

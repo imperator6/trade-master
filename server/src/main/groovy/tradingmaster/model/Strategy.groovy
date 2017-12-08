@@ -1,16 +1,20 @@
 package tradingmaster.model
 
 import groovy.transform.ToString
-import groovy.transform.TupleConstructor
-
 
 @ToString
-class StrategyScript implements IStrategyScript {
+class Strategy implements IStrategy {
 
+    BigDecimal id = ""
+    String name = ""
     String language = ""
     String script = ""
+    BigDecimal version = ""
 
-     StrategyScript(String script, String language) {
+    Strategy() {
+    }
+
+    Strategy(String script, String language) {
         this.language = language
         this.script = script
     }

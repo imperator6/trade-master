@@ -10,8 +10,8 @@ couchDB:
     password: admin123
 
 mariaDB:
-     #jdbc-url: jdbc:mysql://WN000223.rwest.local/trading_master
-     jdbc-url: jdbc:mysql://192.168.0.167/trading_master
+     jdbc-url: jdbc:mysql://S930A3546/trading_master
+     #jdbc-url: jdbc:mysql://192.168.0.167/trading_master
      username: root
      password: admin123
      pool-size: 30

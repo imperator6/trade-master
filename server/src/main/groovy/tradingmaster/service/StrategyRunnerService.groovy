@@ -2,18 +2,16 @@ package tradingmaster.service
 
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.core.io.ClassPathResource
 import org.springframework.core.io.ResourceLoader
 import org.springframework.integration.channel.PublishSubscribeChannel
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
 import org.springframework.stereotype.Service
-import org.springframework.util.StreamUtils
 import tradingmaster.model.Candle
 import tradingmaster.model.IMarket
 import tradingmaster.model.IPortfolio
-import tradingmaster.model.IStrategyScript
+import tradingmaster.model.IStrategy
 import tradingmaster.model.StrategyConfig
 
 import javax.annotation.PostConstruct
@@ -21,7 +19,6 @@ import javax.script.Invocable
 import javax.script.ScriptContext
 import javax.script.ScriptEngine
 import javax.script.ScriptEngineManager
-import java.nio.charset.Charset
 
 @Service
 @Commons
@@ -69,7 +66,7 @@ class StrategyRunnerService implements  MessageHandler {
     }
 
 
-    String startStrategy(IMarket market, IPortfolio portfolio, IStrategyScript script) {
+    String startStrategy(IMarket market, IPortfolio portfolio, IStrategy script) {
 
         log.info("Starting a new Strategy!")
 
