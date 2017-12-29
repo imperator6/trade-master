@@ -1,6 +1,17 @@
+http:
+    proxyHost: proxy.rwe.com
+    proxyPort: 8080
+
 bittrex:
       apikey: key
       secret: secret
+
+gdax:
+    api:
+        baseUrl: "https://api.gdax.com/"
+    key: db6045d4f3d491baf84af7a1c8a4633c
+    secret: gVhFcZ/0ouQwBX8MhAlJUXlSHmSfpmpJV5yvrHpNolqWY4D+/euVrlY0foFrSCc7NGUdiwHKzydORV6MNfjvdg==
+    passphrase: bupa0m5sh4t
 
 # ---- database
 couchDB:
@@ -15,3 +26,15 @@ mariaDB:
      username: root
      password: admin123
      pool-size: 30
+
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.MySQLDialect
+        generate-ddl: true
+    hibernate:
+        dll-auto: create
+    datasource:
+        url: jdbc:mysql://S930A3546/trading_master
+        driverClassName: org.mariadb.jdbc.Driver
+        username: root
+        password: admin

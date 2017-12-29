@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.ToString
 
 @ToString
-class CryptoTrade implements ITrade{
+class CryptoTrade implements ITrade {
 
     @JsonProperty("Id")
     String extId

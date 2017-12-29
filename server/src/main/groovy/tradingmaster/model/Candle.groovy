@@ -10,6 +10,8 @@ class Candle {
 
     IMarket market
 
+    String period
+
     @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "UTC")
     Date start
 

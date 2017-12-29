@@ -6,6 +6,6 @@ import groovy.transform.TupleConstructor
 class TradeBatch {
 
     IMarket market
-    List<ITrade> trades
+    List<ITrade> trades = []
 
 }

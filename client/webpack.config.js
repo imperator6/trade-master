@@ -6,7 +6,7 @@ var node_dir = __dirname + "/node_modules";
 
 module.exports = {
   devtool: "eval",
-  entry: ["babel-polyfill", "./src/index"],
+  entry:  ["babel-polyfill", "./src/index"],
   output: {
     path: path.join(__dirname, "dist"),
     filename: "bundle.js",

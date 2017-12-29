@@ -17,7 +17,13 @@ export default class StrategyStore {
 
   @observable selectedStrategyName = "";
 
-  @observable selectedStrategy = null;
+  @observable selectedStrategy = null; //{ id: -1, script: '', language: 'javascript', version: 1 };
+
+  @observable portfolioChanges = []
+
+  @observable portfolioResult = {}
+
+  newStrategyCount = 0;
 
   @action
   selectStrategyByName = name => {
@@ -28,28 +34,44 @@ export default class StrategyStore {
   };
 
   @action
-  saveScript = (newScript) => {
+  newStrategy = () => {
+    this.newStrategyCount++;
+    let nextStrategy = {
+      script: "",
+      name: "newStrategy" + this.newStrategyCount,
+      language: "javascript",
+      version: 1
+    };
 
+    this.strategyList.push(nextStrategy);
+    this.selectedStrategy = nextStrategy;
+  };
+
+  @action
+  saveScript = newScript => {
     let url = this.rootStore.remoteApiUrl + "/strategy/saveScript";
 
-    console.log('newscript');
-    console.log(newScript);
+    this.selectedStrategy.script = newScript;
 
     axios
-      .post(url, {
-        id: this.selectedStrategy.id,
-        name: this.selectedStrategy.name,
-        script: newScript,
-        language: this.selectedStrategy.language,
-        version: this.selectedStrategy.version
-      })
-      .then(function(response) {
-        console.log(response);
+      .post(
+        url,
+        {
+          id: this.selectedStrategy.id,
+          name: this.selectedStrategy.name,
+          script: this.selectedStrategy.script,
+          language: this.selectedStrategy.language,
+          version: this.selectedStrategy.version
+        },
+        this.rootStore.userStore.getHeaderConfig()
+      )
+      .then(response => {
+        this.selectedStrategy = response.data;
       })
       .catch(function(error) {
         console.log(error);
       });
-  }
+  };
 
   @action
   loadStrategies = () => {
@@ -60,12 +82,9 @@ export default class StrategyStore {
     let url = this.rootStore.remoteApiUrl + "/strategy/";
 
     axios
-      .get(url)
-      .then((response) => {
-        let strategies = response.data
-
-        console.log('axios')
-        console.log(strategies)
+      .get(url, this.rootStore.userStore.getHeaderConfig())
+      .then(response => {
+        let strategies = response.data;
 
         this.strategyList = strategies.map(s => {
           return {
@@ -85,7 +104,108 @@ export default class StrategyStore {
       .catch(function(error) {
         console.log(error);
       });
+  };
 
-    
+  @action
+  runStrategy = () => {
+    console.log("run strategy");
+
+    let url = this.rootStore.remoteApiUrl + "/strategy/runStrategy";
+
+    axios
+      .post(url, {
+        strategyId: this.selectedStrategy.id,
+        strategyParams: { param: 1, param2: 2 },
+        exchange: this.rootStore.marketSelectionStore.selectedExchange,
+        market: this.rootStore.marketSelectionStore.selectedAsset,
+        candleSize: this.rootStore.marketSelectionStore.getCandleSize()
+      },  this.rootStore.userStore.getHeaderConfig())
+      .then(response => {
+        // this.selectedStrategy = response.data
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
+  @action
+  backtestStrategy = () => {
+    console.log("backtest strategy");
+
+    let url = this.rootStore.remoteApiUrl + "/strategy/backtestStrategy";
+
+    let start = this.rootStore.marketSelectionStore.startDate
+      .utc()
+      .toDate()
+      .toISOString();
+
+    let end = this.rootStore.marketSelectionStore.endDate
+      .utc()
+      .toDate()
+      .toISOString();
+
+    axios
+      .post(url, {
+        strategyId: this.selectedStrategy.id,
+        strategyParams: { param: 1, param2: 2 },
+        exchange: this.rootStore.marketSelectionStore.selectedExchange,
+        market: this.rootStore.marketSelectionStore.selectedAsset,
+        candleSize: this.rootStore.marketSelectionStore.getCandleSize(),
+        backtest: true,
+        start: start,
+        end: end
+      },  this.rootStore.userStore.getHeaderConfig())
+      .then(response => {
+        let backtestId = response.data.id;
+        this.fetchBacktestResult(backtestId);
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
+  @action
+  fetchBacktestResult = backtestId => {
+    let url = this.rootStore.remoteApiUrl + "/strategy/backtestResults";
+
+    let config =  this.rootStore.userStore.getHeaderConfig()
+
+    axios
+      .get(url, {
+        params: {
+          backtestId: backtestId
+        },
+        ...config
+      })
+      .then(response => {
+        if (response.data.success) {
+          let results = response.data.data;
+
+          if (results.complete) {
+            console.info("Backtest is complete.");
+
+            console.log(response.data.data);
+
+            this.portfolioChanges = response.data.data.changes
+            this.portfolioResult = response.data.data.portfolio
+
+            this.rootStore.chartStore.updateSignales(
+              response.data.data.signals
+            )
+
+          } else {
+            console.info("Backtest is not complete. Will try again in 2sec.");
+            setTimeout(() => {
+              this.fetchBacktestResult(backtestId);
+            }, 2000);
+          }
+        } else {
+          // error
+          console.info(response.data.message);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
   };
 }

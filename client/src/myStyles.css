@@ -1,11 +1,23 @@
-
-
 div.timeStyle {
-    display: felx;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #424242;
-    background-color: #e0e0e0;
-    width: 100px;
-    height: 37px;
+  display: felx;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #424242;
+  background-color: #e0e0e0;
+  width: 100px;
+  height: 37px;
+}
+
+.login-form {
+  max-width: 300px;
+}
+.login-form-forgot {
+  float: right;
+}
+.login-form-button {
+  width: 100%;
+}
+
+.ant-input-affix-wrapper .ant-input {
+    min-height: 20px;
 }

@@ -12,10 +12,9 @@ import org.springframework.integration.endpoint.AbstractMessageSource
 import org.springframework.messaging.MessageChannel
 import org.springframework.stereotype.Service
 import tradingmaster.exchange.ExchangeService
+import tradingmaster.model.CryptoMarket
 import tradingmaster.model.IExchangeAdapter
-import tradingmaster.model.IMarket
 import tradingmaster.model.TradeBatch
-import tradingmaster.rest.TradeContoller
 
 @Service
 @Commons
@@ -23,9 +22,6 @@ class MaketWatcherService {
 
      @Autowired
      MessageChannel tradeChannel
-
-     @Autowired
-     TradeContoller tradeController
 
      @Autowired
      IntegrationFlowContext integrationFlowContext
@@ -40,12 +36,12 @@ class MaketWatcherService {
           log.info("New MaketWatcherService!")
      }
 
-     String createMarketWatcher(final IMarket market, long interval) {
+     String createMarketWatcher(final CryptoMarket market, long interval) {
           IExchangeAdapter exchange = exchangeService.getExchangyByName(market.getExchange())
           return createMarketWatcher(market, exchange, interval)
      }
 
-     String createMarketWatcher(final IMarket market, final IExchangeAdapter exchange, long interval) {
+     String createMarketWatcher(final CryptoMarket market, final IExchangeAdapter exchange, long interval) {
 
 
           // new message source
@@ -97,20 +93,22 @@ class MaketWatcherService {
 
      TradeBatch filterNewTrades(TradeBatch all) {
 
-          def maxTradeId = tradeIdService.getMaxTradeId(all.getMarket())
+          if(all && all.trades && !all.trades.isEmpty()) {
 
-          //log.info("maxTradeId: $maxTradeId  trades befor: ${all.trades.size()}")
+               def maxTradeId = tradeIdService.getMaxTradeId(all.getMarket())
 
-          def newMaxTradeId = all.trades.max { (it.extId as Long) }?.extId as Long
+               //log.info("maxTradeId: $maxTradeId  trades befor: ${all.trades.size()}")
 
-          //log.info("newMaxTradeId: $newMaxTradeId")
+               def newMaxTradeId = all.trades.max { (it.extId as Long) }?.extId as Long
 
-          all.trades = all.trades.findAll { (it.extId as Long) > maxTradeId }
+               //log.info("newMaxTradeId: $newMaxTradeId")
 
-          //log.info("trades after: ${all.trades.size()}")
+               all.trades = all.trades.findAll { (it.extId as Long) > maxTradeId }
 
+               //log.info("trades after: ${all.trades.size()}")
 
-          tradeIdService.setMaxTradeId(all.getMarket(), newMaxTradeId)
+               tradeIdService.setMaxTradeId(all.getMarket(), newMaxTradeId)
+          }
 
           return all
      }

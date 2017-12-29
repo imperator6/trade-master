@@ -8,6 +8,7 @@ import tradingmaster.model.IExchangeAdapter
 @Service
 class ExchangeService {
 
+
     @Autowired
     ApplicationContext ctx
 

@@ -21,3 +21,22 @@ CREATE TABLE `strategy` (
 )
 ENGINE=InnoDB
 ;
+
+CREATE TABLE `candle` (
+	`id` INT(11) NOT NULL AUTO_INCREMENT,
+	`period` VARCHAR(5) NOT NULL DEFAULT '1min',
+	`exchange` VARCHAR(120) NOT NULL,
+	`market` VARCHAR(120) NOT NULL,
+	`start` DATETIME NOT NULL,
+	`end` DATETIME NOT NULL,
+	`open` DOUBLE NULL DEFAULT '0',
+	`high` DOUBLE NULL DEFAULT '0',
+	`low` DOUBLE NULL DEFAULT '0',
+	`close` DOUBLE NULL DEFAULT '0',
+	`volume` DOUBLE NULL DEFAULT '0',
+	`price` DOUBLE NULL DEFAULT '0',
+	`trade_count` INT(11) NULL DEFAULT '0',
+	PRIMARY KEY (`id`)
+)
+ENGINE=InnoDB
+;

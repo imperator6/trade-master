@@ -3,13 +3,11 @@ package tradingmaster.exchange.bittrex
 import com.fasterxml.jackson.core.type.TypeReference
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import groovy.json.JsonBuilder
-import groovy.json.JsonSlurper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import tradingmaster.model.CryptoMarket
 import tradingmaster.model.IExchangeAdapter
-import tradingmaster.model.IMarket
 import tradingmaster.model.TradeBatch
 
 @Service("Bittrex")
@@ -21,7 +19,7 @@ class Bittrex implements IExchangeAdapter {
 
 
     @Override
-    TradeBatch getTrades(Date startDate, Date endDate, IMarket market) {
+    TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
 
         List tradeList = []
         String jsonRes = api.getMarketHistory(market.getName())

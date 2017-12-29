@@ -18,48 +18,140 @@ const OuterDiv = styled.div`
   height: 37px;
 `;
 
-const provinceData = ["Zhejiang", "Jiangsu"];
-const cityData = {
-  Zhejiang: ["Hangzhou", "Ningbo", "Wenzhou"],
-  Jiangsu: ["Nanjing", "Suzhou", "Zhenjiang"]
-};
-
 @inject("rootStore")
 @observer
 class MarketSelectorForm extends React.Component {
   constructor(props) {
     super(props);
 
+    console.log("New MarketSelectorForm");
+    console.log(props.store);
+
     this.store = this.props.rootStore.marketSelectionStore;
-
-    
   }
 
-  componentDidMount() {
-    console.log(this);
-  }
-
-  onOk = value => {
-    console.log("onOk: ", value);
-  }
+  componentDidMount() {}
 
   onChange2 = (value, dateString) => {
     console.log("Selected Time: ", value);
     console.log("Formatted Selected Time: ", dateString);
-  }
+  };
 
   render() {
-    const exchangeOptions = this.store.exchangeList.map(exc => (
-      <Option key={exc} key={exc}>{exc}</Option>
-    ));
-    const assetOptions = this.store.assetList[this.store.selectedExchange].map(
-      a => <Option key={a}>{a}</Option>
-    );
+    let rows = [];
+
+    for (
+      let seriesIndex = 0;
+      seriesIndex < this.store.seriesCount;
+      seriesIndex++
+    ) {
+      let exchangeOptions = this.store.exchangeLists[0].map(exc => (
+        <Option key={exc} key={exc}>
+          {exc}
+        </Option>
+      ));
+      let assetOptions = this.store.assetList[this.store.selectedExchange].map(
+        a => <Option key={a}>{a}</Option>
+      );
+
+      let row = null;
+
+      let exchangeSelect = (
+        <Select
+          defaultValue={this.store.selectedExchange}
+          onChange={this.store.onExchangeChange}
+          style={{ width: 130 }}
+          //onChange={this.handleProvinceChange}
+        >
+          {exchangeOptions}
+        </Select>
+      );
+
+      let assetSelect = (
+        <Select
+          value={this.store.selectedAsset}
+          style={{ width: 130 }}
+          onChange={this.store.onAssetChange}
+        >
+          {assetOptions}
+        </Select>
+      );
+
+      let periodSelect = null;
+      let startSelect = null;
+      let endSelect = null;
+      let actionButton = null;
+
+      if (seriesIndex == 0) {
+        periodSelect = (
+          <Select
+            style={{ width: 80 }}
+            defaultValue={this.store.selectedPeriod}
+            onChange={this.store.onPeriodChange}
+          >
+            {this.store.periodList.map(p => {
+              return (
+                <Option key={p} value={p}>
+                  {p}
+                </Option>
+              );
+            })}
+          </Select>
+        );
+
+        startSelect = (
+          <DatePicker
+            showTime
+            format="YYYY-MM-DD HH:mm"
+            placeholder="Select Time"
+            value={this.store.startDate}
+            onChange={this.onChange2}
+            onOk={this.onOk}
+          />
+        );
+
+        endSelect = (
+          <DatePicker
+            showTime
+            format="YYYY-MM-DD HH:mm"
+            placeholder="Select Time"
+            value={this.store.endDate}
+            onChange={this.onChange2}
+            onOk={this.onOk}
+          />
+        );
+
+        actionButton = (
+          <Button
+            type="primary"
+            shape="circle"
+            icon="reload"
+            onClick={this.store.load}
+          />
+        );
+      }
+
+      row = (
+        <tr key={seriesIndex}>
+          <td>{seriesIndex}</td>
+          <td>{exchangeSelect}</td>
+          <td>{assetSelect}</td>
+          <td>{periodSelect}</td>
+          <td>{startSelect}</td>
+          <td>{endSelect}</td>
+          <td>{actionButton}</td>
+        </tr>
+      );
+
+      rows.push(row);
+    }
+
     return (
       <div>
         <table>
           <thead>
             <tr>
+              <th>Series</th>
               <th>Exchange</th>
               <th>Market</th>
               <th>Period</th>
@@ -68,71 +160,7 @@ class MarketSelectorForm extends React.Component {
               <th />
             </tr>
           </thead>
-          <tbody>
-            <tr>
-              <td>
-                <Select
-                  defaultValue={this.store.selectedExchange}
-                  style={{ width: 130 }}
-                  //onChange={this.handleProvinceChange}
-                >
-                  {exchangeOptions}
-                </Select>
-              </td>
-              <td>
-                <Select
-                  value={this.store.selectedAsset}
-                  style={{ width: 130 }}
-                  onChange={this.store.onAssetChange}
-                >
-                  {assetOptions}
-                </Select>
-              </td>
-              <td>
-                <Select
-                  style={{ width: 80 }}
-                  defaultValue={this.store.selectedPeriod}
-                  onChange={this.store.onPeriodChange}
-                >
-                  {this.store.periodList.map(p => {
-                    return (
-                      <Option key={p} value={p}>
-                        {p}
-                      </Option>
-                    );
-                  })}
-                </Select>
-              </td>
-              <td>
-                <DatePicker
-                  showTime
-                  format="YYYY-MM-DD HH:mm"
-                  placeholder="Select Time"
-                  value={this.store.startDate}
-                  onChange={this.onChange2}
-                  onOk={this.onOk}
-                />
-              </td>
-              <td>
-                <DatePicker
-                  showTime
-                  format="YYYY-MM-DD HH:mm"
-                  placeholder="Select Time"
-                  value={this.store.endDate}
-                  onChange={this.onChange2}
-                  onOk={this.onOk}
-                />
-              </td>
-              <td>
-                <Button
-                  type="primary"
-                  shape="circle"
-                  icon="reload"
-                  onClick={this.store.load}
-                />
-              </td>
-            </tr>
-          </tbody>
+          <tbody>{rows}</tbody>
         </table>
       </div>
     );

@@ -18,6 +18,7 @@ class CandleAggregator implements MessageHandler {
 
     List<Candle> candleList = Collections.synchronizedList(new ArrayList<Candle>())
 
+
     @Override
     synchronized void handleMessage(Message<?> message) throws MessagingException {
 
@@ -33,14 +34,30 @@ class CandleAggregator implements MessageHandler {
             log.info("Next  ${candleCount} minutes candel $next")
 
             log.info(next.getDurationInMinutes())
-
         }
-
-
-
     }
 
-    Candle buildCandle(List<Candle> minuteCandleList) {
+    static List<Candle> aggregate(Integer candleCount, List<Candle> candles) {
+
+        List<Candle> tempList = []
+
+        List<Candle> aggregatedCandles = []
+
+        candles.each { c ->
+
+            tempList.add(c)
+
+            if(tempList.size() == candleCount) {
+                Candle next = buildCandle( tempList )
+                tempList.clear()
+                aggregatedCandles << next
+            }
+        }
+
+        return aggregatedCandles
+    }
+
+    private static Candle buildCandle(List<Candle> minuteCandleList) {
 
         Candle first = minuteCandleList.first()
 
@@ -64,7 +81,6 @@ class CandleAggregator implements MessageHandler {
         }
 
         return aggregatedCandle
-
     }
 
 }

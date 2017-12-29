@@ -4,6 +4,6 @@ import java.util.Date;
 
 public interface IExchangeAdapter {
 
-    TradeBatch getTrades(Date startDate, Date endDate, IMarket market);
+    TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market);
 
 }

@@ -1,4 +1,4 @@
-package tradingmaster;
+package tradingmaster.config;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -19,13 +19,16 @@ public class WebSocketConfig extends AbstractWebSocketMessageBrokerConfigurer {
 	@Override
 	public void configureMessageBroker(MessageBrokerRegistry registry) {
 		registry.enableSimpleBroker("/queue/", "/topic/");
+		//registry.enableStompBrokerRelay("/queue/", "/topic/");
+				//.setSystemHeartbeatSendInterval(2000)
+				//.setSystemHeartbeatReceiveInterval(2000);
 //		registry.enableStompBrokerRelay("/queue/", "/topic/");
 		registry.setApplicationDestinationPrefixes("/app");
 	}
 
 	@Override
 	public void registerStompEndpoints(StompEndpointRegistry registry) {
-		registry.addEndpoint("/portfolio").setAllowedOrigins("*").withSockJS();
+		registry.addEndpoint("/socket").setAllowedOrigins("*").withSockJS();
 	}
 
 //	@Bean

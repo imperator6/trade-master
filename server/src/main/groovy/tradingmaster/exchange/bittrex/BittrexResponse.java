@@ -2,7 +2,7 @@ package tradingmaster.exchange.bittrex;
 
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import tradingmaster.model.CryptoTrade;
+import tradingmaster.exchange.bittrex.model.BittrexTrade;
 
 import java.util.List;
 
@@ -15,6 +15,6 @@ public class BittrexResponse {
     String message;
 
     @JsonProperty
-    List<CryptoTrade> result;
+    List<BittrexTrade> result;
 
 }

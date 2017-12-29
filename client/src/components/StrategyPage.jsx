@@ -17,6 +17,7 @@ import 'brace/theme/monokai';
 import { Row, Col, Tabs } from "antd";
 
 import StrategyForm from "./StrategyForm"
+import StrategyResults from "./StrategyResults"
 
 import { Layout, Menu, Breadcrumb, Icon, Timeline } from "antd";
 const { Header, Content, Footer, Sider } = Layout;
@@ -46,7 +47,7 @@ class StrategyPage extends React.Component {
   constructor(props) {
     super(props);
 
-    this.store = this.props.rootStore.strategyStore;
+    this.store = this.props.strategyStore;
   }
 
   tabChangeCallback = key => {
@@ -61,7 +62,7 @@ class StrategyPage extends React.Component {
   render() {
     return [
       <Row>
-        <MarketSelectorForm />
+          <MarketSelectorForm  strategyStore={this.props.rootStore.marketSelectionStore}/>
       </Row>,
       <Row>
         <Col span={24}>
@@ -70,65 +71,11 @@ class StrategyPage extends React.Component {
       </Row>,
       <Row>
         <Col span={1}>col-6</Col>
-            
         <Col span={11}>
           <StrategyForm />
         </Col>
         <Col span={11}>
-          <Tabs onChange={this.tabChangeCallback} type="card">
-            <TabPane tab="Logs" key="1">
-            <Scrollarea >
-              <Timeline>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="red">
-                  <p>Solve initial network problems 1</p>
-                  <p>Solve initial network problems 2</p>
-                  <p>Solve initial network problems 3 2015-09-01</p>
-                </Timeline.Item>
-                <Timeline.Item>
-                  <p>Technical testing 1</p>
-                  <p>Technical testing 2</p>
-                  <p>Technical testing 3 2015-09-01</p>
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-                <Timeline.Item color="green">
-                  Create a services site 2015-09-01
-                </Timeline.Item>
-              </Timeline>
-              </Scrollarea >
-            </TabPane>
-            <TabPane tab="Tab 2" key="2">
-              Content of Tab Pane 2
-            </TabPane>
-            <TabPane tab="Tab 3" key="3">
-              Content of Tab Pane 3
-            </TabPane>
-          </Tabs>
+          <StrategyResults />
         </Col>
         <Col span={1}>col-6</Col>
       </Row>

@@ -13,6 +13,15 @@ import java.time.Instant
 @Commons
 class MariaStrategyStore implements IStrategyStore {
 
+    static SELECT_MAX_VERSION_QUERY =  """SELECT * from strategy s1
+WHERE s1.version = 
+  (SELECT max(version) FROM strategy s2 WHERE lower(s2.name) = lower(s1.name))
+"""
+    static UPDATE_QUERY = "update strategy set name = ?, language = ?, script=?, version=? where id = ?"
+
+    static INSERT_QUERY =  """insert into strategy(name, language, script, version) VALUES(?,?,?,?)"""
+
+
     @Autowired
     DataSource dataSource
 
@@ -31,18 +40,9 @@ class MariaStrategyStore implements IStrategyStore {
 
         List<IStrategy> strategies = []
 
-        String query = """SELECT * from strategy s1
-WHERE s1.version = 
-  (SELECT max(version) FROM strategy s2 WHERE lower(s2.name) = lower(s1.name))
-"""
-        sql.eachRow(query.toString()) { row ->
-            IStrategy s = new Strategy()
-            s.id = row.id
-            s.name = row.name
-            s.language = row.language
-            s.script = row.script
-            s.version = row.version
-            strategies << s
+
+        sql.eachRow(SELECT_MAX_VERSION_QUERY.toString()) { row ->
+            strategies << rowToStrategy(row)
         }
 
         def duration = Duration.between(start, Instant.now())
@@ -50,5 +50,58 @@ WHERE s1.version =
         log.debug("loading ${strategies.size()} strategies took ${duration.getSeconds()}")
 
         return strategies
+    }
+
+    IStrategy saveStrategy(Strategy s) {
+
+        Sql sql = new Sql(dataSource)
+
+        if(s.id == null) {
+            // new strategy
+            def params = [s.name, s.language, s.script, s.version++]
+            def res = sql.executeInsert(INSERT_QUERY.toString(), params)
+
+            log.info(res)
+
+            return null
+
+        } else {
+            // update existing
+            def nextVersion = s.version + 1
+            def params = [s.name, s.language, s.script, nextVersion, s.id]
+            sql.execute(UPDATE_QUERY.toString(), params)
+
+            return loadStrategyById(s.id, null)
+        }
+    }
+
+    IStrategy loadStrategyById(Number id, Number version) {
+
+        Sql sql = new Sql(dataSource)
+
+        def query = SELECT_MAX_VERSION_QUERY + " and s1.id = ?"
+        def params = [id]
+
+        if(version != null) {
+            query += " and s1.version = ?"
+            params.push(version)
+        }
+
+        def row = sql.firstRow( query.toString(), params)
+
+        return  rowToStrategy(row)
+    }
+
+    IStrategy rowToStrategy(row) {
+
+        IStrategy s = new Strategy()
+        s.id = row.id
+        s.name = row.name
+        s.language = row.language
+        s.script = row.script
+        s.version = row.version
+
+        return s
+
     }
 }

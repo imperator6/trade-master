@@ -11,7 +11,17 @@ import brace from "brace";
 import "brace/mode/javascript";
 import "brace/theme/monokai";
 
-import { Row, Col, Tabs, Form, Icon, Input, Button, Select } from "antd";
+import {
+  Row,
+  Col,
+  Tabs,
+  Form,
+  Icon,
+  Input,
+  Button,
+  Select,
+  Tooltip
+} from "antd";
 const TabPane = Tabs.TabPane;
 const FormItem = Form.Item;
 const Option = Select.Option;
@@ -33,93 +43,165 @@ class StrategyForm extends React.Component {
     super(props);
 
     this.store = this.props.rootStore.strategyStore;
+
+    this.state = {
+      editStrategyName: false
+    };
   }
 
   componentDidMount() {
-    this.store.loadStrategies()
+    this.store.loadStrategies();
+  }
+
+  componentDidUpdate() {
+    if (this.state.editStrategyName) {
+      this.strategyNameInput.focus();
+    }
   }
 
   onScriptChange = newScript => {
     //console.log(this.refs.strategyEditor);
 
-    console.log(this.refs.strategyEditor);
+    //console.log(this.refs.strategyEditor);
 
-    console.log(newScript);
-
-    
-
-    this.script = newScript;
+  
+    //this.script = newScript;
   };
 
-   handleStrategyChange = (value) => {
-    this.store.selectStrategyByName(value)
-   }
+  handleStrategyChange = value => {
+    this.store.selectStrategyByName(value);
+  };
 
-   saveScript = () => {
-      this.store.saveScript(this.script)
-   }
+  saveScript = () => {
+    let newScript = this.refs.strategyEditor.editor.getValue()
+    this.store.saveScript(newScript);
+    this.setState({ editStrategyName: false });
+  };
 
+  loadStrategies = () => {
+    this.store.loadStrategies();
+    this.setState({ editStrategyName: false });
+  };
+
+  updateStrategyName = e => {
+    e.stopPropagation();
+    console.log(e.target.value);
+    this.store.selectedStrategy.name = e.target.value;
+    this.setState({ editStrategyName: !this.state.editStrategyName });
+  };
+
+  onStrategyNameChange = event => {
+    this.store.selectedStrategy.name = newName;
+  };
+
+  toggleEditStrategyName = () => {
+    let next = !this.state.editStrategyName;
+    this.setState({ editStrategyName: next });
+  };
+
+  newStrategy = () => {
+    this.store.newStrategy();
+    this.setState({ editStrategyName: true });
+  };
 
   render() {
     const strategyOptions = this.store.strategyList.map(s => {
-        return (<Option value={s.name} key={s.name} >{ s.name }</Option>)
+      return (
+        <Option value={s.name} key={s.name}>
+          {s.name}
+        </Option>
+      );
     });
 
     let selStrategy = null;
-    if(this.store.selectedStrategy != null) {
-        let s = this.store.selectedStrategy
-        selStrategy = s.name 
+    let scriptValue = "";
+    if (this.store.selectedStrategy != null) {
+      let s = this.store.selectedStrategy;
+      selStrategy = s.name;
+      scriptValue = this.store.selectedStrategy.script;
     }
 
-    console.log(selStrategy);
-    console.log(strategyOptions);
+    //console.log(selStrategy);
+    //console.log(strategyOptions);
 
-    return [
-        <table>
-          <tbody>
-            <tr>
-              <th>Strategy</th>
-              <td> <Select  
-                  value={selStrategy}
-                  style={{ width: 220 }}
-                  onChange={this.handleStrategyChange}
-                >
-                {strategyOptions}
-                </Select>
-              </td>
-              <th><Button
-                  type="primary"
-                  onClick={this.store.loadStrategies}
-                >Load</Button></th>
-              <th></th>
-              <th></th>
-              <th><Button
-                  type="primary"
-                  icon="plus"
-                  onClick={this.store.load}
-                >New</Button>
-                <Button
-                  type="primary"
-                  onClick={this.saveScript}
-                >Save</Button></th>
-            </tr>
-          </tbody>
-          </table>,
-        <AceEditor
-          mode="javascript"
-          theme="monokai"
-          width="700px"
-          height="450px"
-          value={this.store.script}
-          onChange={this.onScriptChange}
-          name="strategyEditor"
-          editorProps={{
-            $blockScrolling: true
-          }}
-          ref="strategyEditor"
+    let strategyComp = (
+      <Select
+        value={selStrategy}
+        style={{ width: 220 }}
+        onChange={this.handleStrategyChange}
+      >
+        {strategyOptions}
+      </Select>
+    );
+
+    if (this.state.editStrategyName) {
+      strategyComp = (
+        <Input
+          style={{ width: 220 }}
+          defaultValue={selStrategy}
+          placeholder="Enter Strategy Name"
+          // onChange={this.updateStrategyName}
+          onPressEnter={this.updateStrategyName}
+          ref={node => (this.strategyNameInput = node)}
         />
-      
-    ];
+      );
+    }
+
+    return (
+      <table>
+        <tbody>
+          <tr>
+            <th>Strategy</th>
+            <td>
+              {strategyComp}
+              <Tooltip placement="top" title='Edit Strategy Name'>
+                    <Button shape="circle" icon="edit" onClick={this.toggleEditStrategyName} />
+              </Tooltip>
+              <Tooltip placement="top" title='Add a new Strategy'>
+                <Button icon="plus" shape="circle" onClick={this.newStrategy} />
+              </Tooltip>
+            </td>
+            <th>
+                <Tooltip placement="top" title='Reload Strategies from DB'>
+              <Button shape="circle" icon="reload" onClick={this.loadStrategies}></Button>
+              </Tooltip>
+            </th>
+            <th>
+              <Tooltip placement="top" title='Save Strategy'>
+                <Button type="primary" icon="save" onClick={this.saveScript}></Button>
+              </Tooltip>
+            </th>
+            <th >
+                <Tooltip placement="top" title='Backtest Strategy'>
+                    <Button icon="play-circle-o" shape="circle" onClick={this.store.backtestStrategy}></Button>
+                </Tooltip>
+            </th >
+            <th >
+                <Tooltip placement="top" title='Run Strategy'>
+                    <Button type="primary" icon="play-circle" shape="circle" onClick={this.store.runStrategy}></Button>
+                </Tooltip>
+            </th >
+          </tr>
+          <tr>
+            <td colSpan={6}>
+              <AceEditor
+                mode="javascript"
+                theme="monokai"
+                width="700px"
+                height="450px"
+                value={scriptValue}
+                onChange={this.onScriptChange}
+                name="strategyEditor"
+                editorProps={{
+                  $blockScrolling: true
+                }}
+                ref="strategyEditor"
+              />
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    );
   }
 }
 

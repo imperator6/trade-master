@@ -86,7 +86,6 @@ class CandleBuilder implements MessageHandler {
 
                     candle.volumnWeightedPrice /= candle.volume
 
-
                 } else {
                     // empty candle!
                     // - open, high, close, low, vwp are the same as the close of the previous candle.
@@ -115,7 +114,7 @@ class CandleBuilder implements MessageHandler {
                 current = current.plus(1, ChronoUnit.MINUTES)
 
                 log.debug("new minute candel: $candle")
-
+                candle.setPeriod("1min")
                 candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
 
             } // last candle is excluded !

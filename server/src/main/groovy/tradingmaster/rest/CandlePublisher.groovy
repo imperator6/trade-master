@@ -43,7 +43,9 @@ class CandlePublisher implements ApplicationListener<BrokerAvailabilityEvent>, M
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
         Candle c = message.getPayload()
-        messagingTemplate.convertAndSend("/topic/candle/1min" , c)
+
+        def marketName = c.getMarket().getName()
+        messagingTemplate.convertAndSend("/topic/candle/${marketName}/1min".toString() , c)
     }
 
 }
