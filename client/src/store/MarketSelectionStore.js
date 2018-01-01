@@ -8,8 +8,6 @@ export default class MarketSelectionStore {
     this.rootStore = rootStore;
   }
 
-  @observable seriesCount = 2
-
   @observable
   periodList = [
     "1 m",
@@ -25,42 +23,71 @@ export default class MarketSelectionStore {
 
   @observable selectedPeriod = "5 m";
 
-  @observable exchangeList = ["Bittrex", "Gdax"];
+  @observable seriesCount = 1
 
-  @observable selectedExchange = this.exchangeList[0];
+  @observable exchangeList = ["Bittrex", "Gdax"]
+
+  @observable selectedExchangeBySeries = new Map()
+
+  @observable selectedAssetBySeries = new Map()
 
   @observable
   assetList = {
-    Bittrex: ["USDT-BTC", "USDT-ETH", "USDT-NEO", "USDT-LTC"],
-    Gdax: ["USD-ETH"]
+    Bittrex: ["USDT-BTC", "BTC-ETH", "USDT-ETH", "USDT-NEO", "USDT-LTC"],
+    Gdax: ["USD-ETH", "BTC-ETH", "USD-BTC",]
   };
 
-  @observable selectedAsset = this.assetList[this.selectedExchange][0];
+  //@observable selectedAsset = "USDT-BTC" //this.assetList[this.selectedExchange][0];
 
   @observable startDate = moment().subtract(2, "month");
 
   @observable endDate = moment().endOf('day');
 
-  @computed
-  get exchangeLists() {
-      let list = []
-      for(let i=0; i<2; i++) {
-            list.push(["Bittrex", "Gdax"])
-      }
-      return list;
-  }
+  addSeries = () => {
+    this.seriesCount++
+  };
 
-  @action
-  onAssetChange = newValue => {
-    console.log(newValue);
-    this.selectedAsset = newValue;
+  removeSeries = () => {
+    if(this.seriesCount >1)
+      this.seriesCount--
   };
 
   @action
   onExchangeChange = (newValue, seriesIndex) => {
     this.selectedExchange = newValue
-    this.selectedAsset = this.assetList[this.selectedExchange][0]
+    this.selectedAssetBySeries.delete(seriesIndex)
+
+    this.selectedExchangeBySeries.set(seriesIndex, newValue)
   };
+
+  getSelectedExchange(seriesIndex) {
+    let selectedExchange = this.selectedExchangeBySeries.get(seriesIndex)
+      if(!selectedExchange) {
+        selectedExchange = this.exchangeList[0]
+      }
+      //console.log("selected exchange for index " + seriesIndex + " is " + selectedExchange);
+      return selectedExchange
+  }
+
+  getSelectedAsset(seriesIndex) {
+    //console.log("get selected asset for index " + seriesIndex)
+    let selected = this.selectedAssetBySeries.get(seriesIndex)
+      if(!selected) {
+        selected = this.assetList[this.getSelectedExchange(seriesIndex)][0]
+      }
+
+      //console.log("selected asset for index " + seriesIndex + " is " + selected);
+      return selected
+  }
+
+  @action
+  onAssetChange = (newValue, seriesIndex) => {
+    console.log(newValue);
+    this.selectedAsset = newValue;
+    this.selectedAssetBySeries.set(seriesIndex, newValue)
+  };
+
+
 
   @action
   onPeriodChange = newValue => {

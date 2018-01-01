@@ -32,7 +32,7 @@ class CandleChart extends React.Component {
   componentDidUpdate = () => {
     console.log("Chart did update.");
 
-    let marketName = this.store.rootStore.marketSelectionStore.selectedAsset
+    let marketName = this.store.rootStore.marketSelectionStore.getSelectedAsset(0)
     let channel = "/topic/candle/" + marketName + "/1min"
 
     if(this.prevCannel && this.prevCannel !== channel) {
@@ -88,6 +88,9 @@ class CandleChart extends React.Component {
   };
 
   render() {
+
+    let changes = this.store.configChangeCount;
+
     if(this.store.loaded) {
       return <ReactHighstock config={this.store.config} ref="chart" />;
     } else {

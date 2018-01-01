@@ -10,6 +10,8 @@ export default class ChartStore {
 
   @observable loaded = false;
 
+  @observable configChangeCount = 0;
+
   chart = null;
 
   config = {
@@ -44,7 +46,7 @@ export default class ChartStore {
       inputEnabled: false
     },
     title: {
-      text: "AAPL Stock Price"
+      text: "Loading..."
     },
 
     plotOptions: {
@@ -66,40 +68,78 @@ export default class ChartStore {
           ]
         }
       }
-    },
-
-    series: [
-      {
-        type: "candlestick",
-        name: "AAPL",
-        id: "dataseries",
-        data: [],
-        tooltip: {
-          valueDecimals: 2
-        }
-      },
-      {
-        type: "candlestick",
-        name: "AAPL",
-        id: "dataseries2",
-        data: [],
-        tooltip: {
-          valueDecimals: 2
-        }
-      }
-    ]
+    }
   }; // end config
 
   @action
   loadChart = () => {
-    this.loadChart2(this.rootStore.marketSelectionStore, 0);
+    let title = "";
+    let series = [];
+    for (
+      let index = 0;
+      index < this.rootStore.marketSelectionStore.seriesCount;
+      index++
+    ) {
+      let exchange = this.rootStore.marketSelectionStore
+        .getSelectedExchange(index)
+        .toLowerCase();
+      let asset = this.rootStore.marketSelectionStore
+        .getSelectedAsset(index)
+        .toUpperCase();
+      
+      let marketName = exchange + ": " + asset
+
+      title += marketName + ", ";
+
+      let decimals = 6
+
+      if(marketName.indexOf('usd') > -1) {
+        decimals = 2;
+      }
+
+      series.push({
+        type: "candlestick",
+        name: marketName,
+        id: "dataseries",
+        data: [],
+        tooltip: {
+          valueDecimals: decimals
+        }
+      });
+    }
+
+    this.config = {
+      ...this.config,
+      title: { text: title },
+      series: series
+    };
+
+    for (
+      let index = 0;
+      index < this.rootStore.marketSelectionStore.seriesCount;
+      index++
+    ) {
+      this.loadChart2(index);
+    }
   };
 
   @action
-  loadChart2 = (marketSelectionStore, seriesIndex) => {
-    console.log("loading chart");
+  loadChart2 = seriesIndex => {
+    let marketSelection = this.rootStore.marketSelectionStore;
 
-    let marketSelection = marketSelectionStore;
+    let exchange = marketSelection
+      .getSelectedExchange(seriesIndex)
+      .toLowerCase();
+    let asset = marketSelection.getSelectedAsset(seriesIndex).toUpperCase();
+
+    console.log(
+      "loading chart for series " +
+        seriesIndex +
+        " exchange: " +
+        exchange +
+        " asset: " +
+        asset
+    );
 
     this.loaded = false;
 
@@ -114,8 +154,8 @@ export default class ChartStore {
         .toISOString()
     };
 
-    console.log(params.start);
-    console.log(params.end);
+    //console.log(params.start);
+    //console.log(params.end);
 
     let esc = encodeURIComponent;
     let query = Object.keys(params)
@@ -125,9 +165,9 @@ export default class ChartStore {
     let url =
       this.rootStore.remoteApiUrl +
       "/candles/" +
-      marketSelection.selectedExchange.toLowerCase() +
+      exchange +
       "/" +
-      marketSelection.selectedAsset.toUpperCase() +
+      asset +
       "?" +
       query;
 
@@ -137,8 +177,6 @@ export default class ChartStore {
       ...params,
       ...config
     };
-
-    console.log(config);
 
     axios
       .get(url, config)
@@ -151,9 +189,6 @@ export default class ChartStore {
 
         // apply data
         this.config.series[seriesIndex].data = initData;
-
-        console.log("selectedPeriod")
-        console.log(marketSelection)
 
         // configre candle draw size only for first series
         if (seriesIndex == 0) {
@@ -191,6 +226,8 @@ export default class ChartStore {
         }
 
         this.loaded = true;
+        this.configChangeCount++;
+      
       })
       .catch(function(error) {
         console.log(error);

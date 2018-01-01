@@ -23,12 +23,15 @@ public class RestTemplateConfig {
 
         RestTemplate restTemplate = new RestTemplate();
 
-        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
-        InetSocketAddress address = new InetSocketAddress(host,port);
-        Proxy proxy = new Proxy(Proxy.Type.HTTP,address);
-        factory.setProxy(proxy);
+        if(host != null && port != null) {
 
-        restTemplate.setRequestFactory(factory);
+            SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+            InetSocketAddress address = new InetSocketAddress(host,port);
+            Proxy proxy = new Proxy(Proxy.Type.HTTP,address);
+            factory.setProxy(proxy);
+
+            restTemplate.setRequestFactory(factory);
+        }
 
         return restTemplate;
     }

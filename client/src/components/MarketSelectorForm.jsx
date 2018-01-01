@@ -45,21 +45,33 @@ class MarketSelectorForm extends React.Component {
       seriesIndex < this.store.seriesCount;
       seriesIndex++
     ) {
-      let exchangeOptions = this.store.exchangeLists[0].map(exc => (
+      let selectedExchange = this.store.getSelectedExchange(seriesIndex)
+
+      let selectedAsset = this.store.getSelectedAsset(seriesIndex)
+
+      let exchangeOptions = this.store.exchangeList.map(exc => (
         <Option key={exc} key={exc}>
           {exc}
         </Option>
       ));
-      let assetOptions = this.store.assetList[this.store.selectedExchange].map(
+      let assetOptions = this.store.assetList[selectedExchange].map(
         a => <Option key={a}>{a}</Option>
       );
 
       let row = null;
 
+      let onExchangeSelect = (newValue) => {
+        this.store.onExchangeChange(newValue, seriesIndex)
+      }
+
+      let onAssetSelect = (newValue) => {
+        this.store.onAssetChange(newValue, seriesIndex)
+      }
+
       let exchangeSelect = (
         <Select
-          defaultValue={this.store.selectedExchange}
-          onChange={this.store.onExchangeChange}
+          defaultValue={selectedExchange}
+          onChange={onExchangeSelect}
           style={{ width: 130 }}
           //onChange={this.handleProvinceChange}
         >
@@ -69,9 +81,9 @@ class MarketSelectorForm extends React.Component {
 
       let assetSelect = (
         <Select
-          value={this.store.selectedAsset}
+          value={selectedAsset}
           style={{ width: 130 }}
-          onChange={this.store.onAssetChange}
+          onChange={onAssetSelect}
         >
           {assetOptions}
         </Select>
@@ -121,14 +133,24 @@ class MarketSelectorForm extends React.Component {
           />
         );
 
-        actionButton = (
+        actionButton = [
+          <Button
+          type="primary"
+          icon="minus"
+          onClick={this.store.removeSeries}
+        />,
+        <Button
+        type="primary"
+        icon="plus"
+        onClick={this.store.addSeries}
+      />,
           <Button
             type="primary"
             shape="circle"
             icon="reload"
             onClick={this.store.load}
           />
-        );
+        ]
       }
 
       row = (

@@ -6,6 +6,8 @@ import org.springframework.security.authentication.encoding.ShaPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.annotation.PostConstruct;
+
 
 @Component
 public class UserService {
@@ -22,6 +24,11 @@ public class UserService {
     JwtService jwtService;
     @Autowired
     DateGenerator dateGenerator;
+
+    @PostConstruct
+    void init() {
+     //   create("Tino", "admin123", "ADMIN");
+    }
 
 
     public void create(String username, String password, String role) {
