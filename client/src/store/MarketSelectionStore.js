@@ -1,5 +1,6 @@
 import { observable, computed, action } from "mobx";
 import moment from "moment";
+import axios from "axios";
 var _ = require("lodash");
 
 export default class MarketSelectionStore {
@@ -32,16 +33,59 @@ export default class MarketSelectionStore {
   @observable selectedAssetBySeries = new Map()
 
   @observable
-  assetList = {
+  assetMap = new Map()
+  
+  /*{
     Bittrex: ["USDT-BTC", "BTC-ETH", "USDT-ETH", "USDT-NEO", "USDT-LTC"],
     Gdax: ["USD-ETH", "BTC-ETH", "USD-BTC",]
-  };
+  };*/
 
-  //@observable selectedAsset = "USDT-BTC" //this.assetList[this.selectedExchange][0];
+  //@observable selectedAsset = "USDT-BTC" //this.assetMap[this.selectedExchange][0];
 
   @observable startDate = moment().subtract(2, "month");
 
   @observable endDate = moment().endOf('day');
+
+  init = () =>  {
+      
+      let url = this.rootStore.remoteApiUrl + "/exchange/";
+
+      axios
+      .get(url, this.rootStore.userStore.getHeaderConfig())
+      .then(response => {
+        if (response.data.success) {
+           // console.log( response.data.data)
+
+            let newExchangeList = []
+            response.data.data.forEach((exchange) => {
+                 // console.log( exchange)
+                 newExchangeList.push(exchange.name)
+                 
+                 let newAssetList = exchange.markets.map((market) => {
+                       return market.currency + '-' + market.asset
+                 })
+            
+            
+                 this.assetMap.set(exchange.name, newAssetList)
+                 this.selectedAssetBySeries.set(exchange.name, newAssetList[0])
+            });
+            
+            this.exchangeList = newExchangeList
+
+            this.selectedExchangeBySeries.set(0, newExchangeList[0])
+
+            this.load();
+
+        } else {
+          // error
+          console.info(response.data.message)
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  }
+
 
   addSeries = () => {
     this.seriesCount++
@@ -63,7 +107,7 @@ export default class MarketSelectionStore {
   getSelectedExchange(seriesIndex) {
     let selectedExchange = this.selectedExchangeBySeries.get(seriesIndex)
       if(!selectedExchange) {
-        selectedExchange = this.exchangeList[0]
+        selectedExchange = this.exchangeList[0] // select the first
       }
       //console.log("selected exchange for index " + seriesIndex + " is " + selectedExchange);
       return selectedExchange
@@ -71,9 +115,11 @@ export default class MarketSelectionStore {
 
   getSelectedAsset(seriesIndex) {
     //console.log("get selected asset for index " + seriesIndex)
+    let ex = this.getSelectedExchange(seriesIndex)
+
     let selected = this.selectedAssetBySeries.get(seriesIndex)
-      if(!selected) {
-        selected = this.assetList[this.getSelectedExchange(seriesIndex)][0]
+      if(!selected && this.assetMap.get(ex)) {
+        selected = this.assetMap.get(ex)[0]
       }
 
       //console.log("selected asset for index " + seriesIndex + " is " + selected);

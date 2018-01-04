@@ -4,19 +4,25 @@ import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
+import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.gdax.model.GdaxTrade
 import tradingmaster.model.CryptoMarket
-import tradingmaster.model.IExchangeAdapter
 import tradingmaster.model.TradeBatch
 
 @Service("Gdax")
 @Commons
-class Gdax implements IExchangeAdapter {
-
+class Gdax extends DefaultExchageAdapter {
 
     @Autowired
-    GdaxExchange exchange
+    GdaxExchangeImpl exchange
 
+    Gdax() {
+        super("Gdax")
+    }
+
+    List<CryptoMarket> getMakets() {
+        return [new CryptoMarket(name, "USD", "BTC"), new CryptoMarket(name, "USD", "ETH")]
+    }
 
     @Override
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {

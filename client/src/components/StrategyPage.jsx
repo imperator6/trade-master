@@ -61,15 +61,15 @@ class StrategyPage extends React.Component {
 
   render() {
     return [
-      <Row>
+      <Row key="1">
           <MarketSelectorForm  strategyStore={this.props.rootStore.marketSelectionStore}/>
       </Row>,
-      <Row>
+      <Row  key="2">
         <Col span={24}>
           <CandleChart />
         </Col>
       </Row>,
-      <Row>
+      <Row  key="3">
         <Col span={1}>col-6</Col>
         <Col span={11}>
           <StrategyForm />

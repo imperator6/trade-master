@@ -27,9 +27,13 @@ public class Application {
 
         maketWatcherService.createMarketWatcher(new CryptoMarket("Gdax","USD", "ETH"),  10000 );
 
+        maketWatcherService.createMarketWatcher(new CryptoMarket("Gdax","USD", "BTC"),  10000 );
+
         maketWatcherService.createMarketWatcher(new CryptoMarket("Bittrex","USDT", "BTC"),  10000 );
 
-        maketWatcherService.createMarketWatcher(new CryptoMarket("Bittrex","USDT", "LTC"),  10000 );
+        maketWatcherService.createMarketWatcher(new CryptoMarket("Binance","ETH", "XRP"),  10000 );
+
+       // maketWatcherService.createMarketWatcher(new CryptoMarket("Bittrex","USDT", "LTC"),  10000 );
 
 
 

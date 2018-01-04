@@ -6,16 +6,25 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.model.CryptoMarket
-import tradingmaster.model.IExchangeAdapter
 import tradingmaster.model.TradeBatch
 
 @Service("Bittrex")
 @Commons
-class Bittrex implements IExchangeAdapter {
+class Bittrex extends DefaultExchageAdapter {
+
 
     @Autowired
     BittrexApi11 api
+
+    Bittrex() {
+        super("Bittrex")
+    }
+
+    List<CryptoMarket> getMakets() {
+        return [new CryptoMarket(name, "USDT", "ETH")]
+    }
 
 
     @Override

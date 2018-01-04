@@ -23,14 +23,12 @@ const OuterDiv = styled.div`
 class MarketSelectorForm extends React.Component {
   constructor(props) {
     super(props);
-
-    console.log("New MarketSelectorForm");
-    console.log(props.store);
-
     this.store = this.props.rootStore.marketSelectionStore;
   }
 
-  componentDidMount() {}
+  componentDidMount() {
+    this.store.init();
+  }
 
   onChange2 = (value, dateString) => {
     console.log("Selected Time: ", value);
@@ -45,28 +43,31 @@ class MarketSelectorForm extends React.Component {
       seriesIndex < this.store.seriesCount;
       seriesIndex++
     ) {
-      let selectedExchange = this.store.getSelectedExchange(seriesIndex)
-
-      let selectedAsset = this.store.getSelectedAsset(seriesIndex)
+      let selectedExchange = this.store.getSelectedExchange(seriesIndex);
+      let selectedAsset = this.store.getSelectedAsset(seriesIndex);
 
       let exchangeOptions = this.store.exchangeList.map(exc => (
-        <Option key={exc} key={exc}>
+        <Option key={exc + "_" + seriesIndex} key={exc}>
           {exc}
         </Option>
       ));
-      let assetOptions = this.store.assetList[selectedExchange].map(
-        a => <Option key={a}>{a}</Option>
-      );
+
+      let assetOptions = null;
+      if (this.store.assetMap.get(selectedExchange)) {
+        assetOptions = this.store.assetMap
+          .get(selectedExchange)
+          .map(a => <Option key={a + "_" + seriesIndex}>{a}</Option>);
+      }
 
       let row = null;
 
-      let onExchangeSelect = (newValue) => {
-        this.store.onExchangeChange(newValue, seriesIndex)
-      }
+      let onExchangeSelect = newValue => {
+        this.store.onExchangeChange(newValue, seriesIndex);
+      };
 
-      let onAssetSelect = (newValue) => {
-        this.store.onAssetChange(newValue, seriesIndex)
-      }
+      let onAssetSelect = newValue => {
+        this.store.onAssetChange(newValue, seriesIndex);
+      };
 
       let exchangeSelect = (
         <Select
@@ -135,22 +136,18 @@ class MarketSelectorForm extends React.Component {
 
         actionButton = [
           <Button
-          type="primary"
-          icon="minus"
-          onClick={this.store.removeSeries}
-        />,
-        <Button
-        type="primary"
-        icon="plus"
-        onClick={this.store.addSeries}
-      />,
+            type="primary"
+            icon="minus"
+            onClick={this.store.removeSeries}
+          />,
+          <Button type="primary" icon="plus" onClick={this.store.addSeries} />,
           <Button
             type="primary"
             shape="circle"
             icon="reload"
             onClick={this.store.load}
           />
-        ]
+        ];
       }
 
       row = (

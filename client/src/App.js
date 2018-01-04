@@ -41,8 +41,6 @@ class App extends Component {
   render() {
     let html;
 
-    console.log(this.store.loggedIn);
-
     if (this.store.loggedIn) {
       html = (
         <Layout style={{ minHeight: "100vh" }}>

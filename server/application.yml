@@ -6,6 +6,12 @@ bittrex:
       apikey: key
       secret: secret
 
+binance:
+  api:
+      baseUrl: "https://api.binance.com/"
+  key: ug9UqFAVVTS9qRAK2abjsakL5qrK9XyKz2C3hKE8TIR0C3ZD6UM6mfDFHKn6Unnj
+  secret: r1qTJ7DBXULCwGJOT7vYxjuT5dgfwPIY7rziv3Go3MEw8pM3XfL3vIb6x0Tvt4WK
+
 gdax:
     api:
         baseUrl: "https://api.gdax.com/"

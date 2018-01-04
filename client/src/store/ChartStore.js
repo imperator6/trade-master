@@ -80,32 +80,34 @@ export default class ChartStore {
       index < this.rootStore.marketSelectionStore.seriesCount;
       index++
     ) {
-      let exchange = this.rootStore.marketSelectionStore
-        .getSelectedExchange(index)
-        .toLowerCase();
-      let asset = this.rootStore.marketSelectionStore
-        .getSelectedAsset(index)
-        .toUpperCase();
-      
-      let marketName = exchange + ": " + asset
 
-      title += marketName + ", ";
+      let exchange = this.rootStore.marketSelectionStore.getSelectedExchange(index);
+      let asset = this.rootStore.marketSelectionStore.getSelectedAsset(index);
 
-      let decimals = 6
+      if (exchange && asset) {
+        exchange = exchange.toLowerCase();
+        asset = asset.toLowerCase();
 
-      if(marketName.indexOf('usd') > -1) {
-        decimals = 2;
-      }
+        let marketName = exchange + ": " + asset;
 
-      series.push({
-        type: "candlestick",
-        name: marketName,
-        id: "dataseries",
-        data: [],
-        tooltip: {
-          valueDecimals: decimals
+        title += marketName + ", ";
+
+        let decimals = 6;
+
+        if (marketName.indexOf("usd") > -1) {
+          decimals = 2;
         }
-      });
+
+        series.push({
+          type: "candlestick",
+          name: marketName,
+          id: "dataseries",
+          data: [],
+          tooltip: {
+            valueDecimals: decimals
+          }
+        });
+      }
     }
 
     this.config = {
@@ -119,20 +121,35 @@ export default class ChartStore {
       index < this.rootStore.marketSelectionStore.seriesCount;
       index++
     ) {
-      this.loadChart2(index);
+
+      let exchange = this.rootStore.marketSelectionStore.getSelectedExchange(index)
+      let asset = this.rootStore.marketSelectionStore.getSelectedAsset(index)
+      let period = this.rootStore.marketSelectionStore.selectedPeriod
+
+      let startDate = this.rootStore.marketSelectionStore.startDate
+      .utc()
+      .toDate()
+      .toISOString()
+
+      let endDate = this.rootStore.marketSelectionStore.endDate
+      .utc()
+      .toDate()
+      .toISOString()
+      
+
+      this.loadChart2(index, exchange, asset, period, startDate, endDate);
     }
   };
 
   @action
-  loadChart2 = seriesIndex => {
-    let marketSelection = this.rootStore.marketSelectionStore;
+  loadChart2 = (seriesIndex, exchange, asset, period, startDate, endDate)  => {
+    
+    if (!exchange || !asset) return;
 
-    let exchange = marketSelection
-      .getSelectedExchange(seriesIndex)
-      .toLowerCase();
-    let asset = marketSelection.getSelectedAsset(seriesIndex).toUpperCase();
+    exchange = exchange.toLowerCase();
+    asset = asset.toLowerCase();
 
-    console.log(
+    console.info(
       "loading chart for series " +
         seriesIndex +
         " exchange: " +
@@ -144,14 +161,8 @@ export default class ChartStore {
     this.loaded = false;
 
     let params = {
-      start: marketSelection.startDate
-        .utc()
-        .toDate()
-        .toISOString(),
-      end: marketSelection.endDate
-        .utc()
-        .toDate()
-        .toISOString()
+      start: startDate,
+      end: endDate
     };
 
     //console.log(params.start);
@@ -192,7 +203,7 @@ export default class ChartStore {
 
         // configre candle draw size only for first series
         if (seriesIndex == 0) {
-          let periodSplit = marketSelection.selectedPeriod.split(" ");
+          let periodSplit = period.split(" ");
           let periodSelector = periodSplit[1];
           let periodValue = periodSplit[0];
 
@@ -227,7 +238,6 @@ export default class ChartStore {
 
         this.loaded = true;
         this.configChangeCount++;
-      
       })
       .catch(function(error) {
         console.log(error);

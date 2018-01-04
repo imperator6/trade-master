@@ -30,8 +30,7 @@ class CandleChart extends React.Component {
   }
 
   componentDidUpdate = () => {
-    console.log("Chart did update.");
-
+    
     let marketName = this.store.rootStore.marketSelectionStore.getSelectedAsset(0)
     let channel = "/topic/candle/" + marketName + "/1min"
 
@@ -46,7 +45,7 @@ class CandleChart extends React.Component {
     this.stompStore.subscribe( channel , (data) => {
       let date = ts;
       let candle = JSON.parse(data.body);
-      console.log('subscribe created at: ' + ts + ' Next candle: ' +  data.body);
+      
       this.updateChart(this.candleToChartData(candle));
     })
 
@@ -55,10 +54,6 @@ class CandleChart extends React.Component {
 
   componentDidMount() {
     console.log("Chart did mount.");
-
-    this.showLoading()
-
-    this.store.loadChart(this.store.rootStore.marketSelectionStore)
 
     this.store.chart = this.refs.chart
 

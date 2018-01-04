@@ -116,8 +116,8 @@ export default class StrategyStore {
       .post(url, {
         strategyId: this.selectedStrategy.id,
         strategyParams: { param: 1, param2: 2 },
-        exchange: this.rootStore.marketSelectionStore.selectedExchange,
-        market: this.rootStore.marketSelectionStore.selectedAsset,
+        exchange: this.rootStore.marketSelectionStore.getSelectedExchange(0),
+        market: this.rootStore.marketSelectionStore.getSelectedAsset(0),
         candleSize: this.rootStore.marketSelectionStore.getCandleSize()
       },  this.rootStore.userStore.getHeaderConfig())
       .then(response => {
@@ -148,8 +148,8 @@ export default class StrategyStore {
       .post(url, {
         strategyId: this.selectedStrategy.id,
         strategyParams: { param: 1, param2: 2 },
-        exchange: this.rootStore.marketSelectionStore.selectedExchange,
-        market: this.rootStore.marketSelectionStore.selectedAsset,
+        exchange: this.rootStore.marketSelectionStore.getSelectedExchange(0),
+        market: this.rootStore.marketSelectionStore.getSelectedAsset(0),
         candleSize: this.rootStore.marketSelectionStore.getCandleSize(),
         backtest: true,
         start: start,

@@ -40,8 +40,6 @@ class Sidebar extends React.Component {
   }
 
   onCollapse = collapsed => {
-    console.log(collapsed);
-
     if (collapsed) {
       this.setState({ title: "T M" });
     } else {
@@ -53,8 +51,6 @@ class Sidebar extends React.Component {
 
   render() {
 
-
-     console.log(this.props.location)
     return (
       <Sider
         collapsible
