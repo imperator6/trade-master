@@ -66,7 +66,9 @@ class MarketSelectorForm extends React.Component {
       };
 
       let onAssetSelect = newValue => {
-        this.store.onAssetChange(newValue, seriesIndex);
+        let value = newValue.split("_")[0] // _0
+      
+        this.store.onAssetChange(value, seriesIndex);
       };
 
       let exchangeSelect = (

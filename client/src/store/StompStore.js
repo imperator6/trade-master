@@ -2,13 +2,20 @@ import SockJS from "sockjs-client";
 import { Stomp } from "stompjs";
 import { observable, computed, action } from "mobx";
 
+import logger from "../logger"
+
 
 class StompStore {
 
+    log = logger.getLogger('StompStore')
+
     @observable conected = false
 
+    @observable debug = true
+
     constructor(rootStore, url) {
-        console.log("New StompClient!");
+
+        this.log.debug("New StompClient!", {id: 0});
         this.rootStore = rootStore
         this.url = url 
 
@@ -16,16 +23,17 @@ class StompStore {
         this.subscriptions = new Map()
     }
 
+
     @action
     onConnect = () => {
-        console.info("StompClient sucsessfully connected to " + this.url);
+        this.log.debug("StompClient sucsessfully connected to " + this.url);
         this.conected = true
         this.rebuildChannels()
     }
 
     rebuildChannels = () => {
         this.channles.forEach(function(callbackfn, channel) {
-            console.info("StompClient: Adding new subscription for channel" + channel)
+            this.log.debug("StompClient: Adding new subscription for channel" + channel)
             let subscription = this.client.subscribe(channel, callbackfn)
             this.addSubscription(channel, subscription)
           }.bind(this), this.channles)
@@ -33,14 +41,14 @@ class StompStore {
 
     onError = (error) => {
         this.conected = false
-        console.info("StompClient Error: " + error)
+        this.log.debug("StompClient Error: " + error)
         setTimeout(this.connect, 10000)
-        console.log('StompClient: Reconecting in 10 seconds')
+        this.log.debug('StompClient: Reconecting in 10 seconds')
     }
 
     @action
     connect = () => {
-        console.log('StompClient: Attempting connection to ' + this.url);
+        this.log.debug('StompClient: Attempting connection to ' + this.url);
 
         let header = {}
 
@@ -57,11 +65,11 @@ class StompStore {
     @action
     subscribe(channel, cb) {
         if(this.conected) {
-            console.info("StompClient: Adding new subscription for channel" + channel)
+            this.log.debug("StompClient: Adding new subscription for channel" + channel)
             let subscription = this.client.subscribe(channel, cb)
             this.addSubscription(channel, subscription)
         } else {
-            console.info("StompClient: New Subscription but is not connected. -> Let's connect!. ")
+            this.log.debug("StompClient: New Subscription but is not connected. -> Let's connect!. ")
 
             this.channles.set(channel, cb)
 
@@ -79,7 +87,7 @@ class StompStore {
 
     @action
     unsubscribe = (channel) => {
-        console.info("StompClient: Unsubscribe old channel " + channel )
+        this.log.debug("StompClient: Unsubscribe old channel " + channel )
         let s = this.subscriptions.get(channel)
         if(s) {
             s.unsubscribe()

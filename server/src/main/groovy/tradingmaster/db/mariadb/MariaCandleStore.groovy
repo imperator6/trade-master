@@ -94,7 +94,7 @@ class MariaCandleStore implements ICandleStore {
 
         List<Candle> candles = []
 
-        String query = "select * from candle where start >= ? and end <= ? and exchange = ? and market = ? and period = ?"
+        String query = "select * from candle where start >= ? and end <= ? and exchange = ? and market = ? and period = ? order by end asc"
 
         sql.eachRow(query.toString(),  [Timestamp.valueOf(startDate), Timestamp.valueOf(endDate), exchange, market, period]) { row ->
             Candle c = new Candle()

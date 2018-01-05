@@ -3,7 +3,11 @@ import moment from "moment";
 import axios from "axios";
 var _ = require("lodash");
 
+import logger from "../logger"
+
 export default class MarketSelectionStore {
+
+  log = logger.getLogger('MarketSelectionStore');
 
   constructor(rootStore) {
     this.rootStore = rootStore;
@@ -47,6 +51,8 @@ export default class MarketSelectionStore {
   @observable endDate = moment().endOf('day');
 
   init = () =>  {
+
+      this.log.debug("init Market Selection Store -> loading available exchanges")
       
       let url = this.rootStore.remoteApiUrl + "/exchange/";
 
@@ -54,6 +60,7 @@ export default class MarketSelectionStore {
       .get(url, this.rootStore.userStore.getHeaderConfig())
       .then(response => {
         if (response.data.success) {
+              this.log.debug("Loaded Exchanges", {...response.data.data})
            // console.log( response.data.data)
 
             let newExchangeList = []
@@ -67,12 +74,12 @@ export default class MarketSelectionStore {
             
             
                  this.assetMap.set(exchange.name, newAssetList)
-                 this.selectedAssetBySeries.set(exchange.name, newAssetList[0])
+            //     this.selectedAssetBySeries.set(exchange.name, newAssetList[0])
             });
             
             this.exchangeList = newExchangeList
 
-            this.selectedExchangeBySeries.set(0, newExchangeList[0])
+          //  this.selectedExchangeBySeries.set(0, newExchangeList[0])
 
             this.load();
 
@@ -106,9 +113,11 @@ export default class MarketSelectionStore {
 
   getSelectedExchange(seriesIndex) {
     let selectedExchange = this.selectedExchangeBySeries.get(seriesIndex)
-      if(!selectedExchange) {
+      /*if(!selectedExchange) {
         selectedExchange = this.exchangeList[0] // select the first
-      }
+        this.selectedExchangeBySeries.set(seriesIndex, selectedExchange)
+        this.log.debug('No Exchange is selected for series ' + seriesIndex + "! Selecting first from list  " + selectedExchange)
+      }*/
       //console.log("selected exchange for index " + seriesIndex + " is " + selectedExchange);
       return selectedExchange
   }
@@ -118,10 +127,14 @@ export default class MarketSelectionStore {
     let ex = this.getSelectedExchange(seriesIndex)
 
     let selected = this.selectedAssetBySeries.get(seriesIndex)
-      if(!selected && this.assetMap.get(ex)) {
+      /*if(!selected) {
+       //if(!this.assetMap.get(ex)) this.assetMap.set(ex, [])
         selected = this.assetMap.get(ex)[0]
-      }
+        
+        this.log.debug('No Market is selected for exchange ' + ex + ' on series ' + seriesIndex + "! Returning first from list  " + selected)
+      } */
 
+      this.log.debug('Selected  Market is exchange ' + selected)
       //console.log("selected asset for index " + seriesIndex + " is " + selected);
       return selected
   }
