@@ -11,9 +11,11 @@ import org.springframework.integration.dsl.core.Pollers
 import org.springframework.integration.endpoint.AbstractMessageSource
 import org.springframework.messaging.MessageChannel
 import org.springframework.stereotype.Service
+import tradingmaster.db.MarketWatcherRepository
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.IExchangeAdapter
+import tradingmaster.model.MarketWatcher
 import tradingmaster.model.TradeBatch
 
 @Service
@@ -32,6 +34,9 @@ class MaketWatcherService {
      @Autowired
      TradeIdService tradeIdService
 
+     @Autowired
+     MarketWatcherRepository marketWatcherRepository
+
      MaketWatcherService() {
           log.info("New MaketWatcherService!")
      }
@@ -43,6 +48,7 @@ class MaketWatcherService {
 
      String createMarketWatcher(final CryptoMarket market, final IExchangeAdapter exchange, long interval) {
 
+          MarketWatcher w  = marketWatcherRepository.save( new MarketWatcher(market.getExchange(), market.getName()))
 
           // new message source
           MessageSource<TradeBatch> tradeMessageSource = new AbstractMessageSource<TradeBatch>() {

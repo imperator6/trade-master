@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
 import tradingmaster.exchange.DefaultExchageAdapter
+import tradingmaster.exchange.gdax.model.GdaxProduct
 import tradingmaster.exchange.gdax.model.GdaxTrade
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.TradeBatch
@@ -21,7 +22,14 @@ class Gdax extends DefaultExchageAdapter {
     }
 
     List<CryptoMarket> getMakets() {
-        return [new CryptoMarket(name, "USD", "BTC"), new CryptoMarket(name, "USD", "ETH")]
+
+        def tradesEndpoint = "products"
+
+        List<GdaxProduct> trades = exchange.getAsList(tradesEndpoint, new ParameterizedTypeReference<GdaxProduct[]>(){})
+
+        def markets = trades.collect { new CryptoMarket(name, it.asset, it.currency)}
+
+        return markets
     }
 
     @Override

@@ -1,11 +1,13 @@
 package tradingmaster.exchange.binance
 
+import groovy.transform.Memoized
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
 import tradingmaster.exchange.DefaultExchageAdapter
+import tradingmaster.exchange.binance.model.BinanceProductInfo
 import tradingmaster.exchange.binance.model.BinanceTrade
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.TradeBatch
@@ -24,8 +26,12 @@ class Binance extends DefaultExchageAdapter {
         super("Binance")
     }
 
+    @Memoized
     List<CryptoMarket> getMakets() {
-        return [new CryptoMarket(name, "ETH", "XRP")]
+
+        BinanceProductInfo info = exchange.get("api/v1/exchangeInfo", new ParameterizedTypeReference<BinanceProductInfo>(){})
+
+        return info.symbols.collect { new CryptoMarket(name, it.getQuoteAsset(), it.getBaseAsset()) }
     }
 
     @Override

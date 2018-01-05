@@ -66,13 +66,15 @@ class MarketSelectorForm extends React.Component {
       };
 
       let onAssetSelect = newValue => {
-        let value = newValue.split("_")[0] // _0
-      
+        let value = newValue.split("_")[0]; // _0
+
         this.store.onAssetChange(value, seriesIndex);
       };
 
       let exchangeSelect = (
         <Select
+          size="small"
+          placeholder="Select Exchange"
           defaultValue={selectedExchange}
           onChange={onExchangeSelect}
           style={{ width: 130 }}
@@ -83,10 +85,15 @@ class MarketSelectorForm extends React.Component {
       );
 
       let assetSelect = (
-        <Select
+        <Select 
+          size="small"
+          showSearch
+          placeholder="Select Market"
+          optionFilterProp="children"
           value={selectedAsset}
           style={{ width: 130 }}
           onChange={onAssetSelect}
+          filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
         >
           {assetOptions}
         </Select>
@@ -100,6 +107,7 @@ class MarketSelectorForm extends React.Component {
       if (seriesIndex == 0) {
         periodSelect = (
           <Select
+            size="small"
             style={{ width: 80 }}
             defaultValue={this.store.selectedPeriod}
             onChange={this.store.onPeriodChange}
@@ -116,6 +124,7 @@ class MarketSelectorForm extends React.Component {
 
         startSelect = (
           <DatePicker
+            size="small"
             showTime
             format="YYYY-MM-DD HH:mm"
             placeholder="Select Time"
@@ -127,6 +136,7 @@ class MarketSelectorForm extends React.Component {
 
         endSelect = (
           <DatePicker
+            size="small"
             showTime
             format="YYYY-MM-DD HH:mm"
             placeholder="Select Time"
@@ -138,12 +148,25 @@ class MarketSelectorForm extends React.Component {
 
         actionButton = [
           <Button
+            size="small"
+            type="primary"
+            icon="eye"
+            onClick={this.store.removeSeries}
+          />,
+          <Button
+            size="small"
             type="primary"
             icon="minus"
             onClick={this.store.removeSeries}
           />,
-          <Button type="primary" icon="plus" onClick={this.store.addSeries} />,
           <Button
+            size="small"
+            type="primary"
+            icon="plus"
+            onClick={this.store.addSeries}
+          />,
+          <Button
+            size="small"
             type="primary"
             shape="circle"
             icon="reload"
