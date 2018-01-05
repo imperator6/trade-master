@@ -345,7 +345,7 @@ public class BittrexApi11 {
         try {
 
             HttpClient client = HttpClientBuilder.create()
-                    .setProxy(new HttpHost("proxy.rwe.com",8080))
+                    //.setProxy(new HttpHost("proxy.rwe.com",8080))
                     .setRetryHandler(new DefaultHttpRequestRetryHandler(0, false)).build();
 
             HttpGet request = new HttpGet(url);
@@ -365,7 +365,7 @@ public class BittrexApi11 {
 
         } catch (UnknownHostException | SocketException e) {
 
-            if(retryAttemptsLeft-- > 0) {
+            if(true /*retryAttemptsLeft-- > 0 */) {
 
                 System.err.printf("Could not connect to host - retrying in %d seconds... [%d/%d]%n", retryDelaySeconds, retryAttempts - retryAttemptsLeft, retryAttempts);
 
