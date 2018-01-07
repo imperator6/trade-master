@@ -3,6 +3,7 @@ import MarketSelectionStore from "./MarketSelectionStore"
 import ChartStore from "./ChartStore"
 import StompStore from "./StompStore"
 import UserStore from "./UserStore"
+import MarketWatcherStore from "./MarketWatcherStore"
 
 import moment from "moment"
 
@@ -14,10 +15,11 @@ export default class RootStore {
 
     moment.locale('de')
 
-    this.userStore = new UserStore(this);
-    this.strategyStore = new StrategyStore(this);
-    this.marketSelectionStore = new MarketSelectionStore(this);
-    this.chartStore = new ChartStore(this);
+    this.userStore = new UserStore(this)
+    this.strategyStore = new StrategyStore(this)
+    this.marketSelectionStore = new MarketSelectionStore(this)
+    this.chartStore = new ChartStore(this)
+    this.marketWatcherStore = new MarketWatcherStore(this)
 
     this.stompStore = new StompStore(this, this.websocketUrl);
   }

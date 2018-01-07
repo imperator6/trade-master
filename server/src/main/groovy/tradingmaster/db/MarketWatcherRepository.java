@@ -1,13 +1,16 @@
 package tradingmaster.db;
 
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.PagingAndSortingRepository;
 import tradingmaster.model.MarketWatcher;
 
-public interface MarketWatcherRepository extends CrudRepository<MarketWatcher, Integer> {
+import java.util.List;
+
+public interface MarketWatcherRepository extends PagingAndSortingRepository<MarketWatcher, Integer> {
 
     MarketWatcher findByExchangeAndMarket(String exchange, String market);
 
-    MarketWatcher findByActive(boolean active);
+    List<MarketWatcher> findByActive(boolean active);
 
 
 }

@@ -75,7 +75,7 @@ class MarketSelectorForm extends React.Component {
         <Select
           size="small"
           placeholder="Select Exchange"
-          defaultValue={selectedExchange}
+          value={selectedExchange}
           onChange={onExchangeSelect}
           style={{ width: 130 }}
           //onChange={this.handleProvinceChange}

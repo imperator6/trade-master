@@ -5,6 +5,8 @@ import moment from "moment";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 
+import MarketWatcherControl from "./marketWatcherControl";
+
 import { Tabs, Timeline, Badge } from "antd";
 const TabPane = Tabs.TabPane;
 
@@ -16,14 +18,14 @@ const Scrollarea = styled.div`
 @inject("rootStore")
 @observer
 class StrategyResults extends React.Component {
+
   constructor(props) {
     super(props);
-
     this.store = this.props.rootStore.strategyStore;
   }
 
   tabChangeCallback = key => {
-    console.log(key);
+    this.store.selectTab(key);
   };
 
   formatNumber = number => {
@@ -133,14 +135,22 @@ class StrategyResults extends React.Component {
     }
 
     return (
-      <Tabs onChange={this.tabChangeCallback} type="card">
+      <Tabs
+        onChange={this.tabChangeCallback}
+        type="card"
+        activeKey={this.store.activeTab}
+      >
+        <TabPane tab="Parameter" key="param">
+          Parmaeter TODO....
+        </TabPane>
         <TabPane tab="Backtest Result" key="result">
           <Scrollarea>
             <Timeline>{timeLineItems}</Timeline>
           </Scrollarea>
         </TabPane>
-        <TabPane tab="Parameter" key="parmas">
-          Content of Tab Pane 2
+
+        <TabPane tab="Market Watcher" key="watcher">
+          <MarketWatcherControl />
         </TabPane>
       </Tabs>
     );

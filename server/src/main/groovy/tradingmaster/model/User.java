@@ -1,4 +1,4 @@
-package tradingmaster.security;
+package tradingmaster.model;
 
 
 import javax.persistence.*;

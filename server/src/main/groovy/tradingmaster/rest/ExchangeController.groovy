@@ -7,9 +7,11 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import tradingmaster.db.MarketWatcherRepository
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.Exchange
 import tradingmaster.model.IExchangeAdapter
+import tradingmaster.model.MarketWatcher
 import tradingmaster.model.RestResponse
 
 @RestController
@@ -19,6 +21,9 @@ class ExchangeController {
 
     @Autowired
     ApplicationContext ctx
+
+    @Autowired
+    MarketWatcherRepository marketWatcherRepository
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
      RestResponse<List<Exchange>> list() {
@@ -50,5 +55,51 @@ class ExchangeController {
             return new RestResponse(exchangeAdapter.getMakets());
 
         return new RestResponse(result);
+    }
+
+    @RequestMapping(value = "/watchedExchanges", method = RequestMethod.GET)
+    RestResponse<List<Exchange>> watchedExchanges() {
+
+        def results = [:]
+
+        marketWatcherRepository.findAll().forEach {
+
+            Exchange ex = results.get(it.exchange)
+
+            if(!ex) {
+                ex = new Exchange()
+                ex.name = it.exchange
+                ex.markets = []
+
+                results.put(ex.name, ex)
+            }
+
+            ex.markets << new CryptoMarket(it.exchange, it.market)
+        }
+
+        return new RestResponse(results.values())
+    }
+
+    @RequestMapping(value = "/watcherList", method = RequestMethod.GET)
+    RestResponse<List<MarketWatcher>> watcherList() {
+
+        def results = [:]
+
+        marketWatcherRepository.findAll().forEach {
+
+            Exchange ex = results.get(it.exchange)
+
+            if(!ex) {
+                ex = new Exchange()
+                ex.name = it.exchange
+                ex.markets = []
+
+                results.put(ex.name, ex)
+            }
+
+            ex.markets << new CryptoMarket(it.exchange, it.market)
+        }
+
+        return new RestResponse(results.values())
     }
 }

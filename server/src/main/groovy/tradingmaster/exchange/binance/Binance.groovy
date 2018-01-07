@@ -26,7 +26,6 @@ class Binance extends DefaultExchageAdapter {
         super("Binance")
     }
 
-    @Memoized
     List<CryptoMarket> getMakets() {
 
         BinanceProductInfo info = exchange.get("api/v1/exchangeInfo", new ParameterizedTypeReference<BinanceProductInfo>(){})

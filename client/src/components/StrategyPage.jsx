@@ -70,14 +70,13 @@ class StrategyPage extends React.Component {
         </Col>
       </Row>,
       <Row  key="3">
-        <Col span={1}>col-6</Col>
+      
         <Col span={11}>
           <StrategyForm />
         </Col>
         <Col span={11}>
           <StrategyResults />
         </Col>
-        <Col span={1}>col-6</Col>
       </Row>
     ];
   }

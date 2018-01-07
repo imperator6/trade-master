@@ -37,18 +37,44 @@ class MaketWatcherService {
      @Autowired
      MarketWatcherRepository marketWatcherRepository
 
+
      MaketWatcherService() {
           log.info("New MaketWatcherService!")
      }
 
-     String createMarketWatcher(final CryptoMarket market, long interval) {
+     MarketWatcher createMarketWatcher(final CryptoMarket market, long interval) {
+
+          MarketWatcher w = marketWatcherRepository.findByExchangeAndMarket(market.getExchange(), market.getName())
+
+          if(w == null) {
+               w  = marketWatcherRepository.save( new MarketWatcher(market.getExchange(), market.getName()))
+          }
+
+          w.setIntervalMillis(interval)
+
           IExchangeAdapter exchange = exchangeService.getExchangyByName(market.getExchange())
-          return createMarketWatcher(market, exchange, interval)
+
+          return createMarketWatcher(w, market, exchange)
      }
 
-     String createMarketWatcher(final CryptoMarket market, final IExchangeAdapter exchange, long interval) {
+     MarketWatcher stopMarketWatcher(Integer id) {
 
-          MarketWatcher w  = marketWatcherRepository.save( new MarketWatcher(market.getExchange(), market.getName()))
+          log.info("Stopping MarketWatcher with id ${id}")
+
+          MarketWatcher w = marketWatcherRepository.findOne(id)
+
+          if(w != null && w.isActive()) {
+               integrationFlowContext.remove( w.getIntegrationFlowId())
+               w.setIntegrationFlowId(null)
+               w.setActive(false)
+          }
+
+          return marketWatcherRepository.save(w)
+     }
+
+     MarketWatcher createMarketWatcher(final MarketWatcher w, final CryptoMarket market, final IExchangeAdapter exchange) {
+
+          log.info("Creating a new MarketWatcher on exchange ${market.getExchange()} for market: $market")
 
           // new message source
           MessageSource<TradeBatch> tradeMessageSource = new AbstractMessageSource<TradeBatch>() {
@@ -73,10 +99,9 @@ class MaketWatcherService {
                }
           }
 
-
           // periodic call the source and forward to the trade channel
           IntegrationFlow myFlow = IntegrationFlows.from(tradeMessageSource, {c ->
-                  c.poller(Pollers.fixedRate(interval)) })
+                  c.poller(Pollers.fixedRate(w.getIntervalMillis())) })
                   //.transform({s -> filterNewTrades((TradeBatch) s)})
                    // .transform( new AbstractTransformer() {
                    //      Object doTransform(Message<?> message) {
@@ -92,9 +117,14 @@ class MaketWatcherService {
           IntegrationFlowContext.IntegrationFlowRegistrationBuilder b = integrationFlowContext.registration(myFlow)
           IntegrationFlowRegistration r = b.autoStartup(true).register()
 
+          w.setActive(true)
+          w.setStartDate(new Date())
+
+          w.setIntegrationFlowId(r.getId())
+          marketWatcherRepository.save(w)
 
           // return id for removal  -->  integrationFlowContext.remove(id)
-          return r.getId()
+          return w
      }
 
      TradeBatch filterNewTrades(TradeBatch all) {

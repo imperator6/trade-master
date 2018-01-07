@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.encoding.ShaPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import tradingmaster.db.UserRepository;
+import tradingmaster.model.User;
 
 import javax.annotation.PostConstruct;
 

@@ -1,6 +1,7 @@
 package tradingmaster.security;
 
 import org.springframework.stereotype.Component;
+import tradingmaster.model.User;
 
 
 @Component

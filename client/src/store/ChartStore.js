@@ -46,7 +46,7 @@ export default class ChartStore {
       inputEnabled: false
     },
     title: {
-      text: "Loading..."
+      text: "No market selected"
     },
 
     plotOptions: {

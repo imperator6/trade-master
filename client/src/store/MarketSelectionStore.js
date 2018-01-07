@@ -30,7 +30,7 @@ export default class MarketSelectionStore {
 
   @observable seriesCount = 1
 
-  @observable exchangeList = ["Bittrex", "Gdax"]
+  @observable exchangeList = []
 
   @observable selectedExchangeBySeries = new Map()
 
@@ -54,7 +54,7 @@ export default class MarketSelectionStore {
 
       this.log.debug("init Market Selection Store -> loading available exchanges")
       
-      let url = this.rootStore.remoteApiUrl + "/exchange/";
+      let url = this.rootStore.remoteApiUrl + "/exchange/watchedExchanges/";
 
       axios
       .get(url, this.rootStore.userStore.getHeaderConfig())
@@ -93,11 +93,31 @@ export default class MarketSelectionStore {
       });
   }
 
-
-  addSeries = () => {
-    this.seriesCount++
+  @action
+  addSeries = (exchange, market) => {
+    
+    if(exchange && market) {
+        if(!this.getSelectedExchange(this.seriesCount-1) ) {
+          this.onExchangeChange(exchange, this.seriesCount-1)
+          this.onAssetChange(market, this.seriesCount-1)
+        } else {
+          this.seriesCount++
+          this.onExchangeChange(exchange, this.seriesCount-1)
+          this.onAssetChange(market, this.seriesCount-1)
+        }
+    } else {
+      this.seriesCount++
+    }
   };
 
+  @action
+  select = (exchange, market) => {
+      this.onExchangeChange(exchange, this.seriesCount-1)
+      this.onAssetChange(market, this.seriesCount-1)
+      this.load()
+  };
+
+  @action
   removeSeries = () => {
     if(this.seriesCount >1)
       this.seriesCount--
@@ -105,7 +125,8 @@ export default class MarketSelectionStore {
 
   @action
   onExchangeChange = (newValue, seriesIndex) => {
-    this.selectedExchange = newValue
+    this.log.debug("new exchange selection for index ", seriesIndex, " is ", newValue);
+    //this.selectedExchange = newValue
     this.selectedAssetBySeries.delete(seriesIndex)
 
     this.selectedExchangeBySeries.set(seriesIndex, newValue)
@@ -118,7 +139,7 @@ export default class MarketSelectionStore {
         this.selectedExchangeBySeries.set(seriesIndex, selectedExchange)
         this.log.debug('No Exchange is selected for series ' + seriesIndex + "! Selecting first from list  " + selectedExchange)
       }*/
-      //console.log("selected exchange for index " + seriesIndex + " is " + selectedExchange);
+      this.log.debug('Selected  Exchange for series ' + seriesIndex + " is "+ selectedExchange)
       return selectedExchange
   }
 
@@ -134,14 +155,14 @@ export default class MarketSelectionStore {
         this.log.debug('No Market is selected for exchange ' + ex + ' on series ' + seriesIndex + "! Returning first from list  " + selected)
       } */
 
-      this.log.debug('Selected  Market is exchange ' + selected)
+      this.log.debug('Selected  Market for exchange ' + ex + " is "+ selected)
       //console.log("selected asset for index " + seriesIndex + " is " + selected);
       return selected
   }
 
   @action
   onAssetChange = (newValue, seriesIndex) => {
-    console.log(newValue);
+    this.log.debug("new market selection for index ", seriesIndex, " is ", newValue);
     this.selectedAsset = newValue;
     this.selectedAssetBySeries.set(seriesIndex, newValue)
   };

@@ -9,6 +9,8 @@ export default class StrategyStore {
     this.rootStore = rootStore;
   }
 
+  @observable activeTab = "param"
+
   @observable loaded = false;
 
   @observable strategyList = [];
@@ -24,6 +26,14 @@ export default class StrategyStore {
   @observable portfolioResult = {}
 
   newStrategyCount = 0;
+
+  @action
+  selectTab = (newTab) => {
+    if(newTab == 'watcher')
+      this.rootStore.marketWatcherStore.load()
+
+    this.activeTab = newTab
+  };
 
   @action
   selectStrategyByName = name => {

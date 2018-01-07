@@ -1,6 +1,7 @@
 package tradingmaster.model;
 
 import javax.persistence.*;
+import java.util.Date;
 
 @Entity
 @Table(uniqueConstraints={
@@ -20,6 +21,19 @@ public class MarketWatcher {
 
     @Column(nullable = false)
     boolean active = true;
+
+    @Column(nullable = false)
+    Long intervalMillis = new Long(10000);
+
+    @Column(nullable = false)
+    Date startDate  = new Date();
+
+    @Column
+    String integrationFlowId;
+
+
+    public MarketWatcher() {
+    }
 
     public MarketWatcher(String exchange, String market) {
         this.exchange = exchange;
@@ -56,5 +70,30 @@ public class MarketWatcher {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public Date getStartDate() {
+        return startDate;
+    }
+
+    public String getIntegrationFlowId() {
+        return integrationFlowId;
+    }
+
+
+    public void setStartDate(Date startDate) {
+        this.startDate = startDate;
+    }
+
+    public void setIntegrationFlowId(String integrationFlowId) {
+        this.integrationFlowId = integrationFlowId;
+    }
+
+    public Long getIntervalMillis() {
+        return intervalMillis;
+    }
+
+    public void setIntervalMillis(Long intervalMillis) {
+        this.intervalMillis = intervalMillis;
     }
 }
