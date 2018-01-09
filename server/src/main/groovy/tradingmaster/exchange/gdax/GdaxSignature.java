@@ -14,14 +14,14 @@ import java.util.Base64;
  * Created by robevansuk on 17/03/2017.
  */
 @Component
-public class Signature {
+public class GdaxSignature {
 
     private String secretKey;
 
-    public Signature() { }
+    public GdaxSignature() { }
 
     @Autowired
-    public Signature(@Value("${gdax.secret}") String secretKey) {
+    public GdaxSignature(@Value("${gdax.secret}") String secretKey) {
         this.secretKey = secretKey;
     }
 

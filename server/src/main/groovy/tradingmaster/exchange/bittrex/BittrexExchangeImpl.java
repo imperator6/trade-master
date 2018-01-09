@@ -1,4 +1,4 @@
-package tradingmaster.exchange.binance;
+package tradingmaster.exchange.bittrex;
 
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,18 +16,18 @@ import java.time.Instant;
  * Created by irufus on 2/25/15.
  */
 @Component
-public class BinanceExchangeImpl extends DefaultExchangeRestService {
+public class BittrexExchangeImpl extends DefaultExchangeRestService {
 
-    static Logger log = Logger.getLogger(BinanceExchangeImpl.class.getName());
+    static Logger log = Logger.getLogger(BittrexExchangeImpl.class.getName());
 
 
     @Autowired
-    public BinanceExchangeImpl(@Value("${binance.key}") String publicKey,
-                               @Value("${binance.secret}") String secretKey,
-                               @Value("${binance.api.baseUrl}") String baseUrl,
+    public BittrexExchangeImpl(@Value("${bittrex.key}") String publicKey,
+                               @Value("${bittrex.secret}") String secret,
+                               @Value("${bittrex.api.baseUrl}") String baseUrl,
                                RestTemplate restTemplate) {
 
-        super(publicKey, secretKey, null, baseUrl, restTemplate);
+        super(publicKey, secret, null, baseUrl, restTemplate);
     }
 
 

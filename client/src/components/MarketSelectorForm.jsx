@@ -175,6 +175,22 @@ class MarketSelectorForm extends React.Component {
         ];
       }
 
+      let typeSelect = (
+          <Select
+            size="small"
+            style={{ width: 80 }}
+            defaultValue={this.store.rootStore.chartStore.seriesType}
+            onChange={(newValue ) => { this.store.rootStore.chartStore.seriesType = newValue}}
+          >
+            {this.store.rootStore.chartStore.seriesTypes.map(p => {
+              return (
+                <Option key={p} value={p}>
+                  {p}
+                </Option>
+              );
+            })}
+          </Select>)
+
       row = (
         <tr key={seriesIndex}>
           <td>{seriesIndex}</td>
@@ -183,6 +199,7 @@ class MarketSelectorForm extends React.Component {
           <td>{periodSelect}</td>
           <td>{startSelect}</td>
           <td>{endSelect}</td>
+          <td>{typeSelect}</td>
           <td>{actionButton}</td>
         </tr>
       );
@@ -201,6 +218,7 @@ class MarketSelectorForm extends React.Component {
               <th>Period</th>
               <th>Start</th>
               <th>End</th>
+              <th>Type</th>
               <th />
             </tr>
           </thead>

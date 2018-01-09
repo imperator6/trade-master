@@ -10,7 +10,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import tradingmaster.exchange.gdax.Signature;
 
 import java.util.Arrays;
 import java.util.List;
@@ -27,22 +26,21 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
     static Logger log = Logger.getLogger(DefaultExchangeRestService.class.getName());
 
     protected String publicKey;
+    protected String secret;
     protected String passphrase;
     protected String baseUrl;
-
-    protected Signature signature;
 
     protected RestTemplate restTemplate;
 
     public DefaultExchangeRestService( String publicKey,
+                                       String secret,
                                        String passphrase,
                                        String baseUrl,
-                                       Signature signature,
                                        RestTemplate restTemplate) {
         this.publicKey = publicKey;
+        this.secret = secret;
         this.passphrase = passphrase;
         this.baseUrl = baseUrl;
-        this.signature = signature;
         this.restTemplate = restTemplate;
     }
 

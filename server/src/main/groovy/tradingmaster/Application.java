@@ -6,7 +6,6 @@ import org.springframework.context.ApplicationContext;
 import tradingmaster.db.MarketWatcherRepository;
 import tradingmaster.model.CryptoMarket;
 import tradingmaster.service.MaketWatcherService;
-import tradingmaster.service.StrategyRunnerService;
 
 
 @SpringBootApplication

@@ -151,7 +151,7 @@ class MarketWatcherStore {
       .get(url, this.rootStore.userStore.getHeaderConfig())
       .then(response => {
         if (response.data.success) {
-             this.log.debug("Loaded Markets", {...response.data.data})
+             this.log.debug("Loaded watcher", {...response.data.data})
              
              this.watcherList = response.data.data
         } else {

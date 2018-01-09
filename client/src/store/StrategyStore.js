@@ -194,7 +194,9 @@ export default class StrategyStore {
           if (results.complete) {
             console.info("Backtest is complete.");
 
-            console.log(response.data.data);
+            //console.log(response.data.data);
+            this.activeTab = "result"
+
 
             this.portfolioChanges = response.data.data.changes
             this.portfolioResult = response.data.data.portfolio

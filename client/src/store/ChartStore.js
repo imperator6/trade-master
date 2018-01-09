@@ -12,10 +12,24 @@ export default class ChartStore {
 
   @observable configChangeCount = 0;
 
+  @observable seriesType = "line";
+
+  @observable seriesTypes = ["candlestick", "line"]
+
   chart = null;
 
   config = {
-    rangeSelector: {
+    title: {
+      text: "No market selected"
+    }
+  }; // end config
+
+  cleanSeriesAndPrepareConfig = () => {
+    let title = "";
+    let series = [];
+    let plotOptions = {};
+
+    let rangeSelector = {
       buttons: [
         {
           type: "day",
@@ -44,44 +58,16 @@ export default class ChartStore {
       ],
       selected: 1,
       inputEnabled: false
-    },
-    title: {
-      text: "No market selected"
-    },
-
-    plotOptions: {
-      candlestick: {
-        color: "red",
-        upColor: "green",
-        dataGrouping: {
-          enabled: true,
-          forced: true,
-          units: [
-            //  ["millisecond", []],
-            //  ["second", []],
-            ["minute", [1]]
-            //   ["hour", 1[1]],
-            //   ["day", []],
-            //   ["week", []],
-            //   ["month", []],
-            //   ["year", null]
-          ]
-        }
-      }
     }
-  }; // end config
 
-  @action
-  loadChart = () => {
-    let title = "";
-    let series = [];
     for (
       let index = 0;
       index < this.rootStore.marketSelectionStore.seriesCount;
       index++
     ) {
-
-      let exchange = this.rootStore.marketSelectionStore.getSelectedExchange(index);
+      let exchange = this.rootStore.marketSelectionStore.getSelectedExchange(
+        index
+      );
       let asset = this.rootStore.marketSelectionStore.getSelectedAsset(index);
 
       if (exchange && asset) {
@@ -89,7 +75,6 @@ export default class ChartStore {
         asset = asset.toLowerCase();
 
         let marketName = exchange + ": " + asset;
-
         title += marketName + ", ";
 
         let decimals = 6;
@@ -99,110 +84,19 @@ export default class ChartStore {
         }
 
         series.push({
-          type: "candlestick",
+          type: this.seriesType,
           name: marketName,
-          id: "dataseries",
+          id: "dataseries_" + index,
           data: [],
           tooltip: {
             valueDecimals: decimals
           }
         });
-      }
-    }
 
-    this.config = {
-      ...this.config,
-      title: { text: title },
-      series: series
-    };
+        // configure plot options
+        if (index == 0 && this.seriesType == "candlestick" && false) {
+          let period = this.rootStore.marketSelectionStore.selectedPeriod;
 
-    for (
-      let index = 0;
-      index < this.rootStore.marketSelectionStore.seriesCount;
-      index++
-    ) {
-
-      let exchange = this.rootStore.marketSelectionStore.getSelectedExchange(index)
-      let asset = this.rootStore.marketSelectionStore.getSelectedAsset(index)
-      let period = this.rootStore.marketSelectionStore.selectedPeriod
-
-      let startDate = this.rootStore.marketSelectionStore.startDate
-      .utc()
-      .toDate()
-      .toISOString()
-
-      let endDate = this.rootStore.marketSelectionStore.endDate
-      .utc()
-      .toDate()
-      .toISOString()
-      
-
-      this.loadChart2(index, exchange, asset, period, startDate, endDate);
-    }
-  };
-
-  @action
-  loadChart2 = (seriesIndex, exchange, asset, period, startDate, endDate)  => {
-    
-    if (!exchange || !asset) return;
-
-    exchange = exchange.toLowerCase();
-    asset = asset.toLowerCase();
-
-    console.info(
-      "loading chart for series " +
-        seriesIndex +
-        " exchange: " +
-        exchange +
-        " asset: " +
-        asset
-    );
-
-    this.loaded = false;
-
-    let params = {
-      start: startDate,
-      end: endDate
-    };
-
-    //console.log(params.start);
-    //console.log(params.end);
-
-    let esc = encodeURIComponent;
-    let query = Object.keys(params)
-      .map(k => esc(k) + "=" + esc(params[k]))
-      .join("&");
-
-    let url =
-      this.rootStore.remoteApiUrl +
-      "/candles/" +
-      exchange +
-      "/" +
-      asset +
-      "?" +
-      query;
-
-    let config = this.rootStore.userStore.getHeaderConfig();
-
-    config = {
-      ...params,
-      ...config
-    };
-
-    axios
-      .get(url, config)
-      .then(response => {
-        let candles = response.data;
-
-        let initData = candles.map(c => {
-          return this.candleToChartData(c);
-        });
-
-        // apply data
-        this.config.series[seriesIndex].data = initData;
-
-        // configre candle draw size only for first series
-        if (seriesIndex == 0) {
           let periodSplit = period.split(" ");
           let periodSelector = periodSplit[1];
           let periodValue = periodSplit[0];
@@ -221,27 +115,149 @@ export default class ChartStore {
               periodSelector = "minute";
           }
 
-          //console.log([periodSelector, [periodValue]]);
-
-          this.config.plotOptions.candlestick.dataGrouping.units = [
-            //  ["millisecond", []],
-            //  ["second", []],
-            //  ["minute", []],
-            [periodSelector, [periodValue]]
-            //   ["hour", 1[1]],
-            //   ["day", []],
-            //   ["week", []],
-            //   ["month", []],
-            //   ["year", null]
-          ];
+          plotOptions = {
+            candlestick: {
+              color: "red",
+              upColor: "green",
+              dataGrouping: {
+                enabled: true,
+                forced: true,
+                units: [
+                  //  ["millisecond", []],
+                  //  ["second", []],
+                  [periodSelector, [periodValue]]
+                  //   ["hour", 1[1]],
+                  //   ["day", []],
+                  //   ["week", []],
+                  //   ["month", []],
+                  //   ["year", null]
+                ]
+              }
+            }
+          };
         }
+      }
+    }
 
-        this.loaded = true;
-        this.configChangeCount++;
+    this.config = {
+      ...this.config,
+      rangeSelector: rangeSelector,
+      title: { text: title },
+      plotOptions: plotOptions,
+      series: series
+    };
+  };
+
+  @action
+  loadChart = () => {
+    this.cleanSeriesAndPrepareConfig();
+
+    let loadTasks = [];
+
+    for (
+      let index = 0;
+      index < this.rootStore.marketSelectionStore.seriesCount;
+      index++
+    ) {
+      let exchange = this.rootStore.marketSelectionStore.getSelectedExchange(
+        index
+      );
+      let asset = this.rootStore.marketSelectionStore.getSelectedAsset(index);
+      let period = this.rootStore.marketSelectionStore.selectedPeriod;
+
+      let startDate = this.rootStore.marketSelectionStore.startDate
+        .utc()
+        .toDate()
+        .toISOString();
+
+      let endDate = this.rootStore.marketSelectionStore.endDate
+        .utc()
+        .toDate()
+        .toISOString();
+
+      let loadPromise = this.loadChart2(
+        index,
+        exchange,
+        asset,
+        period,
+        startDate,
+        endDate
+      );
+      loadTasks.push(loadPromise);
+    }
+
+    this.loaded = false;
+
+    Promise.all(loadTasks).then( (results) => {
+
+      results.forEach(seriesData => {
+          // apply data
+          if(seriesData)
+            this.config.series[seriesData.seriesIndex].data = seriesData.data;
       })
-      .catch(function(error) {
-        console.log(error);
+
+      this.loaded = true
+      this.configChangeCount++
+    });
+  };
+
+  @action
+  loadChart2 = (seriesIndex, exchange, asset, period, startDate, endDate) => {
+
+    return new Promise(resolve => {
+
+      if (!exchange || !asset) resolve(null);
+
+      exchange = exchange.toLowerCase();
+      asset = asset.toLowerCase();
+
+      console.info(
+        "loading chart for series " +
+          seriesIndex +
+          " exchange: " +
+          exchange +
+          " asset: " +
+          asset
+      );
+
+      this.loaded = false;
+
+      let params = {
+        start: startDate,
+        end: endDate
+      };
+
+      let esc = encodeURIComponent;
+      let query = Object.keys(params)
+        .map(k => esc(k) + "=" + esc(params[k]))
+        .join("&");
+
+      let url =
+        this.rootStore.remoteApiUrl +
+        "/candles/" +
+        exchange +
+        "/" +
+        asset +
+        "?" +
+        query;
+
+      let config = this.rootStore.userStore.getHeaderConfig();
+
+      config = {
+        ...params,
+        ...config
+      };
+
+      axios.get(url, config).then(response => {
+        let candles = response.data;
+
+        let initData = candles.map(c => {
+          return this.candleToChartData(c);
+        });
+
+        resolve({seriesIndex: seriesIndex, data: initData});
       });
+    });
   };
 
   @action
@@ -285,7 +301,7 @@ export default class ChartStore {
         name: "Buy Signals",
         type: "flags",
         id: "buy",
-        onSeries: "dataseries",
+        onSeries: "dataseries_0",
         shape: "circlepin",
         width: 16,
         data: buySignales,
@@ -305,7 +321,7 @@ export default class ChartStore {
         name: "Sell Signals",
         type: "flags",
         id: "sell",
-        onSeries: "dataseries",
+        onSeries: "dataseries_0",
         shape: "circlepin",
         width: 16,
         data: sellSignales,
@@ -330,15 +346,19 @@ export default class ChartStore {
   };
 
   candleToChartData = candle => {
-    let newDate = new Date(candle.start);
-    let dataEntry = [
-      newDate.getTime(),
-      candle.open,
-      candle.high,
-      candle.low,
-      candle.close
-    ];
 
-    return dataEntry;
+    let newDate = new Date(candle.start);
+
+    let  dataEntry = [
+        newDate.getTime(),
+        candle.open,
+        candle.high,
+        candle.low,
+        candle.close
+      ];
+
+   
+
+    return dataEntry
   };
 }

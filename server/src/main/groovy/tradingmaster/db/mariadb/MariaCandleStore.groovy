@@ -94,7 +94,22 @@ class MariaCandleStore implements ICandleStore {
 
         List<Candle> candles = []
 
-        String query = "select * from candle where start >= ? and end <= ? and exchange = ? and market = ? and period = ? order by end asc"
+        // TODO: query is not perfect as avg(price) is not weighted!
+        // need to find onother solution to prevent double candles on startup
+        String query = """select 
+     start,
+     end, 
+     min(open) as open,
+     max(high) as high,
+     min(low) as low,
+     min(close) as close,
+     sum(volume) as volume,
+     avg(price) as price
+    from candle where start >= ? and end <= ? and exchange = ? and market = ? and period = ? 
+    group by 
+    start, end
+    order by end asc
+    """
 
         sql.eachRow(query.toString(),  [Timestamp.valueOf(startDate), Timestamp.valueOf(endDate), exchange, market, period]) { row ->
             Candle c = new Candle()

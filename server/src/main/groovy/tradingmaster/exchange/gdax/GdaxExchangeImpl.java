@@ -20,15 +20,19 @@ public class GdaxExchangeImpl extends DefaultExchangeRestService {
 
     static Logger log = Logger.getLogger(GdaxExchangeImpl.class.getName());
 
+    protected GdaxSignature signature;
+
 
     @Autowired
     public GdaxExchangeImpl(@Value("${gdax.key}") String publicKey,
+                            @Value("${gdax.secret}") String secretKey,
                             @Value("${gdax.passphrase}") String passphrase,
                             @Value("${gdax.api.baseUrl}") String baseUrl,
-                            Signature signature,
+                            GdaxSignature signature,
                             RestTemplate restTemplate) {
 
-        super(publicKey, passphrase, baseUrl, signature, restTemplate);
+        super(publicKey, secretKey, passphrase, baseUrl, restTemplate);
+        this.signature = signature;
     }
 
 

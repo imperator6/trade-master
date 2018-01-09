@@ -30,7 +30,10 @@ class MarketWatcherController {
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
     RestResponse<List<MarketWatcher>> watcherList() {
-        return marketWatcherRepository.findAll(new Sort(Sort.Direction.DESC,"active"))
+
+        List<MarketWatcher> list = marketWatcherRepository.findAll(new Sort(Sort.Direction.DESC,"active"))
+
+        return new RestResponse(list)
     }
 
     @Secured("TRADER") // TODO...  Secured dosent work !
