@@ -6,7 +6,7 @@ import groovy.transform.EqualsAndHashCode
 class DefaultMarket implements IMarket {
 
     String name
-    String exchange // exchange or broker
+    String exchange // tradingmaster.exchange or broker
 
     DefaultMarket(exchange, name) {
         this.exchange = exchange.capitalize()

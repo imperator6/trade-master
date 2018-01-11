@@ -26,6 +26,13 @@ public class Config {
     @Autowired
     private Environment env;
 
+
+    @PostConstruct
+    void started() {
+        TimeZone.setDefault(TimeZone.getTimeZone("Etc/UTC")); // let's use UTC by default
+    }
+
+
     @Bean
     TaskExecutor backtestTaskExecutor() {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
@@ -36,10 +43,10 @@ public class Config {
     }
 
 
-    @Bean
+   /* @Bean
     BittrexApi11 bittrexApi11() {
         return new BittrexApi11(env.getProperty("bittrex.apikey"), env.getProperty("bittrex.secret"), 1, 15);
-    }
+    } */
 
 
     @Bean
@@ -52,7 +59,7 @@ public class Config {
         return MessageChannels.publishSubscribe().get();
     }
 
-    @Bean
+   /* @Bean
     CandleAggregator candelAggregator5Minutes() {
         CandleAggregator ca = new CandleAggregator(5);
         candelChannel1Minute().subscribe(ca);
@@ -64,7 +71,7 @@ public class Config {
         CandleAggregator ca = new CandleAggregator(15);
         candelChannel1Minute().subscribe(ca);
         return ca;
-    }
+    } */
 
 
     @Bean
@@ -87,7 +94,7 @@ public class Config {
         return cb;
     }
 
-
+    /*
     @Bean
     CouchDBClient couchDBClient() {
         return new CouchDBClient(
@@ -97,13 +104,7 @@ public class Config {
                 env.getProperty("couchDB.password"));
     }
 
-
-
-    @PostConstruct
-    void started() {
-        TimeZone.setDefault(TimeZone.getTimeZone("Etc/UTC")); // let's use UTC by default
-    }
-
+    */
 
 
 }

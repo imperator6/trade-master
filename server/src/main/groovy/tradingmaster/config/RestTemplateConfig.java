@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestTemplate;
 
 import javax.net.ssl.HostnameVerifier;
@@ -53,7 +54,7 @@ public class RestTemplateConfig {
                 new SSLContextBuilder().loadTrustMaterial(trustStrategy).build(), hostnameVerifier);
         HttpClientBuilder clientBuilder = HttpClients.custom().setSSLSocketFactory(socketFactory);
 
-        if(host != null && port != null) {
+        if(!StringUtils.isEmpty(host) && port != null) {
             clientBuilder = clientBuilder.setProxy(new HttpHost(host, port));
         }
 
