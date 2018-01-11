@@ -42,6 +42,15 @@ public class Config {
         return pool;
     }
 
+    @Bean
+    TaskExecutor candleImportTaskExecutor() {
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.setCorePoolSize(5);
+        pool.setMaxPoolSize(10);
+        pool.setWaitForTasksToCompleteOnShutdown(true);
+        return pool;
+    }
+
 
    /* @Bean
     BittrexApi11 bittrexApi11() {
