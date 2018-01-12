@@ -5,16 +5,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
 import tradingmaster.exchange.ExchangeService
-import tradingmaster.model.Candle
-import tradingmaster.model.CryptoMarket
-import tradingmaster.model.ICandleStore
-import tradingmaster.model.IExchangeAdapter
-import tradingmaster.model.IHistoricDataExchangeAdapter
-import tradingmaster.model.ITradeStore
-import tradingmaster.model.RestResponse
+import tradingmaster.model.*
 import tradingmaster.service.CandleImportService
 
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 
 @RestController
 @RequestMapping("/api/candles")
@@ -65,7 +60,7 @@ class CandleController {
 
         if(exchangeAdapter instanceof IHistoricDataExchangeAdapter) {
 
-            candleImportService.importCandles(  Date.from(start), Date.from(end) , new CryptoMarket(exchange, market), exchangeAdapter)
+            candleImportService.importCandles(  Date.from(start.toInstant(ZoneOffset.UTC)), Date.from(end.toInstant(ZoneOffset.UTC)) , new CryptoMarket(exchange, market), exchangeAdapter)
 
             res.setData("OK")
 

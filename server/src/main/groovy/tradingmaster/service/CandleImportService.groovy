@@ -2,9 +2,7 @@ package tradingmaster.service
 
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.core.task.TaskExecutor
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor
 import org.springframework.stereotype.Service
 import tradingmaster.db.mariadb.MariaCandleStore
 import tradingmaster.model.Candle
@@ -52,7 +50,10 @@ class CandleImportService {
 
                 candleStore.saveAll(data)
 
-                currentTime = data.last().getStart().toInstant().plus(1, ChronoUnit.MINUTES)
+                if(data.isEmpty())
+                    currentTime = data.last().getStart().toInstant().plus(1, ChronoUnit.MINUTES)
+                else
+                    currentTime = endDate.toInstant()
 
                 Thread.sleep(200) // slow down to avoid to many request
             }
