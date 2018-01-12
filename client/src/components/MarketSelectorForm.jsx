@@ -30,10 +30,16 @@ class MarketSelectorForm extends React.Component {
     this.store.init();
   }
 
-  onChange2 = (value, dateString) => {
-    console.log("Selected Time: ", value);
-    console.log("Formatted Selected Time: ", dateString);
+  onStartDateChange = (value) => {
+    console.log("Selected Start Time: ", value);
+    this.store.startDate = value
   };
+
+  onEndDateChange = (value) => {
+    console.log("Selected End Time: ", value);
+    this.store.endDate = value
+  };
+
 
   render() {
     let rows = [];
@@ -128,9 +134,8 @@ class MarketSelectorForm extends React.Component {
             showTime
             format="YYYY-MM-DD HH:mm"
             placeholder="Select Time"
-            value={this.store.startDate}
-            onChange={this.onChange2}
-            onOk={this.onOk}
+            defaultValue={this.store.startDate}
+            onOk={this.onEndDateChange}
           />
         );
 
@@ -140,9 +145,8 @@ class MarketSelectorForm extends React.Component {
             showTime
             format="YYYY-MM-DD HH:mm"
             placeholder="Select Time"
-            value={this.store.endDate}
-            onChange={this.onChange2}
-            onOk={this.onOk}
+            defaultValue={this.store.endDate}
+            onOk={this.onEndDateChange}
           />
         );
 
@@ -151,7 +155,7 @@ class MarketSelectorForm extends React.Component {
             size="small"
             type="primary"
             icon="eye"
-            onClick={this.store.removeSeries}
+            onClick={this.store.startCandleImport}
           />,
           <Button
             size="small"

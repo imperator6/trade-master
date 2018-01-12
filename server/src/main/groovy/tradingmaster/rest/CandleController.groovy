@@ -4,9 +4,15 @@ import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.web.bind.annotation.*
+import tradingmaster.exchange.ExchangeService
 import tradingmaster.model.Candle
+import tradingmaster.model.CryptoMarket
 import tradingmaster.model.ICandleStore
+import tradingmaster.model.IExchangeAdapter
+import tradingmaster.model.IHistoricDataExchangeAdapter
 import tradingmaster.model.ITradeStore
+import tradingmaster.model.RestResponse
+import tradingmaster.service.CandleImportService
 
 import java.time.LocalDateTime
 
@@ -20,6 +26,12 @@ class CandleController {
 
     @Autowired
     ICandleStore candleStore
+
+    @Autowired
+    CandleImportService candleImportService
+
+    @Autowired
+    ExchangeService exchangeService
 
     @RequestMapping(value = "/{exchange}/{market}", method = RequestMethod.GET)
     List<Candle> list(@PathVariable String exchange, @PathVariable String market,
@@ -38,6 +50,31 @@ class CandleController {
        // candleStore.saveAll(candles)
 
         return candles
+    }
+
+    @RequestMapping(value = "/importCandles/{exchange}/{market}", method = RequestMethod.GET)
+    RestResponse<String> importCandles(@PathVariable String exchange, @PathVariable String market,
+                               @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") LocalDateTime  start,
+                               @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'") LocalDateTime  end) {
+
+        log.info("import candles for $exchange, $market, $start, $end")
+
+        IExchangeAdapter exchangeAdapter = exchangeService.getExchangyByName(exchange)
+
+        RestResponse<String> res = new RestResponse<String>()
+
+        if(exchangeAdapter instanceof IHistoricDataExchangeAdapter) {
+
+            candleImportService.importCandles(  Date.from(start), Date.from(end) , new CryptoMarket(exchange, market), exchangeAdapter)
+
+            res.setData("OK")
+
+        } else {
+            res.setSuccess(false)
+            res.setMessage("Exchange $exchange does not support the import of historic candles!")
+        }
+
+        return res
     }
 
 //    List<Candle> tradesToCandle(IMarket market, List<ITrade> allTrades) {

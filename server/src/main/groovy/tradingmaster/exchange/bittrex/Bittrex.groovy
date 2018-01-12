@@ -1,15 +1,11 @@
 package tradingmaster.exchange.bittrex
 
-import com.fasterxml.jackson.core.type.TypeReference
-import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
 import org.springframework.web.util.UriComponentsBuilder
 import tradingmaster.exchange.DefaultExchageAdapter
-import tradingmaster.exchange.bittrex.model.BittrexMarket
 import tradingmaster.exchange.bittrex.model.BittrexMarketResponse
 import tradingmaster.exchange.bittrex.model.BittrexTradeResponse
 import tradingmaster.model.CryptoMarket

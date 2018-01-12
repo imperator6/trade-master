@@ -260,6 +260,8 @@ export default class ChartStore {
     });
   };
 
+  
+
   @action
   removeSignals() {
     // remove prev. flags

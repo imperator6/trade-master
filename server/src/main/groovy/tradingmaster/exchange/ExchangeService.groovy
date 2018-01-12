@@ -13,6 +13,10 @@ class ExchangeService {
     ApplicationContext ctx
 
     IExchangeAdapter getExchangyByName(String name) {
-        return ctx.getBean(name, IExchangeAdapter.class)
+
+        name = name.toLowerCase()
+        String upperCase = name.substring(0, 1).toUpperCase() + name.substring(1);
+
+        return  ctx.getBean(upperCase, IExchangeAdapter.class)
     }
 }
