@@ -21,6 +21,8 @@ class StrategyRunConfig {
 
     Integer candleSize
 
+    StrategyConfig config
+
     boolean backtest = false
 
 }

@@ -82,6 +82,35 @@ class MariaCandleStore implements ICandleStore {
         }
     }
 
+    void delete(String period, String exchange, String market, LocalDateTime startDate, LocalDateTime endDate) {
+
+        Sql sql = new Sql(dataSource)
+
+        def start = Instant.now()
+
+        exchange = exchange.capitalize()
+
+        // TODO: query is not perfect as avg(price) is not weighted!
+        // need to find onother solution to prevent double candles on startup
+        String query = """delete
+from candle 
+where 
+    start >= ? and 
+    end <= ? and 
+    exchange = ? and 
+    market = ? and 
+    period = ? 
+    """
+
+       def deleteCount = sql.executeUpdate( query, [Timestamp.valueOf(startDate), Timestamp.valueOf(endDate), exchange, market, period])
+
+        def duration = Duration.between(start, Instant.now())
+
+        log.info("deleteing of ${deleteCount} candles took ${duration.getSeconds()}")
+
+    }
+
+
     List<Candle> find(String period, String exchange, String market, LocalDateTime startDate, LocalDateTime endDate) {
 
         Sql sql = new Sql(dataSource)

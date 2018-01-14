@@ -11,4 +11,7 @@ public interface ICandleStore {
     void saveAll(Collection<Candle> candles);
 
     List<Candle> find(String period, String exchange, String market, LocalDateTime startDate, LocalDateTime endDate);
+
+    void delete(String period, String exchange, String market, LocalDateTime startDate, LocalDateTime endDate);
+
 }

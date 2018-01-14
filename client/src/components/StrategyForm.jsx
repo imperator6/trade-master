@@ -9,6 +9,7 @@ import AceEditor from "react-ace";
 import brace from "brace";
 
 import "brace/mode/javascript";
+// import "brace/mode/json";
 import "brace/theme/monokai";
 
 import {
@@ -61,10 +62,7 @@ class StrategyForm extends React.Component {
 
   onScriptChange = newScript => {
     //console.log(this.refs.strategyEditor);
-
     //console.log(this.refs.strategyEditor);
-
-  
     //this.script = newScript;
   };
 
@@ -73,7 +71,7 @@ class StrategyForm extends React.Component {
   };
 
   saveScript = () => {
-    let newScript = this.refs.strategyEditor.editor.getValue()
+    let newScript = this.refs.strategyEditor.editor.getValue();
     this.store.saveScript(newScript);
     this.setState({ editStrategyName: false });
   };
@@ -154,38 +152,71 @@ class StrategyForm extends React.Component {
             <th>Strategy</th>
             <td>
               {strategyComp}
-              <Tooltip placement="top" title='Edit Strategy Name'>
-                    <Button shape="circle" icon="edit" onClick={this.toggleEditStrategyName} />
+              <Select
+                value={this.store.selectedScriptType}
+                style={{ width: 100 }}
+                onChange={(newValue) => { 
+                  this.store.selectedScriptType = newValue 
+                  this.store.selectedStrategy.language = newValue
+                }}
+              >
+                {this.store.scriptTypes.map(p => {
+              return (
+                <Option key={p} value={p}>
+                  {p}
+                </Option>
+              );
+            })}
+              </Select>
+              <Tooltip placement="top" title="Edit Strategy Name">
+                <Button
+                  shape="circle"
+                  icon="edit"
+                  onClick={this.toggleEditStrategyName}
+                />
               </Tooltip>
-              <Tooltip placement="top" title='Add a new Strategy'>
+              <Tooltip placement="top" title="Add a new Strategy">
                 <Button icon="plus" shape="circle" onClick={this.newStrategy} />
               </Tooltip>
             </td>
             <th>
-                <Tooltip placement="top" title='Reload Strategies from DB'>
-              <Button shape="circle" icon="reload" onClick={this.loadStrategies}></Button>
+              <Tooltip placement="top" title="Reload Strategies from DB">
+                <Button
+                  shape="circle"
+                  icon="reload"
+                  onClick={this.loadStrategies}
+                />
               </Tooltip>
             </th>
             <th>
-              <Tooltip placement="top" title='Save Strategy'>
-                <Button type="primary" icon="save" onClick={this.saveScript}></Button>
+              <Tooltip placement="top" title="Save Strategy">
+                <Button type="primary" icon="save" onClick={this.saveScript} />
               </Tooltip>
             </th>
-            <th >
-                <Tooltip placement="top" title='Backtest Strategy'>
-                    <Button icon="play-circle-o" shape="circle" onClick={this.store.backtestStrategy}></Button>
-                </Tooltip>
-            </th >
-            <th >
-                <Tooltip placement="top" title='Run Strategy'>
-                    <Button type="primary" icon="play-circle" shape="circle" onClick={this.store.runStrategy}></Button>
-                </Tooltip>
-            </th >
+            <th>
+              <Tooltip placement="top" title="Backtest Strategy">
+                <Button
+                  icon="play-circle-o"
+                  shape="circle"
+                  onClick={this.store.backtestStrategy}
+                />
+              </Tooltip>
+            </th>
+            <th>
+              <Tooltip placement="top" title="Run Strategy">
+                <Button
+                  type="primary"
+                  icon="play-circle"
+                  shape="circle"
+                  onClick={this.store.runStrategy}
+                />
+              </Tooltip>
+            </th>
           </tr>
           <tr>
             <td colSpan={6}>
               <AceEditor
-                mode="javascript"
+                mode={'javascript'}
                 theme="monokai"
                 width="700px"
                 height="450px"

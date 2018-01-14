@@ -39,9 +39,9 @@ class PaperPortfolioService {
     void onLastCandle(Candle c, PaperPortfolio p) {
         p.endPrice = c.close
         p.holdBalance = p.startCurrency + c.close * p.startAsset
-        log.info("${p.trades} Trades. Balance: ${format(p.balance)} vs. " +
+/*        log.info("${p.trades} Trades. Balance: ${format(p.balance)} vs. " +
                 "is ${format(p.holdBalance)} $p.currencyName Hold Balance. startAsset ${format(p.startAsset)} $p.assetName." +
-                " startPrice: ${format(p.startPrice)} $p.currencyName endPrice: ${format(p.endPrice)} $p.currencyName ")
+                " startPrice: ${format(p.startPrice)} $p.currencyName endPrice: ${format(p.endPrice)} $p.currencyName ") */
     }
 
     BigDecimal extractFee(BigDecimal amount, BigDecimal fee) {

@@ -1,5 +1,6 @@
 package tradingmaster.exchange
 
+import com.tictactec.ta.lib.Core
 import junit.framework.Test
 import junit.framework.TestCase
 import org.junit.runner.RunWith
@@ -25,6 +26,10 @@ class BittrexApiTest extends TestCase {
     @Test
     void testgetMarkets() {
         assertTrue( !bittrex.getMakets().isEmpty() )
+
+        Core c = new Core();
+
+        c.stochRsi()
 
     }
 

@@ -11,6 +11,8 @@ import tradingmaster.model.CryptoMarket
 import tradingmaster.model.IHistoricDataExchangeAdapter
 
 import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -26,7 +28,11 @@ class CandleImportService {
 
     void importCandles(final Date startDate, final Date endDate,final CryptoMarket market, final IHistoricDataExchangeAdapter exchange) {
 
-        // Todo.... delete exsisting candles in db
+        candleStore.delete(CandleInterval.ONE_MINUTE.getKey(),
+                market.getExchange(),
+                market.getName(),
+                LocalDateTime.ofInstant(startDate.toInstant(), ZoneId.of("UTC")),
+                LocalDateTime.ofInstant(endDate.toInstant(), ZoneId.of("UTC")))
 
         Runnable task
         task = {
@@ -50,10 +56,14 @@ class CandleImportService {
 
                 candleStore.saveAll(data)
 
-                if(data.isEmpty())
+                if(!data.isEmpty())
                     currentTime = data.last().getStart().toInstant().plus(1, ChronoUnit.MINUTES)
-                else
-                    currentTime = endDate.toInstant()
+                else {
+                    log.info("No import data found for $market startDate: $currentTime")
+                    currentTime = endTime //currentTime.plus(1, ChronoUnit.DAYS)
+                }
+
+
 
                 Thread.sleep(200) // slow down to avoid to many request
             }

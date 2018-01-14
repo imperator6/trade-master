@@ -1,5 +1,6 @@
 package tradingmaster.service
 
+import groovy.json.JsonSlurper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
@@ -9,8 +10,10 @@ import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
 import org.springframework.stereotype.Service
+import sun.font.ScriptRun
 import tradingmaster.core.CandleAggregator
 import tradingmaster.model.*
+import tradingmaster.strategy.DemaSettings
 
 import javax.annotation.PostConstruct
 import javax.script.*
@@ -20,9 +23,9 @@ import java.time.LocalDateTime
 @Commons
 class StrategyRunnerService implements  MessageHandler {
 
-    Map<String, StrategyRun> strategyMap = [:]
+    Map<String, ScriptRun> strategyMap = [:]
 
-    Map<String, StrategyRun> backtestMap = [:]
+    Map<String, ScriptRun> backtestMap = [:]
 
     @Autowired
     TaskExecutor backtestTaskExecutor
@@ -54,13 +57,13 @@ class StrategyRunnerService implements  MessageHandler {
 
         Map strategies = new HashMap(this.strategyMap)
 
-        def matchingStrategies = strategies.values().findAll { StrategyRun s ->
+        def matchingStrategies = strategies.values().findAll { ScriptStrategyRun s ->
             s.getMarket().equals( c.getMarket() )
         }
 
         log.info("Found ${matchingStrategies.size()} matching strategies!")
 
-        matchingStrategies.each { StrategyRun s ->
+        matchingStrategies.each { ScriptStrategyRun s ->
            s.nextCandle(c)
         }
     }
@@ -75,7 +78,7 @@ class StrategyRunnerService implements  MessageHandler {
         //portfolio.init([:])
 
 
-        StrategyRun run = crerateStrategyRun(config, portfolio, false)
+        ScriptStrategyRun run = crerateStrategyRun(config, portfolio, false)
 
         strategyMap.put(config.id, run)
     }
@@ -94,7 +97,7 @@ class StrategyRunnerService implements  MessageHandler {
         PaperPortfolio portfolio = ctx.getBean(PaperPortfolio.class)
         paperPortfolioService.init(portfolioParams, portfolio)
 
-        StrategyRun run = crerateStrategyRun(config, portfolio, true)
+        ScriptStrategyRun run = crerateStrategyRun(config, portfolio, true)
         backtestMap.put(config.id, run)
 
         Runnable task = {
@@ -127,14 +130,7 @@ class StrategyRunnerService implements  MessageHandler {
         StrategyRun run = backtestMap.get(id)
 
         if(run) {
-
-            result.complete = run.backtestComplete
-
-            result.changes = new ArrayList(run.portfolioChanges)
-
-            result.portfolio = run.portfolio
-
-            result.signals = new ArrayList(run.signals)
+            result = run.getResult()
         }
 
         return result
@@ -144,16 +140,38 @@ class StrategyRunnerService implements  MessageHandler {
 
         Strategy strategy = strategyStore.loadStrategyById(config.getStrategyId(), null)
 
-        StrategyRun run = new StrategyRun(new ActionBindings(), backtest)
-        run.market = new CryptoMarket( config.exchange, config.market)
-        run.strategy = strategy
-        run.strategyParmas = config.strategyParams
-        run.portfolio = portfolio
+        StrategyRun run = null
 
-        ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn")
-        engine.eval(strategy.getScript())
+        if(strategy.script.indexOf("function(candle, params, actions)") > -1) {
 
-        run.engine = engine
+            run = new ScriptStrategyRun(new ActionBindings(), backtest)
+            run.market = new CryptoMarket( config.exchange, config.market)
+            run.strategy = strategy
+            run.strategyParmas = config.strategyParams
+            run.portfolio = portfolio
+
+            ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn")
+            engine.eval(strategy.getScript())
+
+            run.engine = engine
+
+        } else {
+            // config run
+
+            def c = new JsonSlurper().parseText(strategy.getScript())
+
+            DemaSettings demaSettings = c.dema as DemaSettings
+
+            run = new CombinedStrategyRun()
+
+
+            //config.setCandleSize()
+
+
+
+
+        }
+
 
         return run
 
@@ -163,7 +181,7 @@ class StrategyRunnerService implements  MessageHandler {
     class ActionBindings {
 
         Candle candle
-        StrategyRun run
+        ScriptStrategyRun run
 
         ActionBindings() {
         }
@@ -229,33 +247,65 @@ class StrategyRunnerService implements  MessageHandler {
 
     }
 
+    abstract class DefaultStrategyRun {
 
+        boolean backtest = false
+        boolean backtestComplete = false
 
-
-
-    class StrategyRun {
-
-        Strategy strategy
-        Map strategyParmas
         IMarket market
-        IPortfolio portfolio
 
-        ActionBindings actionBindings
+        IPortfolio portfolio
 
         List<TradingSignal> signals = []
 
         List<PortfolioChange> portfolioChanges = []
 
-        ScriptEngine engine
 
-        boolean backtest = false
-        boolean backtestComplete = false
+        void close() {
+            this.backtestComplete = true
+        }
+
+        BacktestResult getResult() {
+
+            BacktestResult res = new BacktestResult()
+
+            res.complete = this.backtestComplete
+
+            res.changes = new ArrayList(this.portfolioChanges)
+
+            res.portfolio = this.portfolio
+
+            res.signals = new ArrayList(this.signals)
+
+            return res
+        }
+    }
+
+
+    class CombinedStrategyRun extends DefaultStrategyRun implements StrategyRun {
+
+
+        void nextCandle(Candle c) {
+
+        }
+
+    }
+
+
+    class ScriptStrategyRun extends DefaultStrategyRun implements StrategyRun {
+
+        Strategy strategy
+        Map strategyParmas
+
+        ActionBindings actionBindings
+
+        ScriptEngine engine
 
         boolean firstCandle = true
 
         Candle prevCandle = null
 
-        StrategyRun(ActionBindings ab, boolean backtest) {
+        ScriptStrategyRun(ActionBindings ab, boolean backtest) {
             this.actionBindings = ab
             this.actionBindings.run = this
             this.backtest = backtest
@@ -283,10 +333,9 @@ class StrategyRunnerService implements  MessageHandler {
         }
 
         void close() {
-            this.backtestComplete = true
+            super.close()
             actionBindings.onLastCandle(this.prevCandle)
         }
     }
-
 
 }

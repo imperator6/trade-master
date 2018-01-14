@@ -15,6 +15,10 @@ export default class StrategyStore {
 
   @observable strategyList = [];
 
+  @observable scriptTypes = ['javascript', 'json'];
+
+  @observable selectedScriptType = 'javascript';
+
   @observable strategyNameList = [];
 
   @observable selectedStrategyName = "";
@@ -38,9 +42,10 @@ export default class StrategyStore {
   @action
   selectStrategyByName = name => {
     let next = this.strategyList.find(s => {
-      return s.name === name;
+      return s.name === name
     });
-    this.selectedStrategy = next;
+    this.selectedStrategy = next
+    this.selectedScriptType = next.language
   };
 
   @action
@@ -77,6 +82,7 @@ export default class StrategyStore {
       )
       .then(response => {
         this.selectedStrategy = response.data;
+        this.loadStrategies()
       })
       .catch(function(error) {
         console.log(error);
