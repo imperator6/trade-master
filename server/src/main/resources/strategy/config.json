@@ -1,0 +1,32 @@
+{
+
+  "candlesize": "15m",
+  "warmup": 5,
+
+  "dema": {
+    "enabled": true,
+    "shortPeriod": 10,
+    "longPeriod": 21,
+    "up": 0.025,
+    "down": -0.025
+  },
+
+  "rsi": {
+    "enabled": false,
+    "interval": 14,
+    "low": 30,
+    "high": 70,
+    "persistence": 1
+  },
+
+  "takeProfit": {
+    "enabled": false,
+    "value": 2
+  },
+
+  "stopLoss": {
+    "enabled": false,
+    "value": 5
+  }
+
+}
