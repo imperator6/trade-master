@@ -42,7 +42,7 @@ class Ema implements Indicator<BigDecimal> {
         // calculation
         this.result = price * k + y * (1 - k)
 
-        return this.result()
+        return this.result
     }
 
 

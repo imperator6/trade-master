@@ -3,7 +3,7 @@ package tradingmaster.model
 import groovy.transform.ToString
 
 @ToString
-class Strategy implements IStrategy {
+class ScriptStrategy implements IScriptStrategy {
 
     BigDecimal id = null
     String name = ""
@@ -11,10 +11,10 @@ class Strategy implements IStrategy {
     String script = ""
     BigDecimal version = 1
 
-    Strategy() {
+    ScriptStrategy() {
     }
 
-    Strategy(String script, String language) {
+    ScriptStrategy(String script, String language) {
         this.language = language
         this.script = script
     }

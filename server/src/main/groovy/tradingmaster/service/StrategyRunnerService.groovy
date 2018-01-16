@@ -12,8 +12,12 @@ import org.springframework.messaging.MessagingException
 import org.springframework.stereotype.Service
 import sun.font.ScriptRun
 import tradingmaster.core.CandleAggregator
+import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.model.*
+import tradingmaster.strategy.Dema
 import tradingmaster.strategy.DemaSettings
+import tradingmaster.strategy.Strategy
+import tradingmaster.strategy.StrategyResult
 
 import javax.annotation.PostConstruct
 import javax.script.*
@@ -34,7 +38,7 @@ class StrategyRunnerService implements  MessageHandler {
     PublishSubscribeChannel candelChannel1Minute
 
     @Autowired
-    IStrategyStore strategyStore
+    MariaStrategyStore strategyStore
 
     @Autowired
     ICandleStore candleStore
@@ -71,7 +75,7 @@ class StrategyRunnerService implements  MessageHandler {
 
     String startStrategy(StrategyRunConfig config) {
 
-        log.info("Starting a new Strategy!")
+        log.info("Starting a new ScriptStrategy!")
 
         // ToDo... put a real portfolio here
         IPortfolio portfolio = ctx.getBean(PaperPortfolio.class)
@@ -97,7 +101,7 @@ class StrategyRunnerService implements  MessageHandler {
         PaperPortfolio portfolio = ctx.getBean(PaperPortfolio.class)
         paperPortfolioService.init(portfolioParams, portfolio)
 
-        ScriptStrategyRun run = crerateStrategyRun(config, portfolio, true)
+        DefaultStrategyRun run = crerateStrategyRun(config, portfolio, true)
         backtestMap.put(config.id, run)
 
         Runnable task = {
@@ -138,17 +142,17 @@ class StrategyRunnerService implements  MessageHandler {
 
     StrategyRun crerateStrategyRun(StrategyRunConfig config, IPortfolio portfolio, boolean backtest) {
 
-        Strategy strategy = strategyStore.loadStrategyById(config.getStrategyId(), null)
+        ScriptStrategy strategy = strategyStore.loadStrategyById(config.getStrategyId(), null)
 
         StrategyRun run = null
 
         if(strategy.script.indexOf("function(candle, params, actions)") > -1) {
 
-            run = new ScriptStrategyRun(new ActionBindings(), backtest)
+            run = new ScriptStrategyRun(portfolio, new ActionBindings(), backtest)
             run.market = new CryptoMarket( config.exchange, config.market)
+
             run.strategy = strategy
             run.strategyParmas = config.strategyParams
-            run.portfolio = portfolio
 
             ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn")
             engine.eval(strategy.getScript())
@@ -160,9 +164,13 @@ class StrategyRunnerService implements  MessageHandler {
 
             def c = new JsonSlurper().parseText(strategy.getScript())
 
-            DemaSettings demaSettings = c.dema as DemaSettings
+            run = new CombinedStrategyRun(portfolio, new ActionBindings(), backtest)
+            run.market = new CryptoMarket( config.exchange, config.market)
 
-            run = new CombinedStrategyRun()
+            if(c.dema) {
+                DemaSettings demaSettings = c.dema as DemaSettings
+                run.strategies << new Dema(demaSettings)
+            }
 
 
             //config.setCandleSize()
@@ -181,7 +189,7 @@ class StrategyRunnerService implements  MessageHandler {
     class ActionBindings {
 
         Candle candle
-        ScriptStrategyRun run
+        DefaultStrategyRun run
 
         ActionBindings() {
         }
@@ -260,9 +268,32 @@ class StrategyRunnerService implements  MessageHandler {
 
         List<PortfolioChange> portfolioChanges = []
 
+        ActionBindings actionBindings
+
+        boolean firstCandle = true
+
+        Candle prevCandle = null
+
+        void nextCandle(Candle c) {
+
+            // update candle in bindings
+            this.actionBindings.candle = c
+
+            if(firstCandle) {
+                actionBindings.onFirstCandle(c)
+                firstCandle = false
+            }
+
+            run(c)
+
+            this.prevCandle = c
+        }
+
+        abstract void run(Candle c)
 
         void close() {
             this.backtestComplete = true
+            actionBindings.onLastCandle(this.prevCandle)
         }
 
         BacktestResult getResult() {
@@ -284,9 +315,40 @@ class StrategyRunnerService implements  MessageHandler {
 
     class CombinedStrategyRun extends DefaultStrategyRun implements StrategyRun {
 
+        List<Strategy> strategies = []
 
-        void nextCandle(Candle c) {
+        StrategyResult prevActionResult = StrategyResult.NONE
 
+        CombinedStrategyRun(IPortfolio portfolio, ActionBindings ab, boolean backtest) {
+            this.actionBindings = ab
+            this.actionBindings.run = this
+            this.portfolio = portfolio
+            this.backtest = backtest
+        }
+
+        void run(Candle c) {
+
+            Map<String, StrategyResult> results = [:]
+
+            strategies.each {
+                results.put(it.getName(), it.execute( c ))
+            }
+
+            boolean goLong = results.values().findAll { it == StrategyResult.LONG }.size() == results.size()
+
+            boolean goShort = results.values().findAll { it == StrategyResult.SHORT }.size() == results.size()
+
+            if(goLong && prevActionResult != StrategyResult.LONG) {
+
+                actionBindings.buy()
+                prevActionResult = StrategyResult.LONG
+            }
+
+            if(goShort && prevActionResult != StrategyResult.SHORT) {
+
+                actionBindings.sell()
+                prevActionResult = StrategyResult.SHORT
+            }
         }
 
     }
@@ -294,32 +356,19 @@ class StrategyRunnerService implements  MessageHandler {
 
     class ScriptStrategyRun extends DefaultStrategyRun implements StrategyRun {
 
-        Strategy strategy
+        ScriptStrategy strategy
         Map strategyParmas
-
-        ActionBindings actionBindings
 
         ScriptEngine engine
 
-        boolean firstCandle = true
-
-        Candle prevCandle = null
-
-        ScriptStrategyRun(ActionBindings ab, boolean backtest) {
+        ScriptStrategyRun(IPortfolio portfolio, ActionBindings ab, boolean backtest) {
             this.actionBindings = ab
             this.actionBindings.run = this
+            this.portfolio = portfolio
             this.backtest = backtest
         }
 
-        void nextCandle(Candle c) {
-
-            // update candle in bindings
-            this.actionBindings.candle = c
-
-            if(firstCandle) {
-                actionBindings.onFirstCandle(c)
-                firstCandle = false
-            }
+        void run(Candle c) {
 
             Bindings b = engine.getBindings(ScriptContext.ENGINE_SCOPE)
             b.put("market", market)
@@ -329,12 +378,6 @@ class StrategyRunnerService implements  MessageHandler {
 
             Object result  = invocable.invokeFunction("nextCandle", c, strategyParmas , this.actionBindings )
 
-            this.prevCandle = c
-        }
-
-        void close() {
-            super.close()
-            actionBindings.onLastCandle(this.prevCandle)
         }
     }
 

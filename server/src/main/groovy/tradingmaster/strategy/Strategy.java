@@ -4,5 +4,7 @@ import tradingmaster.model.Candle;
 
 public interface Strategy {
 
-    StrategyResult next(Candle c);
+    String getName();
+
+    StrategyResult execute(Candle c);
 }

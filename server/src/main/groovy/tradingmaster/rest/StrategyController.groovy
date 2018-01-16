@@ -3,6 +3,7 @@ package tradingmaster.rest
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
+import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.model.*
 import tradingmaster.service.StrategyRunnerService
 
@@ -15,21 +16,21 @@ import java.time.format.DateTimeFormatter
 class StrategyController {
 
     @Autowired
-    IStrategyStore store
+    MariaStrategyStore store
 
     @Autowired
     StrategyRunnerService strategyRunnerService
 
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
-    List<Strategy> list() {
+    List<ScriptStrategy> list() {
 
 
         return store.loadStrategies()
     }
 
     @RequestMapping(value = "/saveScript", method = RequestMethod.POST)
-    Strategy saveScript(@RequestBody Strategy strategy) {
+    ScriptStrategy saveScript(@RequestBody ScriptStrategy strategy) {
 
         log.info("Savaing startegy ${strategy.name} with id ${strategy.id}")
 

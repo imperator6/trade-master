@@ -13,7 +13,7 @@ class StrategyConfig {
 
     IPortfolio portfolio
 
-    IStrategy script
+    IScriptStrategy script
 
     ScriptEngine scriptHandler
 

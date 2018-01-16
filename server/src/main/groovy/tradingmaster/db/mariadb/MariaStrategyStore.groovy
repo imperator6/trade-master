@@ -11,7 +11,7 @@ import java.time.Duration
 import java.time.Instant
 
 @Commons
-class MariaStrategyStore implements IStrategyStore {
+class MariaStrategyStore {
 
     static SELECT_MAX_VERSION_QUERY =  """SELECT * from strategy s1
 WHERE s1.version = 
@@ -32,13 +32,13 @@ WHERE s1.version =
 
     }
 
-    List<IStrategy> loadStrategies() {
+    List<IScriptStrategy> loadStrategies() {
 
         Sql sql = new Sql(dataSource)
 
         def start = Instant.now()
 
-        List<IStrategy> strategies = []
+        List<IScriptStrategy> strategies = []
 
 
         sql.eachRow(SELECT_MAX_VERSION_QUERY.toString()) { row ->
@@ -52,7 +52,7 @@ WHERE s1.version =
         return strategies
     }
 
-    IStrategy saveStrategy(Strategy s) {
+    IScriptStrategy saveStrategy(ScriptStrategy s) {
 
         Sql sql = new Sql(dataSource)
 
@@ -75,7 +75,7 @@ WHERE s1.version =
         }
     }
 
-    IStrategy loadStrategyById(Number id, Number version) {
+    IScriptStrategy loadStrategyById(Number id, Number version) {
 
         Sql sql = new Sql(dataSource)
 
@@ -92,9 +92,9 @@ WHERE s1.version =
         return  rowToStrategy(row)
     }
 
-    IStrategy rowToStrategy(row) {
+    IScriptStrategy rowToStrategy(row) {
 
-        IStrategy s = new Strategy()
+        IScriptStrategy s = new ScriptStrategy()
         s.id = row.id
         s.name = row.name
         s.language = row.language

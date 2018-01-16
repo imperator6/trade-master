@@ -4,7 +4,7 @@ import tradingmaster.model.Candle
 import tradingmaster.strategy.indicator.Ema
 
 
-class Dema {
+class Dema implements Strategy {
 
     Ema shortEma
     Ema longEma
@@ -19,7 +19,11 @@ class Dema {
         this.down = settings.down
     }
 
-    StrategyResult next(Candle c) {
+    String getName() {
+        return "dema"
+    }
+
+    StrategyResult execute(Candle c) {
 
         def s = shortEma.update(c)
         def l = longEma.update(c)

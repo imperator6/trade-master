@@ -9,7 +9,6 @@ import tradingmaster.db.mariadb.MariaCandleStore;
 import tradingmaster.db.mariadb.MariaStrategyStore;
 import tradingmaster.db.mariadb.MariaTradeStore;
 import tradingmaster.model.ICandleStore;
-import tradingmaster.model.IStrategyStore;
 import tradingmaster.model.ITradeStore;
 
 @Configuration
@@ -31,7 +30,7 @@ public class MariaDbConfig {
     ICandleStore candleStore() { return new MariaCandleStore(); }
 
     @Bean
-    IStrategyStore strategyStore() {
+    MariaStrategyStore strategyStore() {
         return new MariaStrategyStore();
     }
 }
