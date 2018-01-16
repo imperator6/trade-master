@@ -11,6 +11,16 @@
     "down": -0.025
   },
 
+  "macd": {
+    "enabled": true,
+    "shortPeriod": 10,
+    "longPeriod": 21,
+    "signalPeriod": 9,
+    "up": 0.025,
+    "down": -0.025,
+    "persistence": 1
+  },
+
   "rsi": {
     "enabled": false,
     "interval": 14,

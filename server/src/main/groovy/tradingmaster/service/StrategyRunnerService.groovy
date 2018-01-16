@@ -16,6 +16,8 @@ import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.model.*
 import tradingmaster.strategy.Dema
 import tradingmaster.strategy.DemaSettings
+import tradingmaster.strategy.Macd
+import tradingmaster.strategy.MacdSettings
 import tradingmaster.strategy.Strategy
 import tradingmaster.strategy.StrategyResult
 
@@ -115,6 +117,8 @@ class StrategyRunnerService implements  MessageHandler {
                 run.nextCandle(c)
             }
 
+            log.info("Backtest task: all candles done!");
+
             run.close()
 
             // Todo... persit results?
@@ -168,11 +172,22 @@ class StrategyRunnerService implements  MessageHandler {
             run.market = new CryptoMarket( config.exchange, config.market)
 
             if(c.dema) {
-                DemaSettings demaSettings = c.dema as DemaSettings
-                run.strategies << new Dema(demaSettings)
+                DemaSettings demaSettings = new DemaSettings(c.dema) // as DemaSettings
+
+                if(demaSettings.enabled)
+                    run.strategies << new Dema(demaSettings)
+            }
+
+            if(c.macd) {
+                MacdSettings settings = new MacdSettings(c.macd)
+
+                if(settings.enabled)
+                    run.strategies << new Macd(settings)
             }
 
 
+
+            // Todo: set candle size from config!
             //config.setCandleSize()
 
 

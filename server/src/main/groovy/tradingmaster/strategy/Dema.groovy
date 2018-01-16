@@ -25,8 +25,8 @@ class Dema implements Strategy {
 
     StrategyResult execute(Candle c) {
 
-        def s = shortEma.update(c)
-        def l = longEma.update(c)
+        def s = shortEma.update(c.close)
+        def l = longEma.update(c.close)
 
         def diff = 100 * (s - l) / ((s + l) / 2)
 

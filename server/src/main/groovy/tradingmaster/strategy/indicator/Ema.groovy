@@ -13,9 +13,7 @@ class Ema implements Indicator<BigDecimal> {
         this.weight = weight
     }
 
-    BigDecimal update(Candle c) {
-
-        def price = c.close
+    BigDecimal update(BigDecimal price) {
 
         // The first time we can't calculate based on previous
         // ema, because we haven't calculated any yet.

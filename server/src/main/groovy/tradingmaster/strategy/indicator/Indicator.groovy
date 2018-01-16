@@ -1,9 +1,8 @@
 package tradingmaster.strategy.indicator;
 
-import tradingmaster.model.Candle;
 
-public interface Indicator<T> {
+interface Indicator<T> {
 
-    T update(Candle c);
+    T update(BigDecimal n)
 
 }
