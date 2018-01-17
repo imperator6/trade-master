@@ -38,7 +38,7 @@ public class GdaxExchangeImpl extends DefaultExchangeRestService {
 
 
     @Override
-    public HttpEntity<String> securityHeaders(String endpoint, String method, String jsonBody) {
+    public HttpEntity<String> securityHeaders(String uri, String endpoint, String method, String jsonBody) {
         HttpHeaders headers = new HttpHeaders();
 
         String timestamp = Instant.now().getEpochSecond() + "";

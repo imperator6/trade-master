@@ -14,16 +14,14 @@ import sun.font.ScriptRun
 import tradingmaster.core.CandleAggregator
 import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.model.*
-import tradingmaster.strategy.Dema
-import tradingmaster.strategy.DemaSettings
-import tradingmaster.strategy.Macd
-import tradingmaster.strategy.MacdSettings
-import tradingmaster.strategy.Strategy
-import tradingmaster.strategy.StrategyResult
+import tradingmaster.strategy.*
 
 import javax.annotation.PostConstruct
 import javax.script.*
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.temporal.ChronoUnit
 
 @Service
 @Commons
@@ -108,16 +106,39 @@ class StrategyRunnerService implements  MessageHandler {
 
         Runnable task = {
 
-            List<Candle> candles = candleStore.find( "1min", config.exchange, config.market, start, end)
+            List<TimeRange> ranges = []
 
-            candles = CandleAggregator.aggregate(config.candleSize, candles)
+            // split into smaller date ranges
+            Instant from = start.toInstant(ZoneOffset.UTC)
+            Instant to = end.toInstant(ZoneOffset.UTC)
 
-            // TODO: split in chuncks?
-            candles.each { c ->
-                run.nextCandle(c)
+            Instant current = from
+            while(current < to) {
+
+                Instant nextTo = current.plus( 14, ChronoUnit.DAYS)
+
+                if(nextTo > to) {
+                    nextTo = to
+                }
+
+                ranges << new TimeRange(current, nextTo)
+                current = nextTo.plus(1, ChronoUnit.MINUTES)
             }
 
-            log.info("Backtest task: all candles done!");
+            ranges.each { range ->
+
+                List<Candle> candles = candleStore.find( "1min", config.exchange, config.market, LocalDateTime.ofInstant(range.from, ZoneOffset.UTC), LocalDateTime.ofInstant(range.to, ZoneOffset.UTC))
+                candles = CandleAggregator.aggregate(config.candleSize, candles)
+
+                log.info("Processing ${candles.size()} candles from ${range.from} to ${range.to}")
+
+
+                candles.each { c ->
+                    run.nextCandle(c)
+                }
+            }
+
+            log.info("Backtest task: all candles done!")
 
             run.close()
 
@@ -365,7 +386,6 @@ class StrategyRunnerService implements  MessageHandler {
                 prevActionResult = StrategyResult.SHORT
             }
         }
-
     }
 
 

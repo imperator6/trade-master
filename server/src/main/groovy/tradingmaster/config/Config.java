@@ -9,11 +9,9 @@ import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
-import tradingmaster.core.CandleAggregator;
 import tradingmaster.core.CandleBuilder;
 import tradingmaster.core.CandleWriter;
 import tradingmaster.core.TradeWriter;
-import tradingmaster.db.couchdb.CouchDBClient;
 import tradingmaster.exchange.bittrex.BittrexApi11;
 
 import javax.annotation.PostConstruct;
@@ -52,10 +50,10 @@ public class Config {
     }
 
 
-   /* @Bean
+    @Bean
     BittrexApi11 bittrexApi11() {
-        return new BittrexApi11(env.getProperty("bittrex.apikey"), env.getProperty("bittrex.secret"), 1, 15);
-    } */
+        return new BittrexApi11(env.getProperty("bittrex.key"), env.getProperty("bittrex.secret"), 1, 15);
+    }
 
 
     @Bean

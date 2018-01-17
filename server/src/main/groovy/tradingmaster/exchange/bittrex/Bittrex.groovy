@@ -4,9 +4,10 @@ import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
-import org.springframework.web.util.UriComponentsBuilder
 import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.bittrex.model.BittrexMarketResponse
+import tradingmaster.exchange.bittrex.model.BittrexOrder
+import tradingmaster.exchange.bittrex.model.BittrexOrderResponse
 import tradingmaster.exchange.bittrex.model.BittrexTradeResponse
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.TradeBatch
@@ -23,6 +24,19 @@ class Bittrex extends DefaultExchageAdapter {
         super("Bittrex")
     }
 
+    List<BittrexOrder> getOrderHistory() {
+
+        BittrexOrderResponse res = exchange.get("account/getorderhistory", new ParameterizedTypeReference<BittrexOrderResponse>(){})
+
+        if(res.success) {
+            return res.getResult()
+        }
+
+        log.error("Error: ${res.getMessage()}")
+
+        return []
+    }
+
     List<CryptoMarket> getMakets() {
 
         BittrexMarketResponse info = exchange.get("public/getmarkets", new ParameterizedTypeReference<BittrexMarketResponse>(){})
@@ -33,11 +47,9 @@ class Bittrex extends DefaultExchageAdapter {
     @Override
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
 
-        UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath("public/getmarkethistory")
+        Map parmas = ["market": "${market.getCurrency()}-${market.getAsset()}".toString()]
 
-        urlBuilder.queryParam("market", "${market.getCurrency()}-${market.getAsset()}")
-
-        BittrexTradeResponse res = exchange.get(urlBuilder.toUriString(), new ParameterizedTypeReference<BittrexTradeResponse>(){})
+        BittrexTradeResponse res = exchange.get("public/getmarkethistory", parmas,  new ParameterizedTypeReference<BittrexTradeResponse>(){})
 
         List tradeList = []
 

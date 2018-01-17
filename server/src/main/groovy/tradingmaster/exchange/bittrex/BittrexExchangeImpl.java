@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import tradingmaster.exchange.DefaultExchangeRestService;
 
-import java.time.Instant;
+import java.util.Map;
 
 
 /**
@@ -30,17 +30,40 @@ public class BittrexExchangeImpl extends DefaultExchangeRestService {
         super(publicKey, secret, null, baseUrl, restTemplate);
     }
 
+    @Override
+    public Map addAdditionalParmas(String resourcePath, Map params) {
+
+        if(!(resourcePath.indexOf("public") > -1)) {
+            params.put("apikey", publicKey);
+            params.put("nonce", EncryptionUtility.generateNonce());
+        }
+        return params;
+    }
+
+//    @Override
+//    public String buildUrl(String resourcePath) {
+//
+//        UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
+//        urlBuilder.queryParam("apikey", publicKey);
+//        urlBuilder.queryParam("nonce", EncryptionUtility.generateNonce());
+//
+//        return getBaseUrl() + urlBuilder.toUriString();
+//    }
+
 
 
     @Override
-    public HttpEntity<String> securityHeaders(String endpoint, String method, String jsonBody) {
+    public HttpEntity<String> securityHeaders(String uri, String resourcePath, String method, String jsonBody) {
         HttpHeaders headers = new HttpHeaders();
 
-        String timestamp = Instant.now().getEpochSecond() + "";
-        String resource = endpoint.replace(getBaseUrl(), "");
+        //String timestamp = Instant.now().getEpochSecond() + "";
+        String resource = uri.toString().replace(getBaseUrl(), "");
 
-//        headers.add("accept", "application/json");
-//        headers.add("content-type", "application/json");
+        headers.add("apisign", EncryptionUtility.calculateHash(secret, uri, "HmacSHA512")); // Attaches signature as a header
+
+        //request.addHeader("apisign", EncryptionUtility.calculateHash(secret, url, encryptionAlgorithm)); // Attaches signature as a header
+        headers.add("accept", "application/json");
+        headers.add("content-type", "application/json");
 //        headers.add("CB-ACCESS-KEY", publicKey);
 //        headers.add("CB-ACCESS-SIGN", signature.generate(resource, method, jsonBody, timestamp));
 //        headers.add("CB-ACCESS-TIMESTAMP", timestamp);

@@ -10,9 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static org.springframework.http.HttpMethod.GET;
 
@@ -46,76 +49,143 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
     @Override
     public <T> T get(String resourcePath, ParameterizedTypeReference<T> responseType) {
+        return get(resourcePath, Collections.emptyMap(), responseType);
+    }
+
+    @Override
+    public <T> T get(String resourcePath, Map<String, ?> params, ParameterizedTypeReference<T> responseType) {
         try {
-            ResponseEntity<T> responseEntity = restTemplate.exchange(getBaseUrl() + resourcePath,
+
+            addAdditionalParmas(resourcePath, params);
+
+            UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
+
+            for(String key: params.keySet()){
+                Object value= params.get(key);
+                urlBuilder.queryParam(key, value);
+            }
+
+            String uri = buildUrl(urlBuilder.toUriString());
+            ResponseEntity<T> responseEntity = restTemplate.exchange(uri ,
                     GET,
-                    securityHeaders(resourcePath,
+                    securityHeaders(uri, resourcePath,
                     "GET",
                      ""),
                     responseType);
             return responseEntity.getBody();
         } catch (HttpClientErrorException ex) {
             log.error("GET request Failed for '" + resourcePath + "': " + ex.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("GET request Failed for '" + resourcePath + "': " + e.getMessage());
         }
         return null;
     }
 
     @Override
     public <T> List<T> getAsList(String resourcePath, ParameterizedTypeReference<T[]> responseType) {
-       T[] result = get(resourcePath, responseType);
+        T[] result = get(resourcePath, Collections.emptyMap(), responseType);
+
+        return result == null ? Arrays.asList() : Arrays.asList(result);
+    }
+
+    @Override
+    public <T> List<T> getAsList(String resourcePath, Map<String, ?> uriVariables, ParameterizedTypeReference<T[]> responseType) {
+       T[] result = get(resourcePath, uriVariables, responseType);
 
        return result == null ? Arrays.asList() : Arrays.asList(result);
     }
 
     @Override
     public <T> T pagedGet(String resourcePath,
+                          Map<String, ?> uriVariables,
                           ParameterizedTypeReference<T> responseType,
                           String beforeOrAfter,
                           Integer pageNumber,
                           Integer limit) {
         resourcePath += "?" + beforeOrAfter + "=" + pageNumber + "&limit=" + limit;
-        return get(resourcePath, responseType);
+        return get(resourcePath, uriVariables, responseType);
     }
 
     @Override
     public <T> List<T> pagedGetAsList(String resourcePath,
+                                      Map<String, ?> uriVariables,
                           ParameterizedTypeReference<T[]> responseType,
                           String beforeOrAfter,
                           Integer pageNumber,
                           Integer limit) {
-        T[] result = pagedGet(resourcePath, responseType, beforeOrAfter, pageNumber, limit );
+        T[] result = pagedGet(resourcePath, uriVariables, responseType, beforeOrAfter, pageNumber, limit );
         return result == null ? Arrays.asList() : Arrays.asList(result);
     }
 
     @Override
     public <T> T delete(String resourcePath, ParameterizedTypeReference<T> responseType) {
+        return delete(resourcePath, Collections.emptyMap(), responseType);
+    }
+
+    @Override
+    public <T> T delete(String resourcePath, Map<String, ?> params, ParameterizedTypeReference<T> responseType) {
         try {
-            ResponseEntity<T> response = restTemplate.exchange(getBaseUrl() + resourcePath,
+            addAdditionalParmas(resourcePath, params);
+
+            UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
+
+            for(String key: params.keySet()){
+                Object value= params.get(key);
+                urlBuilder.queryParam(key, value);
+            }
+
+            String uri = buildUrl(urlBuilder.toUriString());
+            ResponseEntity<T> response = restTemplate.exchange(uri,
                 HttpMethod.DELETE,
-                securityHeaders(resourcePath, "DELETE", ""),
+                securityHeaders(uri, resourcePath, "DELETE", ""),
                 responseType);
             return response.getBody();
         } catch (HttpClientErrorException ex) {
             log.error("DELETE request Failed for '" + resourcePath + "': " + ex.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("DELETE request Failed for '" + resourcePath + "': " + e.getMessage());
         }
+
         return null;
     }
 
     @Override
-    public <T, R> T post(String resourcePath,  ParameterizedTypeReference<T> responseType, R jsonObj) {
+    public <T, R> T post(String resourcePath, ParameterizedTypeReference<T> responseType, R jsonObj) {
+       return post(resourcePath, Collections.emptyMap(), responseType, jsonObj);
+    }
+
+    @Override
+    public <T, R> T post(String resourcePath,  Map<String, ?> params, ParameterizedTypeReference<T> responseType, R jsonObj) {
         Gson gson = new Gson();
         String jsonBody = gson.toJson(jsonObj);
-
         try {
-            ResponseEntity<T> response = restTemplate.exchange(getBaseUrl() + resourcePath,
+
+            addAdditionalParmas(resourcePath, params);
+
+            UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
+            for(String key: params.keySet()){
+                Object value= params.get(key);
+                urlBuilder.queryParam(key, value);
+            }
+
+            String uri = buildUrl(urlBuilder.toUriString());
+
+
+            ResponseEntity<T> response = restTemplate.exchange(uri,
                     HttpMethod.POST,
-                    securityHeaders(resourcePath, "POST", jsonBody),
+                    securityHeaders(uri, resourcePath, "POST", jsonBody),
                     responseType);
             return response.getBody();
         } catch (HttpClientErrorException ex) {
             log.error("POST request Failed for '" + resourcePath + "': " + ex.getResponseBodyAsString());
+        }  catch (Exception e) {
+            log.error("POST request Failed for '" + resourcePath + "': "  + e.getMessage());
         }
         return null;
+    }
+
+    public String buildUrl(String resourcePath) {
+        return getBaseUrl() + resourcePath;
     }
 
     @Override
@@ -123,8 +193,12 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
         return baseUrl;
     }
 
+    public Map addAdditionalParmas(String resourcePath, Map params) {
+        return params;
+    }
+
     @Override
-    public abstract HttpEntity<String> securityHeaders(String endpoint, String method, String jsonBody);
+    public abstract HttpEntity<String> securityHeaders(String uri, String resourcePath, String method, String jsonBody);
 
     protected void curlRequest(String method, String jsonBody, HttpHeaders headers, String resource) {
         String curlTest = "curl ";

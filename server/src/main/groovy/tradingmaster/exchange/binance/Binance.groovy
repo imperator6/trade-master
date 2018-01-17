@@ -1,20 +1,13 @@
 package tradingmaster.exchange.binance
 
-import groovy.transform.Memoized
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
-import org.springframework.web.util.UriComponentsBuilder
 import tradingmaster.exchange.DefaultExchageAdapter
-import tradingmaster.exchange.binance.model.BinanceCandle
 import tradingmaster.exchange.binance.model.BinanceProductInfo
 import tradingmaster.exchange.binance.model.BinanceTrade
-import tradingmaster.model.Candle
-import tradingmaster.model.CandleInterval
-import tradingmaster.model.CryptoMarket
-import tradingmaster.model.IHistoricDataExchangeAdapter
-import tradingmaster.model.TradeBatch
+import tradingmaster.model.*
 /**
  *  https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
  */
@@ -33,21 +26,20 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
     @Override
     List<Candle> getCandles(Date startDate, Date endDate, CryptoMarket market, CandleInterval interval) {
 
-        UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath("api/v1/klines")
 
-        urlBuilder.queryParam("symbol", "${market.getAsset()}${market.getCurrency()}")
-
-        urlBuilder.queryParam("interval", interval.getKey())
+        Map params = [:]
+        params.put("symbol", "${market.getAsset()}${market.getCurrency()}".toString())
+        params.put("interval", interval.getKey())
 
         if(startDate) {
-            urlBuilder.queryParam("startTime", startDate.getTime())
+            params.put("startTime", startDate.getTime())
         }
 
         if(endDate) {
-            urlBuilder.queryParam("endTime", startDate.getTime())
+            params.put("endTime", startDate.getTime())
         }
 
-        ArrayList[] res = exchange.getAsList(urlBuilder.toUriString(), new ParameterizedTypeReference<ArrayList[]>(){})
+        ArrayList[] res = exchange.getAsList("api/v1/klines", params ,  new ParameterizedTypeReference<ArrayList[]>(){})
 
         List<Candle> candles = res.collect {
 
@@ -81,13 +73,10 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
     @Override
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
 
-        UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath("api/v1/aggTrades")
+        Map params = [:]
+        params.put("symbol", "${market.getAsset()}${market.getCurrency()}".toString())
 
-        urlBuilder.queryParam("symbol", "${market.getAsset()}${market.getCurrency()}")
-
-
-        List<BinanceTrade> trades = exchange.getAsList(urlBuilder.toUriString(), new ParameterizedTypeReference<BinanceTrade[]>(){})
-
+        List<BinanceTrade> trades = exchange.getAsList("api/v1/aggTrades", params, new ParameterizedTypeReference<BinanceTrade[]>(){})
 
         return new TradeBatch(market, trades)
     }
