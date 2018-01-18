@@ -94,7 +94,7 @@ export default class ChartStore {
         });
 
         // configure plot options
-        if (index == 0 && this.seriesType == "candlestick" && false) {
+        if (index == 0 && this.seriesType == "candlestick") {
           let period = this.rootStore.marketSelectionStore.selectedPeriod;
 
           let periodSplit = period.split(" ");
@@ -146,6 +146,8 @@ export default class ChartStore {
       plotOptions: plotOptions,
       series: series
     };
+
+    console.log(plotOptions)
   };
 
   @action

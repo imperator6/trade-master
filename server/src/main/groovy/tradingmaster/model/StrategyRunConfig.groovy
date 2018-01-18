@@ -21,7 +21,9 @@ class StrategyRunConfig {
 
     Integer candleSize
 
-    StrategyConfig config
+    Integer warmup
+
+    //StrategyConfig config
 
     boolean backtest = false
 

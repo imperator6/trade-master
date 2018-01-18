@@ -140,18 +140,20 @@ class StrategyResults extends React.Component {
         type="card"
         activeKey={this.store.activeTab}
       >
-        <TabPane tab="Parameter" key="param">
-          Parmaeter TODO....
+        
+        <TabPane tab="Market Watcher" key="watcher">
+          <MarketWatcherControl />
         </TabPane>
         <TabPane tab="Backtest Result" key="result">
           <Scrollarea>
             <Timeline>{timeLineItems}</Timeline>
           </Scrollarea>
         </TabPane>
-
-        <TabPane tab="Market Watcher" key="watcher">
-          <MarketWatcherControl />
+        <TabPane tab="Parameter" key="param">
+          Parmaeter TODO....
         </TabPane>
+
+        
       </Tabs>
     );
   }

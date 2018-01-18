@@ -74,8 +74,6 @@ class StrategyController {
     @RequestMapping(value = "/backtestResults", method = RequestMethod.GET)
     RestResponse<BacktestResult> backtestResults(@RequestParam String backtestId) {
 
-        log.info("backtestResults ${backtestId}")
-
         BacktestResult result = strategyRunnerService.getBacktestResults(backtestId)
 
         if(result == null) {

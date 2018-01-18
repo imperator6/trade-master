@@ -1,19 +1,21 @@
 package tradingmaster.strategy
 
+import groovy.transform.CompileStatic
 import groovy.util.logging.Commons
 import tradingmaster.model.Candle
 import tradingmaster.strategy.indicator.MacdIndicator
 
+@CompileStatic
 @Commons
 class Macd implements Strategy {
 
     MacdSettings settings
     MacdIndicator indicator
 
-    def duration = 0
-    def direction = 'up'
-    def persisted = false
-    def adviced = false
+    Integer duration = 0
+    String direction = 'up'
+    boolean persisted = false
+    boolean adviced = false
 
 
     Macd(MacdSettings s) {

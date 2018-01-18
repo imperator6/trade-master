@@ -1,5 +1,8 @@
 package tradingmaster.strategy
 
+import groovy.transform.CompileStatic
+
+@CompileStatic
 class MacdSettings {
 
     Boolean enabled = true

@@ -50,10 +50,10 @@ public class JwtAuthenticationTokenFilter extends OncePerRequestFilter {
                 authToken = new String(authToken.substring(beginIndex).getBytes(), UTF_8);
                 SecurityContext context = securityAppContext.getContext();
                 if(context.getAuthentication() == null) {
-                    logger.info("Checking authentication for token " + authToken);
+                    logger.debug("Checking authentication for token " + authToken);
                     User u = userService.validateUser(authToken, request.getRemoteAddr());
                     if(u != null) {
-                        logger.info("User " + u.getUsername() + " found.");
+                        logger.debug("User " + u.getUsername() + " found.");
                         Authentication authentication = usernamePasswordAuthenticationTokenFactory.create(u);
                         context.setAuthentication(authentication);
                     }

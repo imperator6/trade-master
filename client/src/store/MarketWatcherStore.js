@@ -62,6 +62,8 @@ class MarketWatcherStore {
         .catch(function(error) {
           console.log(error);
         });
+
+        this.load();
     }
 
     addToChart = (watcher) => {
