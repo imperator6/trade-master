@@ -8,7 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import tradingmaster.model.User;
+import tradingmaster.db.entity.User;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;

@@ -1,8 +1,7 @@
 package tradingmaster.db;
 
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import tradingmaster.model.MarketWatcher;
+import tradingmaster.db.entity.MarketWatcher;
 
 import java.util.List;
 

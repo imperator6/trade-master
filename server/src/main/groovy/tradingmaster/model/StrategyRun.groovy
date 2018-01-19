@@ -1,10 +1,10 @@
 package tradingmaster.model;
 
-public interface StrategyRun {
+interface StrategyRun {
 
-    void nextCandle(Candle c);
+    void nextCandle(Candle c)
 
-    void close();
+    void close()
 
-    BacktestResult getResult();
+    BacktestResult getResult()
 }

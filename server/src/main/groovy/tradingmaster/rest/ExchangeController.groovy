@@ -11,7 +11,7 @@ import tradingmaster.db.MarketWatcherRepository
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.Exchange
 import tradingmaster.model.IExchangeAdapter
-import tradingmaster.model.MarketWatcher
+import tradingmaster.db.entity.MarketWatcher
 import tradingmaster.model.RestResponse
 
 @RestController

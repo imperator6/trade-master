@@ -7,7 +7,7 @@ import tradingmaster.model.IPortfolio
 import tradingmaster.model.PortfolioChange
 import tradingmaster.model.TradingSignal
 
-abstract class DefaultStrategyRun {
+abstract class DefaultStrategyRun implements IStrategyRunner {
 
     boolean backtest = false
     boolean backtestComplete = false

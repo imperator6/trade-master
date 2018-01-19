@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component
 import tradingmaster.model.BuySell
 import tradingmaster.model.Candle
 import tradingmaster.model.TradingSignal
-import tradingmaster.service.PaperPortfolioService
+import tradingmaster.service.TradeBotManager
 
 @Component
 @Scope(value='prototype')
@@ -15,7 +15,7 @@ import tradingmaster.service.PaperPortfolioService
 class ActionBindings {
 
     @Autowired
-    PaperPortfolioService paperPortfolioService
+    TradeBotManager paperPortfolioService
 
     Candle candle
     DefaultStrategyRun run

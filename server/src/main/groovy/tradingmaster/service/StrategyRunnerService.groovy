@@ -15,13 +15,12 @@ import tradingmaster.core.CandleAggregator
 import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.model.*
 import tradingmaster.strategy.*
-import tradingmaster.strategy.runner.ActionBindings
 import tradingmaster.strategy.runner.CombinedStrategyRun
 import tradingmaster.strategy.runner.DefaultStrategyRun
+import tradingmaster.strategy.runner.IStrategyRunner
 import tradingmaster.strategy.runner.ScriptStrategyRun
 
 import javax.annotation.PostConstruct
-import javax.script.*
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -51,7 +50,7 @@ class StrategyRunnerService implements  MessageHandler {
     ApplicationContext ctx
 
     @Autowired
-    PaperPortfolioService paperPortfolioService
+    TradeBotManager tradeBotManager
 
     @PostConstruct
     init() {
@@ -82,7 +81,7 @@ class StrategyRunnerService implements  MessageHandler {
         log.info("Starting a new ScriptStrategy!")
 
         // ToDo... put a real portfolio here
-        IPortfolio portfolio = ctx.getBean(PaperPortfolio.class)
+        IPortfolio portfolio = ctx.getBean(TradeBot.class)
         //portfolio.init([:])
 
 
@@ -97,7 +96,7 @@ class StrategyRunnerService implements  MessageHandler {
 
         CryptoMarket market =  new CryptoMarket(config.exchange, config.market)
 
-        // TODO: pass PaperPortfolio settings ...
+        // TODO: pass TradeBot settings ...
         Map portfolioParams = [:]
         portfolioParams.assetName = market.getAsset()
         portfolioParams.currencyName = market.getCurrency()
@@ -173,39 +172,42 @@ class StrategyRunnerService implements  MessageHandler {
         ScriptStrategy strategy = strategyStore.loadStrategyById(config.getStrategyId(), null)
 
         // TODO.. load real portfolio if no a backtest
-        PaperPortfolio portfolio = ctx.getBean(PaperPortfolio.class)
+        TradeBot tradeBot = ctx.getBean(TradeBot.class)
 
-        StrategyRun run = null
+        IStrategyRunner run = null
 
         if(strategy.script.indexOf("function(candle, params, actions)") > -1) {
 
-            paperPortfolioService.init(paramMap, portfolio)
-            run = new ScriptStrategyRun(portfolio, ctx.getBean(ActionBindings.class), backtest)
-            run.market = new CryptoMarket( config.exchange, config.market)
+            // not supported anymore
+            throw new RuntimeException("Scripts are not supported at the moment!")
 
-            run.strategy = strategy
-            run.strategyParmas = config.strategyParams
-
-            ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn")
-            engine.eval(strategy.getScript())
-
-            run.engine = engine
+//            paperPortfolioService.init(paramMap, tradeBot, backtest)
+//            run = new ScriptStrategyRun(tradeBot, ctx.getBean(ActionBindings.class), backtest)
+//            run.market = new CryptoMarket( config.exchange, config.market)
+//
+//            run.strategy = strategy
+//            run.strategyParmas = config.strategyParams
+//
+//            ScriptEngine engine = new ScriptEngineManager().getEngineByName("nashorn")
+//            engine.eval(strategy.getScript())
+//
+//            run.engine = engine
 
         } else {
             // config run
 
             paramMap = new JsonSlurper().parseText(strategy.getScript())
-            paperPortfolioService.init(paramMap, portfolio)
 
             config.strategyParams = paramMap
             config.exchange = paramMap.exchange
-            config.market = "${paramMap.currencyName}-${paramMap.assetName}"
+            //config.market = "${paramMap.currencyName}-${paramMap.assetName}"
             config.candleSize = CandleInterval.parse(paramMap.candleSize).getMinuteValue()
             config.warmup = paramMap.warmup
 
+            tradeBotManager.init(paramMap, tradeBot, backtest)
 
-            run = new CombinedStrategyRun(portfolio, ctx.getBean(ActionBindings.class), backtest)
-            run.market = new CryptoMarket( config.exchange, config.market)
+            run = ctx.getBean(CombinedStrategyRun.class)
+            run.init(tradeBot)
 
             if(paramMap.dema) {
                 DemaSettings demaSettings = new DemaSettings(paramMap.dema) // as DemaSettings

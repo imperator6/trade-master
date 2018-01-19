@@ -1,7 +1,13 @@
 {
-
+  "baseCurrency": "ETH",
   "candlesize": "15m",
   "warmup": 5,
+
+  "backtest": {
+    "startBalance": 1,
+    "fee": 0.25
+
+  },
 
   "dema": {
     "enabled": true,

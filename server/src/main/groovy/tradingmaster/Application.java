@@ -33,38 +33,6 @@ public class Application {
 
         });
 
-        //maketWatcherService.createMarketWatcher(new CryptoMarket("Bittrex","USDT", "NEO"), 10000 );
-
-      //  maketWatcherService.createMarketWatcher(new CryptoMarket("Bittrex","USDT", "ETH"),  10000 );
-
-       // maketWatcherService.createMarketWatcher(new CryptoMarket("Bittrex","BTC", "ETH"),  10000 );
-
-        //maketWatcherService.createMarketWatcher(new CryptoMarket("Gdax","USD", "BTC"),  10000 );
-
-        //maketWatcherService.createMarketWatcher(new CryptoMarket("Gdax","USD", "ETH"),  10000 );
-
-        //maketWatcherService.createMarketWatcher(new CryptoMarket("Gdax","BTC", "ETH"),  10000 );
-
-        //maketWatcherService.createMarketWatcher(new CryptoMarket("Bittrex","USDT", "BTC"),  10000 );
-
-        //maketWatcherService.createMarketWatcher(new CryptoMarket("Bittrex","USDT", "LTC"),  10000 );
-
-
-
-
-
-
-       /* PublishSubscribeChannel tradeChannel = ctx.getBean("tradeChannel", PublishSubscribeChannel.class);
-
-        tradeChannel.subscribe(new CandleBuilder());
-
-        tradeChannel.subscribe(new TradeWriter()); */
-
-
-
-
-       // System.exit(0);
-
 
     }
 

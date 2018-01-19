@@ -84,7 +84,9 @@ public class Config {
     @Bean
     public TradeWriter tradeWriter() {
         TradeWriter tw = new TradeWriter();
-        tradeChannel().subscribe(tw);
+        // TODO: add property to active trade writing
+        if(false)
+           tradeChannel().subscribe(tw);
         return tw;
     }
 

@@ -8,7 +8,7 @@ import java.time.Duration
 @ToString
 class Candle {
 
-    IMarket market
+    CryptoMarket market
 
     String period
 

@@ -10,5 +10,11 @@ public interface IExchangeAdapter {
 
     List<CryptoMarket> getMakets();
 
+    List<Balance> getBalances();
+
+    Balance getBalance(String currency);
+
+
+
 
 }

@@ -2,7 +2,6 @@ package tradingmaster.model
 
 import groovy.transform.ToString
 import groovy.util.logging.Commons
-import org.springframework.context.annotation.Scope
 import org.springframework.stereotype.Component
 
 @Commons
@@ -13,6 +12,7 @@ class Position {
     Integer id
 
     String extbuyOrderId
+
     String extSellOrderId
 
     Date date
@@ -21,13 +21,15 @@ class Position {
     String assetName
 
     BigDecimal amount
-    BigDecimal cost
+
 
     BigDecimal buyRate
     BigDecimal buyFee
+    BigDecimal totalBuy
 
     BigDecimal sellRate
     BigDecimal sellFee
+    BigDecimal totalSell
 
     BigDecimal total
     BigDecimal result // result in percent
@@ -35,6 +37,7 @@ class Position {
     String triggerName
 
     boolean open = true
+
     boolean hold = false
 
 

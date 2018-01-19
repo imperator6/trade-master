@@ -1,4 +1,4 @@
-package tradingmaster.model;
+package tradingmaster.db.entity;
 
 import javax.persistence.*;
 import java.util.Date;
