@@ -53,7 +53,7 @@ class HamsterSignalPublisher implements MessageHandler {
                 store.save(it)
 
                 // now we have the id - let's publich a signals
-               // if(it.getSignalDate() > this.applicationStartDate)
+               if(it.getSignalDate() > this.applicationStartDate)
                     publishHamsterSignal(it)
             }
         }
