@@ -8,6 +8,7 @@ import org.springframework.core.task.TaskExecutor;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.channel.MessageChannels;
+import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import tradingmaster.core.CandleBuilder;
 import tradingmaster.core.CandleWriter;
@@ -19,6 +20,7 @@ import java.util.TimeZone;
 
 @Configuration
 @EnableIntegration
+@EnableAsync
 public class Config {
 
     @Autowired
@@ -49,6 +51,15 @@ public class Config {
         return pool;
     }
 
+    @Bean
+    TaskExecutor orderTaskExecutor() {
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.setCorePoolSize(5);
+        pool.setMaxPoolSize(25);
+        pool.setWaitForTasksToCompleteOnShutdown(true);
+        return pool;
+    }
+
 
     @Bean
     BittrexApi11 bittrexApi11() {
@@ -63,6 +74,16 @@ public class Config {
 
     @Bean
     public PublishSubscribeChannel candelChannel1Minute() {
+        return MessageChannels.publishSubscribe().get();
+    }
+
+    @Bean
+    public PublishSubscribeChannel signalChannel() {
+        return MessageChannels.publishSubscribe().get();
+    }
+
+    @Bean
+    public PublishSubscribeChannel hamsterSignalChannel() {
         return MessageChannels.publishSubscribe().get();
     }
 

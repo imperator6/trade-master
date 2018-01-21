@@ -1,7 +1,6 @@
 package tradingmaster.strategy;
 
 import groovy.transform.CompileStatic;
-import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import tradingmaster.model.Candle;
 import tradingmaster.strategy.indicator.Ema;
 
@@ -42,7 +41,7 @@ public class Dema implements Strategy {
             return StrategyResult.LONG;
         } else {
 
-            return StrategyResult.NONE;
+            return StrategyResult.NEUTRAL;
         }
 
     }

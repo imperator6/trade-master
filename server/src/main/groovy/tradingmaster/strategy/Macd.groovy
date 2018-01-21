@@ -81,7 +81,7 @@ class Macd implements Strategy {
 
             log.debug('In no trend')
 
-            return StrategyResult.NONE
+            return StrategyResult.NEUTRAL
         }
     }
 

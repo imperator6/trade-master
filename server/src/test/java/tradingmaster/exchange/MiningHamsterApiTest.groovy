@@ -1,6 +1,5 @@
 package tradingmaster.exchange
 
-import com.tictactec.ta.lib.Core
 import junit.framework.TestCase
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -9,38 +8,35 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import tradingmaster.exchange.bittrex.Bittrex
 import tradingmaster.exchange.bittrex.BittrexApi11
+import tradingmaster.exchange.mininghamster.HamsterSignalRepository
+import tradingmaster.exchange.mininghamster.MiningHamster
 import tradingmaster.model.CryptoMarket
 
 @RunWith(value = SpringRunner.class)
 @SpringBootTest
-class BittrexApiTest extends TestCase {
+class MiningHamsterApiTest extends TestCase {
 
     @Autowired
-    Bittrex bittrex
+    MiningHamster miningHamster
 
     @Autowired
-    BittrexApi11 bittrexApi11
+    HamsterSignalRepository repo
 
 
     @Test
     void testgetMarkets() {
-        assertTrue( !bittrex.getMakets().isEmpty() )
+        List signals = miningHamster.getLatestSignals()
+
+
+        def s2 = repo.findAll()
+
+        assertTrue( !signals.isEmpty() )
+
+
+
+
     }
 
-    @Test
-    void testgetTrades() {
-        assertTrue( !bittrex.getTrades( null, null, new CryptoMarket("Bittrex", "BTC", "ETH")).trades.isEmpty() )
-    }
-
-    @Test
-    void testGetOrderHistory() {
-
-        ///def list = bittrexApi11.getOrderHistory("")
-
-        def orders = bittrex.getOrderHistory()
-
-        assertTrue( !orders.isEmpty() )
-    }
 
 
 

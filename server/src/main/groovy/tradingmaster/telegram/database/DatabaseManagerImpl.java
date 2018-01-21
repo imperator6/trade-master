@@ -9,11 +9,10 @@ import org.telegram.bot.structure.IUser;
 import tradingmaster.telegram.structure.ChatImpl;
 import tradingmaster.telegram.structure.User;
 
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
 import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Ruben Bermudez
@@ -24,6 +23,12 @@ import java.util.HashMap;
 public class DatabaseManagerImpl implements DatabaseManager {
     private static final String LOGTAG = "DATABASEMANAGER";
     private static volatile ConnectionDB connetion;
+
+    Map<Integer, Chat> chatMap = new ConcurrentHashMap();
+
+    Map<Integer, int[]>  diffrencesMap = new ConcurrentHashMap();
+
+    Map<Integer, User> userMap = new ConcurrentHashMap<>();
 
     /**
      * Private constructor (due to Singleton)
@@ -70,20 +75,7 @@ public class DatabaseManagerImpl implements DatabaseManager {
      */
     @Override
     public @Nullable IUser getUserById(int userId) {
-        User user = null;
-        try {
-            final PreparedStatement preparedStatement = connetion.getPreparedStatement("SELECT * FROM Users WHERE userId= ?");
-            preparedStatement.setInt(1, userId);
-            final ResultSet result = preparedStatement.executeQuery();
-            if (result.next()) {
-                user = new User(userId);
-                user.setUserHash(result.getLong("userHash"));
-            }
-            result.close();
-        } catch (SQLException e) {
-            BotLogger.error(LOGTAG, e);
-        }
-        return user;
+        return userMap.get(userId);
     }
 
     /**
@@ -94,59 +86,20 @@ public class DatabaseManagerImpl implements DatabaseManager {
      * @see User
      */
     public boolean addUser(@NotNull User user) {
-        int updatedRows = 0;
-        try {
-            final PreparedStatement preparedStatement = connetion.getPreparedStatement("INSERT INTO Users (userId, userHash) " +
-                    "VALUES (?,?)");
-            preparedStatement.setInt(1, user.getUserId());
-            if ((user.getUserHash() == null) || (user.getUserHash() == 0L)) {
-                preparedStatement.setNull(2, Types.NUMERIC);
-            } else {
-                preparedStatement.setLong(2, user.getUserHash());
-            }
-            updatedRows = preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            BotLogger.error(LOGTAG, e);
-        }
-        return updatedRows > 0;
+
+        userMap.put(user.getUserId(), user);
+        return true;
     }
 
     public boolean updateUser(@NotNull User user) {
-        int updatedRows = 0;
-        try {
-            final PreparedStatement preparedStatement = connetion.getPreparedStatement("UPDATE Users SET userHash=? " +
-                    "WHERE userId=?");
-            if ((user.getUserHash() == null) || (user.getUserHash() == 0L)) {
-                preparedStatement.setNull(1, Types.NUMERIC);
-            } else {
-                preparedStatement.setLong(1, user.getUserHash());
-            }
-            preparedStatement.setInt(2, user.getUserId());
-            updatedRows = preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            BotLogger.error(LOGTAG, e);
-        }
-        return updatedRows > 0;
+        userMap.put(user.getUserId(), user);
+        return true;
     }
 
     @Override
     public @Nullable Chat getChatById(int chatId) {
-        ChatImpl channel = null;
-        try {
-            final PreparedStatement preparedStatement = connetion.getPreparedStatement("SELECT * FROM Chat WHERE id= ?");
-            preparedStatement.setInt(1, chatId);
-            final ResultSet result = preparedStatement.executeQuery();
-            if (result.next()) {
-                channel = new ChatImpl(chatId);
-                channel.setAccessHash(result.getLong("accessHash"));
-                channel.setChannel(result.getBoolean("isChannel"));
-            }
-            result.close();
-        } catch (SQLException e) {
-            BotLogger.severe(LOGTAG, e);
-        }
 
-        return channel;
+        return chatMap.get(chatId);
     }
 
     /**
@@ -157,73 +110,23 @@ public class DatabaseManagerImpl implements DatabaseManager {
      * @see User
      */
     public boolean addChat(@NotNull ChatImpl chat) {
-        int updatedRows = 0;
-        try {
-            final PreparedStatement preparedStatement = connetion.getPreparedStatement("INSERT INTO Chat (id, accessHash, isChannel) " +
-                    "VALUES (?,?,?)");
-            preparedStatement.setInt(1, chat.getId());
-            if (chat.getAccessHash() == null) {
-                preparedStatement.setNull(2, Types.BIGINT);
-            } else {
-                preparedStatement.setLong(2, chat.getAccessHash());
-            }
-            preparedStatement.setBoolean(3, chat.isChannel());
-            updatedRows = preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            BotLogger.error(LOGTAG, e);
-        }
-        return updatedRows > 0;
+        this.chatMap.put(chat.getId(), chat);
+        return true;
     }
 
     public boolean updateChat(ChatImpl chat) {
-        int updatedRows = 0;
-        try {
-            final PreparedStatement preparedStatement = connetion.getPreparedStatement("UPDATE Chat SET accessHash=?, isChannel=? " +
-                    "WHERE id=?");
-            preparedStatement.setLong(1, chat.getAccessHash());
-            preparedStatement.setBoolean(2, chat.isChannel());
-            preparedStatement.setInt(3, chat.getId());
-            updatedRows = preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            BotLogger.error(LOGTAG, e);
-        }
-        return updatedRows > 0;
+        return addChat(chat);
     }
 
     @Override
     public @NotNull HashMap<Integer, int[]> getDifferencesData() {
-        final HashMap<Integer, int[]> differencesDatas = new HashMap<>();
-        try {
-            final PreparedStatement preparedStatement = connetion.getPreparedStatement("SELECT * FROM DifferencesData");
-            final ResultSet result = preparedStatement.executeQuery();
-            while (result.next()) {
-                final int[] differencesData = new int[3];
-                differencesData[0] = result.getInt("pts");
-                differencesData[1] = result.getInt("date");
-                differencesData[2] = result.getInt("seq");
-                differencesDatas.put(result.getInt("botId"), differencesData);
-            }
-            result.close();
-        } catch (SQLException e) {
-            BotLogger.error(LOGTAG,e);
-        }
-        return differencesDatas;
+        return new HashMap(diffrencesMap);
     }
 
     @Override
     public boolean updateDifferencesData(int botId, int pts, int date, int seq) {
-        int updatedRows = 0;
-        try {
-            final PreparedStatement preparedStatement = connetion.getPreparedStatement("REPLACE INTO DifferencesData (botId, pts, date, seq) VALUES (?, ?, ?, ?);");
-            preparedStatement.setInt(1, botId);
-            preparedStatement.setInt(2, pts);
-            preparedStatement.setInt(3, date);
-            preparedStatement.setInt(4, seq);
-            updatedRows = preparedStatement.executeUpdate();
-        } catch (SQLException e) {
-            BotLogger.error(LOGTAG,e);
-        }
-        return updatedRows > 0;
+        diffrencesMap.put(botId, new int[]{ pts, date, seq });
+        return true;
     }
 
     @Override

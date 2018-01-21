@@ -34,6 +34,7 @@ public class ChatsHandler implements IChatsHandler {
     private void onAbsChat(TLAbsChat chat) {
         if (chat instanceof TLChannel) {
             onChannel((TLChannel) chat);
+            BotLogger.warn( "Chat", ((TLChannel) chat).getTitle());
         } else if (chat instanceof TLChannelForbidden) {
             onChannelForbidden((TLChannelForbidden) chat);
         } else if (chat instanceof TLChat) {

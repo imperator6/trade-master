@@ -12,10 +12,10 @@ import org.springframework.integration.endpoint.AbstractMessageSource
 import org.springframework.messaging.MessageChannel
 import org.springframework.stereotype.Service
 import tradingmaster.db.MarketWatcherRepository
+import tradingmaster.db.entity.MarketWatcher
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.IExchangeAdapter
-import tradingmaster.db.entity.MarketWatcher
 import tradingmaster.model.TradeBatch
 
 @Service

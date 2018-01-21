@@ -4,7 +4,6 @@ import tradingmaster.model.Candle
 import tradingmaster.model.IPortfolio
 import tradingmaster.model.ScriptStrategy
 import tradingmaster.model.StrategyRun
-import tradingmaster.model.TradeBot
 
 import javax.script.Bindings
 import javax.script.Invocable
@@ -37,8 +36,5 @@ class ScriptStrategyRun extends DefaultStrategyRun implements StrategyRun {
 
     }
 
-    @Override
-    void init(TradeBot bot) {
 
-    }
 }

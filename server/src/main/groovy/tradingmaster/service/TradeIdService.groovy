@@ -3,8 +3,8 @@ package tradingmaster.service
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
-import tradingmaster.model.ITradeStore
 import tradingmaster.model.IMarket
+import tradingmaster.model.ITradeStore
 
 @Service
 @Commons

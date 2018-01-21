@@ -1,13 +1,14 @@
 package tradingmaster.exchange.bittrex;
 
-import java.io.UnsupportedEncodingException;
-import java.security.*;
-import java.util.Base64;
+import org.apache.commons.codec.binary.Hex;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
-
-import org.apache.commons.codec.binary.Hex;
+import java.io.UnsupportedEncodingException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 public class EncryptionUtility {
 

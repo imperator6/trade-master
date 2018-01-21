@@ -9,8 +9,11 @@ import org.telegram.bot.structure.Chat;
  * @date 16 of October of 2016
  */
 public class ChatImpl implements Chat {
+
     private int id;
+
     private Long accessHash;
+
     private boolean isChannel;
 
     public ChatImpl(int id) {

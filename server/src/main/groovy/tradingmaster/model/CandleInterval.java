@@ -1,7 +1,5 @@
 package tradingmaster.model;
 
-import java.util.Arrays;
-
 public enum CandleInterval {
 
     ONE_MINUTE("1m", 1),

@@ -2,10 +2,7 @@ package tradingmaster.strategy;
 
 import groovy.transform.CompileStatic;
 import tradingmaster.model.Candle;
-import tradingmaster.strategy.indicator.Ema;
 import tradingmaster.strategy.indicator.RsiIndicator;
-
-import java.math.BigDecimal;
 
 @CompileStatic
 public class Rsi implements Strategy {
@@ -82,7 +79,7 @@ public class Rsi implements Strategy {
 
         }
 
-        return StrategyResult.NONE;
+        return StrategyResult.NEUTRAL;
 
     }
 

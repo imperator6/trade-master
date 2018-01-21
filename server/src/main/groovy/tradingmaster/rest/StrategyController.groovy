@@ -4,7 +4,10 @@ import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
 import tradingmaster.db.mariadb.MariaStrategyStore
-import tradingmaster.model.*
+import tradingmaster.model.BacktestResult
+import tradingmaster.model.RestResponse
+import tradingmaster.model.ScriptStrategy
+import tradingmaster.model.StrategyRunConfig
 import tradingmaster.service.StrategyRunnerService
 
 import java.time.LocalDateTime
@@ -74,7 +77,8 @@ class StrategyController {
     @RequestMapping(value = "/backtestResults", method = RequestMethod.GET)
     RestResponse<BacktestResult> backtestResults(@RequestParam String backtestId) {
 
-        BacktestResult result = strategyRunnerService.getBacktestResults(backtestId)
+
+        BacktestResult result = null //strategyRunnerService.getBacktestResults(backtestId)
 
         if(result == null) {
             return new RestResponse<BacktestResult>(false, "Backtest with id ${backtestId} not found!")

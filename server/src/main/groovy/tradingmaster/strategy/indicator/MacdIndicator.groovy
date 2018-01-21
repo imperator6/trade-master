@@ -1,7 +1,6 @@
 package tradingmaster.strategy.indicator
 
 import groovy.transform.CompileStatic
-import tradingmaster.model.Candle
 
 @CompileStatic
 class MacdIndicator implements Indicator<BigDecimal> {

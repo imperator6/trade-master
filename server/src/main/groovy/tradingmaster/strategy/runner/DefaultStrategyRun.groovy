@@ -1,13 +1,8 @@
 package tradingmaster.strategy.runner
 
-import tradingmaster.model.BacktestResult
-import tradingmaster.model.Candle
-import tradingmaster.model.IMarket
-import tradingmaster.model.IPortfolio
-import tradingmaster.model.PortfolioChange
-import tradingmaster.model.TradingSignal
+import tradingmaster.model.*
 
-abstract class DefaultStrategyRun implements IStrategyRunner {
+abstract class DefaultStrategyRun {
 
     boolean backtest = false
     boolean backtestComplete = false

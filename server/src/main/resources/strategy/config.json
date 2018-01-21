@@ -1,30 +1,29 @@
 {
-  "baseCurrency": "ETH",
-  "candlesize": "15m",
+  "exchange": "bittrex",
+  "baseCurrency": "USDT",
+  "startBalance": 1,
+  "assetName": "NEO",
+  "candleSize": "30m",
   "warmup": 5,
 
-  "backtest": {
-    "startBalance": 1,
-    "fee": 0.25
-
-  },
+  "maxPositions": 10,
 
   "dema": {
-    "enabled": true,
+    "enabled": false,
     "shortPeriod": 10,
-    "longPeriod": 21,
+    "longPeriod": 50,
     "up": 0.025,
     "down": -0.025
   },
 
   "macd": {
-    "enabled": true,
-    "shortPeriod": 10,
-    "longPeriod": 21,
-    "signalPeriod": 9,
+    "enabled": false,
+    "shortPeriod": 11,
+    "longPeriod": 25,
+    "signalPeriod": 12,
     "up": 0.025,
     "down": -0.025,
-    "persistence": 1
+    "persistence": 3
   },
 
   "rsi": {

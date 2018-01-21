@@ -1,73 +1,193 @@
 package tradingmaster.service
 
+import groovy.json.JsonSlurper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import tradingmaster.db.PositionRepository
+import tradingmaster.db.TradeBotRepository
+import tradingmaster.db.entity.Position
+import tradingmaster.db.entity.Signal
+import tradingmaster.db.entity.TradeBot
+import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.paper.PaperExchange
-import tradingmaster.model.*
+import tradingmaster.model.IExchangeAdapter
+import tradingmaster.model.ScriptStrategy
 
 import java.text.DecimalFormat
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 @Commons
 class TradeBotManager {
 
+    static Map<Integer, TradeBot> TRADE_BOT_MAP = new ConcurrentHashMap()
+
     @Autowired
     ExchangeService exchangeService
 
-    void init(Map params, TradeBot p, boolean backtest) {
+    @Autowired
+    MariaStrategyStore strategyStore
 
-       /* p.assetName = params.assetName
-        p.currencyName = params.currencyName
+    @Autowired
+    TradeBotRepository tradeBotRepository
 
-        p.currency = params.currency ? params.currency as BigDecimal : 0
-        p.asset = params.asset ? params.asset as BigDecimal : 0.1
-        p.startCurrency = p.currency
-        p.startAsset = p.asset
+    @Autowired
+    PositionRepository positionRepository
 
-        p.tradingFee = params.slippage ? params.slippage as BigDecimal : 0.25
-        p.slippage = params.slippage ? params.slippage as BigDecimal : 0.05
 
-        p.fee = (p.tradingFee + p.slippage) / 100 */
+    List<TradeBot> getActiveBots() {
+        return new ArrayList(this.TRADE_BOT_MAP.values().findAll { it.active })
+    }
+
+    void startBots() {
+
+        tradeBotRepository.findByActive(true).each { TradeBot b ->
+
+            log.info("********************************************")
+            log.info("* Starting trading bot $b")
+            log.info("********************************************")
+
+            // load the config
+            ScriptStrategy strategy = strategyStore.loadStrategyById(b.configId, null)
+            Map params = new JsonSlurper().parseText(strategy.getScript())
+
+            b.config = params
+
+            b.positions = positionRepository.findByBotId(b.id)
+
+
+            TRADE_BOT_MAP.put( b.getId(), b)
+
+        }
+
+    }
+
+    void syncBanlance(TradeBot b) {
+        // todo..
+        b.startBalance = getExchangeAdapter(b).getBalance(b.config.baseCurrency).getValue()
+    }
+
+    IExchangeAdapter getExchangeAdapter(TradeBot b) {
+        if(b.isBacktest()) {
+
+            PaperExchange exchange = new PaperExchange()
+            exchange.config = b.config
+            return exchange
+
+        } else {
+           return exchangeService.getExchangyByName( b.config.exchange )
+        }
+    }
+
+
+    TradeBot createNewBot(Integer configId, boolean backtest) {
+
+        TradeBot p = new TradeBot()
+        p.configId = configId
+        p.backtest = backtest
+
+        ScriptStrategy strategy = strategyStore.loadStrategyById(configId, null)
+
+        Map params = new JsonSlurper().parseText(strategy.getScript())
 
         p.config = params
         p.baseCurrency = params.baseCurrency
+        p.exchange = params.exchange
 
-        IExchangeAdapter exchangeAdapter = null
+        syncBanlance(p)
 
-        if(backtest) {
-            p.backtest = backtest
-
-            PaperExchange exchange = new PaperExchange()
-            exchange.config = params
-            exchangeAdapter = exchange
-
-        } else {
-            exchangeAdapter = exchangeService.getExchangyByName( p.exchange )
-        }
-
-        p.exchange = exchangeAdapter
-
-        // Todo... load/sync open position from db
-        p.startBalance = exchangeAdapter.getBalance(params.baseCurrency).getValue()
-
+        tradeBotRepository.save(p)
 
         log.info("A new trade bot has been initilized: ${p}")
+
+        return p
     }
 
-    void onFirstCandle(Candle c, TradeBot p) {
-      //  p.startPrice = c.close
-      //  p.startBalance = p.currency + c.close * p.asset
-      //  log.info("Starting balance for portfolio ${p.currencyName}-${p.assetName} is ${format(p.startBalance)} $p.currencyName ${format(p.asset)} $p.assetName")
+    void handleSignal(TradeBot b, Signal s) {
+
+        if("buy".equalsIgnoreCase( s.getBuySell())) {
+
+            if(isValidSignalForBot(b, s)) {
+                openPosition(b, s)
+            }
+
+        } else if ("sell".equalsIgnoreCase( s.getBuySell())){
+
+
+            // TODO... implement ...
+
+        } else {
+            log.error("Unsupported buysell flag ${s.getBuySell()}")
+        }
     }
 
-    void onLastCandle(Candle c, TradeBot p) {
-       // p.endPrice = c.close
-       // p.holdBalance = p.startCurrency + c.close * p.startAsset
-/*        log.info("${p.trades} Trades. Balance: ${format(p.balance)} vs. " +
-                "is ${format(p.holdBalance)} $p.currencyName Hold Balance. startAsset ${format(p.startAsset)} $p.assetName." +
-                " startPrice: ${format(p.startPrice)} $p.currencyName endPrice: ${format(p.endPrice)} $p.currencyName ") */
+
+    boolean isValidSignalForBot(TradeBot b, Signal s) {
+        boolean valid = false
+
+        if(s.getExchange().equalsIgnoreCase(b.exchange)) {
+
+            // check if asset is supported
+            //getExchangeAdapter(b).
+
+            if(b.positions.findAll { !it.closed }.size() < b.config.maxPositions) {
+                valid = true
+            } else {
+                log.info("Max open positions  (${b.config.maxPosition}) has reached! Signal $s.id is not valid for TradeBot $b.id. ")
+            }
+
+
+        } else {
+            log.info("Signal $s.id is not valid for TradeBot $b.id. Exchange does not match! $s.exchange != $b.exchange")
+        }
+
+        return valid
+    }
+
+    void openPosition(TradeBot bot, Signal s) {
+
+        // TODO: calculate based on settings
+        BigDecimal currencyAmount = nextTradeBalance(bot)
+
+        if(currencyAmount > 0) {
+
+            Position pos = new Position()
+
+            pos.created = new Date()
+            pos.botId = bot.getId()
+            pos.buySignalId = s.getId()
+
+            pos.market = "${bot.config.baseCurrency}-${s.asset}"
+            pos.status = "placing buy order"
+            pos.signalRate = s.price
+
+            // Too: call exc to place the order...
+            def currency  = bot.config.baseCurrency
+            def asset = s.asset
+            def price = s.price
+
+            // clac price range ....
+
+            /* pos.buyFee = 0.0
+            pos.buyRate = tradePrice
+            pos.amount = currencyAmount / tradePrice //extractFee(this.currency / price)
+            pos.totalBuy =  pos.amount + pos.buyFee
+
+            */
+
+            positionRepository.save(pos)
+            bot.positions << pos
+
+            // TODO... place the order...
+            getExchangeAdapter(b).
+
+            log.debug "New position created! $pos"
+        } else {
+            // balance to small
+
+        }
     }
 
     BigDecimal extractFee(BigDecimal amount, BigDecimal fee) {
@@ -78,46 +198,16 @@ class TradeBotManager {
         return amount
     }
 
+    void closePosition(Position p, Signal s, TradeBot bot) {
 
-    void openPosition(String triggerName, Candle c, TradeBot bot) {
-
-        // TODO: Delegate to exchange
-        BigDecimal currencyAmount = bot.nextTradeBalance()
-
-        if(currencyAmount > 0) {
-            def tradePrice = c.close
-
-            Position pos = new Position()
-            pos.id = 1
-            pos.extbuyOrderId = UUID.randomUUID()
-            pos.date = new Date()
-            pos.buyFee = 0.0
-            pos.buyRate = tradePrice
-            pos.amount = currencyAmount / tradePrice //extractFee(this.currency / price)
-            pos.triggerName = triggerName
-            pos.totalBuy =  pos.amount + pos.buyFee
-
-            pos.assetName = c.getMarket().getAsset()
-            pos.currencyName = bot.config.baseCurrency
-
-            // add sync method
-            bot.positions << pos
-
-            log.debug "New position $pos"
-        } else {
-            // balance to small
-
-        }
-    }
-
-    void closePosition(String triggerName, Position p, Candle c, TradeBot bot) {
+        bot.signals << s
 
         // TODO: Delegate to exchange
         if(p.isOpen()) {
 
             p.extSellOrderId = UUID.randomUUID()
 
-            p.sellRate = c.close
+            p.sellRate = s.price
             p.sellFee = 0
             p.totalSell = (p.sellRate * p.amount) - p.sellFee
 
@@ -125,6 +215,14 @@ class TradeBotManager {
             p.open = false
         }
 
+    }
+
+    BigDecimal nextTradeBalance(TradeBot bot) {
+        def next = bot.startBalance / 10
+
+        // Todo: check balance on exchange
+
+        return next
     }
 
 

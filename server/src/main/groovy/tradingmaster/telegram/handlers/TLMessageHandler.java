@@ -4,7 +4,6 @@ import org.telegram.api.message.TLMessage;
 import org.telegram.api.peer.TLAbsPeer;
 import org.telegram.api.peer.TLPeerUser;
 import org.telegram.bot.kernel.database.DatabaseManager;
-import org.telegram.bot.services.BotLogger;
 import org.telegram.bot.structure.IUser;
 
 /**
@@ -25,10 +24,13 @@ public class TLMessageHandler {
 
     public void onTLMessage(TLMessage message) {
         final TLAbsPeer absPeer = message.getToId();
+
+        System.out.println( message.getMessage() );
+
         if (absPeer instanceof TLPeerUser) {
             onTLMessageForUser(message);
         } else {
-            BotLogger.severe(LOGTAG, "Unsupported Peer: " + absPeer.toString());
+            //BotLogger.severe(LOGTAG, "Unsupported Peer: " + absPeer.toString());
         }
     }
 

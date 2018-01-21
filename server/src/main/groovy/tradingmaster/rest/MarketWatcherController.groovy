@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import tradingmaster.db.MarketWatcherRepository
 import tradingmaster.db.entity.MarketWatcher
-import tradingmaster.model.*
+import tradingmaster.model.CryptoMarket
+import tradingmaster.model.RestResponse
 import tradingmaster.service.MaketWatcherService
 
 @RestController

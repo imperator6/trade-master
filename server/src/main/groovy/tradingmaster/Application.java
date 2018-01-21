@@ -4,8 +4,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import tradingmaster.db.MarketWatcherRepository;
+import tradingmaster.exchange.mininghamster.HamsterWatcherService;
 import tradingmaster.model.CryptoMarket;
 import tradingmaster.service.MaketWatcherService;
+import tradingmaster.service.TradeBotManager;
 
 
 @SpringBootApplication
@@ -17,9 +19,12 @@ public class Application {
 
         ApplicationContext ctx = SpringApplication.run(Application.class, args);
 
-        MaketWatcherService maketWatcherService = ctx.getBean(MaketWatcherService.class);
+        // start all Bots
+        TradeBotManager botManager = ctx.getBean(TradeBotManager.class);
+        botManager.startBots();
 
-        //StrategyRunnerService strategyRunnerService = ctx.getBean(StrategyRunnerService.class);
+        // start market watcher
+        MaketWatcherService maketWatcherService = ctx.getBean(MaketWatcherService.class);
 
         MarketWatcherRepository marketWatcherRepository = ctx.getBean(MarketWatcherRepository.class);
 
@@ -32,6 +37,11 @@ public class Application {
             maketWatcherService.createMarketWatcher( market, w.getIntervalMillis() );
 
         });
+
+
+        // start Hamster Watcher
+        HamsterWatcherService hamsterWatcherService = ctx.getBean(HamsterWatcherService.class);
+        hamsterWatcherService.startHamsterWatcher();
 
 
     }

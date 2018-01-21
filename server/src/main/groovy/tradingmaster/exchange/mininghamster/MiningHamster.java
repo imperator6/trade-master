@@ -1,33 +1,28 @@
-package tradingmaster.exchange.bittrex;
+package tradingmaster.exchange.mininghamster;
 
-import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import tradingmaster.exchange.DefaultExchangeRestService;
+import tradingmaster.exchange.bittrex.EncryptionUtility;
+import tradingmaster.exchange.mininghamster.model.HamsterSignal;
 
+import java.util.List;
 import java.util.Map;
 
-
-/**
- * Created by irufus on 2/25/15.
- */
-@Component
-public class BittrexExchangeImpl extends DefaultExchangeRestService {
-
-    static Logger log = Logger.getLogger(BittrexExchangeImpl.class.getName());
-
+@Service
+class MiningHamster extends DefaultExchangeRestService {
 
     @Autowired
-    public BittrexExchangeImpl(@Value("${bittrex.key}") String publicKey,
-                               @Value("${bittrex.secret}") String secret,
-                               @Value("${bittrex.api.baseUrl}") String baseUrl,
+    public MiningHamster(@Value("${mininghamster.key}") String publicKey,
+                               @Value("${mininghamster.api.baseUrl}") String baseUrl,
                                RestTemplate restTemplate) {
 
-        super(publicKey, secret, null, baseUrl, restTemplate);
+        super(publicKey, null, null, baseUrl, restTemplate);
     }
 
     @Override
@@ -35,20 +30,9 @@ public class BittrexExchangeImpl extends DefaultExchangeRestService {
 
         if(!(resourcePath.indexOf("public") > -1)) {
             params.put("apikey", publicKey);
-            params.put("nonce", EncryptionUtility.generateNonce());
         }
         return params;
     }
-
-//    @Override
-//    public String buildUrl(String resourcePath) {
-//
-//        UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
-//        urlBuilder.queryParam("apikey", publicKey);
-//        urlBuilder.queryParam("nonce", EncryptionUtility.generateNonce());
-//
-//        return getBaseUrl() + urlBuilder.toUriString();
-//    }
 
 
 
@@ -59,7 +43,7 @@ public class BittrexExchangeImpl extends DefaultExchangeRestService {
         //String timestamp = Instant.now().getEpochSecond() + "";
         String resource = uri.toString().replace(getBaseUrl(), "");
 
-        headers.add("apisign", EncryptionUtility.calculateHash(secret, uri, "HmacSHA512")); // Attaches signature as a header
+        headers.add("apisign", EncryptionUtility.calculateHash(publicKey, uri, "HmacSHA512")); // Attaches signature as a header
 
         //request.addHeader("apisign", EncryptionUtility.calculateHash(secret, url, encryptionAlgorithm)); // Attaches signature as a header
         headers.add("accept", "application/json");
@@ -69,4 +53,13 @@ public class BittrexExchangeImpl extends DefaultExchangeRestService {
 
         return new HttpEntity<>(jsonBody, headers);
     }
+
+    public List<HamsterSignal> getLatestSignals() {
+
+
+        List<HamsterSignal> signals = get("", new ParameterizedTypeReference<List<HamsterSignal>>(){});
+
+        return signals;
+    }
+
 }

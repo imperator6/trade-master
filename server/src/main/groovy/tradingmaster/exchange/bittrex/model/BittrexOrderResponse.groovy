@@ -1,6 +1,4 @@
-package tradingmaster.exchange.bittrex.model;
-
-import java.util.List;
+package tradingmaster.exchange.bittrex.model
 
 public class BittrexOrderResponse extends BittrexResponse<List<BittrexOrder>> {
 

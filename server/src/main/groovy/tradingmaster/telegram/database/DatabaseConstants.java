@@ -10,5 +10,5 @@ class DatabaseConstants {
     static final String controllerDB = "org.mariadb.jdbc.Driver";
     static final String userDB = "root";
     static final String password = "admin123";
-    static final String linkDB = "jdbc:mysql://S930A3546/trading_master";
+    static final String linkDB = "jdbc:mysql://192.168.0.167/trading_master";
 }

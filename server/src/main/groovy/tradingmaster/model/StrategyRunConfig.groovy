@@ -7,9 +7,9 @@ class StrategyRunConfig {
 
     String id
 
-    BigDecimal strategyId
+    Integer strategyId
 
-    Map strategyParams
+    //Map strategyParams
 
     String exchange
 
@@ -23,7 +23,7 @@ class StrategyRunConfig {
 
     Integer warmup
 
-    //StrategyConfig config
+    //StrategyConfig config */
 
     boolean backtest = false
 

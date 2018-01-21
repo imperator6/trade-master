@@ -3,7 +3,10 @@ package tradingmaster.db.mariadb
 import groovy.sql.Sql
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import tradingmaster.model.*
+import tradingmaster.model.Candle
+import tradingmaster.model.CryptoMarket
+import tradingmaster.model.ICandleStore
+import tradingmaster.model.IMarket
 
 import javax.annotation.PostConstruct
 import javax.sql.DataSource

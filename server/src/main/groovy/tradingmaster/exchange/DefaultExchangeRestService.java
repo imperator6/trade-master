@@ -10,10 +10,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
 
+import java.net.URI;
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +49,7 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
     @Override
     public <T> T get(String resourcePath, ParameterizedTypeReference<T> responseType) {
-        return get(resourcePath, Collections.emptyMap(), responseType);
+        return get(resourcePath, new HashMap<String, String>(), responseType);
     }
 
     @Override
@@ -58,17 +58,20 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
             addAdditionalParmas(resourcePath, params);
 
-            UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
+           /* UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
 
             for(String key: params.keySet()){
                 Object value= params.get(key);
                 urlBuilder.queryParam(key, value);
-            }
+            } */
 
-            String uri = buildUrl(urlBuilder.toUriString());
+            String url = buildQueryString(resourcePath, params);
+
+            URI uri = new URI(url);
+            //String uri = buildUrl(urlBuilder.toUriString());
             ResponseEntity<T> responseEntity = restTemplate.exchange(uri ,
                     GET,
-                    securityHeaders(uri, resourcePath,
+                    securityHeaders(uri.toString(), resourcePath,
                     "GET",
                      ""),
                     responseType);
@@ -83,7 +86,7 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
     @Override
     public <T> List<T> getAsList(String resourcePath, ParameterizedTypeReference<T[]> responseType) {
-        T[] result = get(resourcePath, Collections.emptyMap(), responseType);
+        T[] result = get(resourcePath, new HashMap<String, String>(), responseType);
 
         return result == null ? Arrays.asList() : Arrays.asList(result);
     }
@@ -119,7 +122,7 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
     @Override
     public <T> T delete(String resourcePath, ParameterizedTypeReference<T> responseType) {
-        return delete(resourcePath, Collections.emptyMap(), responseType);
+        return delete(resourcePath, new HashMap<String, String>(), responseType);
     }
 
     @Override
@@ -127,17 +130,12 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
         try {
             addAdditionalParmas(resourcePath, params);
 
-            UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
+            String url = buildQueryString(resourcePath, params);
 
-            for(String key: params.keySet()){
-                Object value= params.get(key);
-                urlBuilder.queryParam(key, value);
-            }
-
-            String uri = buildUrl(urlBuilder.toUriString());
+            URI uri = new URI(url);
             ResponseEntity<T> response = restTemplate.exchange(uri,
                 HttpMethod.DELETE,
-                securityHeaders(uri, resourcePath, "DELETE", ""),
+                securityHeaders(uri.toString(), resourcePath, "DELETE", ""),
                 responseType);
             return response.getBody();
         } catch (HttpClientErrorException ex) {
@@ -151,7 +149,7 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
     @Override
     public <T, R> T post(String resourcePath, ParameterizedTypeReference<T> responseType, R jsonObj) {
-       return post(resourcePath, Collections.emptyMap(), responseType, jsonObj);
+       return post(resourcePath, new HashMap<String, String>(), responseType, jsonObj);
     }
 
     @Override
@@ -162,19 +160,15 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
             addAdditionalParmas(resourcePath, params);
 
-            UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
-            for(String key: params.keySet()){
-                Object value= params.get(key);
-                urlBuilder.queryParam(key, value);
-            }
+            String url = buildQueryString(resourcePath, params);
 
-            String uri = buildUrl(urlBuilder.toUriString());
-
+            URI uri = new URI(url);
 
             ResponseEntity<T> response = restTemplate.exchange(uri,
                     HttpMethod.POST,
-                    securityHeaders(uri, resourcePath, "POST", jsonBody),
+                    securityHeaders(uri.toString(), resourcePath, "POST", jsonBody),
                     responseType);
+
             return response.getBody();
         } catch (HttpClientErrorException ex) {
             log.error("POST request Failed for '" + resourcePath + "': " + ex.getResponseBodyAsString());
@@ -184,9 +178,6 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
         return null;
     }
 
-    public String buildUrl(String resourcePath) {
-        return getBaseUrl() + resourcePath;
-    }
 
     @Override
     public String getBaseUrl() {
@@ -210,5 +201,25 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
         curlTest += "-X " + method + " " + getBaseUrl() + resource;
         log.debug(curlTest);
+    }
+
+    private String buildQueryString(String resourcePath, Map<String,?> params) {
+
+        boolean first = true;
+        String result = getBaseUrl() + resourcePath;
+
+        for(String key: params.keySet()){
+            Object value= params.get(key);
+
+            if(first) {
+                result += "?" + key + "=" + value;
+                first = false;
+            } else {
+                result += "&" + key + "=" + value;
+            }
+        }
+
+        return result;
+
     }
 }
