@@ -1,6 +1,6 @@
 package tradingmaster.exchange.bittrex.model;
 
-public class BittrexResponse<T> {
+public class ExchangeResponse<T> {
 
     Boolean success;
 
@@ -9,7 +9,7 @@ public class BittrexResponse<T> {
     T result;
 
 
-    public BittrexResponse() {
+    public ExchangeResponse() {
     }
 
     public Boolean getSuccess() {

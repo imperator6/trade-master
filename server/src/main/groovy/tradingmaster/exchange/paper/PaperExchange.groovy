@@ -1,9 +1,9 @@
 package tradingmaster.exchange.paper
 
 import tradingmaster.exchange.DefaultExchageAdapter
-import tradingmaster.model.Balance
-import tradingmaster.model.CryptoMarket
-import tradingmaster.model.TradeBatch
+import tradingmaster.exchange.bittrex.model.BittrexBalance
+import tradingmaster.exchange.bittrex.model.ExchangeResponse
+import tradingmaster.model.*
 
 class PaperExchange extends DefaultExchageAdapter {
 
@@ -13,14 +13,44 @@ class PaperExchange extends DefaultExchageAdapter {
         super("PaperExchange")
     }
 
+    @Override
+    Boolean cancelOrder(String id) {
+        return null
+    }
+
+    @Override
+    ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
+        return null
+    }
+
+    @Override
+    ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
+        return null
+    }
+
+    @Override
+    ExchangeResponse<ITicker> getTicker(String market) {
+        return null
+    }
+
+    @Override
+    ExchangeResponse<IOrder> getOrder(String id) {
+        return null
+    }
+
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
         return null
     }
 
-    List<Balance> getBalances() {
+    @Override
+    List<CryptoMarket> getMakets() {
+        return null
+    }
+
+    List<IBalance> getBalances() {
         def balances = []
 
-        Balance b = new Balance()
+        IBalance b = new BittrexBalance()
         b.currency = config.baseCurrency
         b.value = config.startBalance
 

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.binance.model.BinanceProductInfo
 import tradingmaster.exchange.binance.model.BinanceTrade
+import tradingmaster.exchange.bittrex.model.ExchangeResponse
 import tradingmaster.model.*
 /**
  *  https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
@@ -22,6 +23,8 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
     Binance() {
         super("Binance")
     }
+
+
 
     @Override
     List<Candle> getCandles(Date startDate, Date endDate, CryptoMarket market, CandleInterval interval) {
@@ -68,6 +71,36 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         BinanceProductInfo info = exchange.get("api/v1/exchangeInfo", new ParameterizedTypeReference<BinanceProductInfo>(){})
 
         return info.symbols.collect { new CryptoMarket(name, it.getQuoteAsset(), it.getBaseAsset()) }
+    }
+
+    @Override
+    List<IBalance> getBalances() {
+        return null
+    }
+
+    @Override
+    Boolean cancelOrder(String id) {
+        return null
+    }
+
+    @Override
+    ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
+        return null
+    }
+
+    @Override
+    ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
+        return null
+    }
+
+    @Override
+    ExchangeResponse<ITicker> getTicker(String market) {
+        return null
+    }
+
+    @Override
+    ExchangeResponse<IOrder> getOrder(String id) {
+        return null
     }
 
     @Override

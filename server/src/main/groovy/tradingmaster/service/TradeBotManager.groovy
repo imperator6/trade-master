@@ -3,6 +3,7 @@ package tradingmaster.service
 import groovy.json.JsonSlurper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.TradeBotRepository
@@ -11,8 +12,12 @@ import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.exchange.ExchangeService
+import tradingmaster.exchange.IExchangeAdapter
+import tradingmaster.exchange.bittrex.model.ExchangeResponse
 import tradingmaster.exchange.paper.PaperExchange
-import tradingmaster.model.IExchangeAdapter
+import tradingmaster.model.BuySell
+import tradingmaster.model.IOrder
+import tradingmaster.model.PriceRange
 import tradingmaster.model.ScriptStrategy
 
 import java.text.DecimalFormat
@@ -35,6 +40,9 @@ class TradeBotManager {
 
     @Autowired
     PositionRepository positionRepository
+
+    @Autowired
+    OrderExecutorService orderExecutorService
 
 
     List<TradeBot> getActiveBots() {
@@ -65,8 +73,18 @@ class TradeBotManager {
     }
 
     void syncBanlance(TradeBot b) {
-        // todo..
-        b.startBalance = getExchangeAdapter(b).getBalance(b.config.baseCurrency).getValue()
+
+        log.debug("Syncing balance for bot ${b.id}")
+
+        def balanceOnExchange = getExchangeAdapter(b).getBalance(b.config.baseCurrency).getValue()
+
+        if(b.startBalance == null) {
+            log.info("Setting start balance for bot ${b.id} to $balanceOnExchange")
+            b.startBalance = balanceOnExchange
+        }
+
+        log.info("Setting current balance for bot ${b.id} to $balanceOnExchange")
+        b.currentBalance = balanceOnExchange
     }
 
     IExchangeAdapter getExchangeAdapter(TradeBot b) {
@@ -105,6 +123,7 @@ class TradeBotManager {
         return p
     }
 
+    @Async("orderTaskExecutor")
     void handleSignal(TradeBot b, Signal s) {
 
         if("buy".equalsIgnoreCase( s.getBuySell())) {
@@ -133,7 +152,20 @@ class TradeBotManager {
             //getExchangeAdapter(b).
 
             if(b.positions.findAll { !it.closed }.size() < b.config.maxPositions) {
-                valid = true
+
+                // check forbiddenAssets
+                if( b.config.forbiddenAssets) {
+
+                    List<String> forbiddenAssets = b.config.forbiddenAssets
+
+                    if(forbiddenAssets.find{ it.equalsIgnoreCase(s.asset) }) {
+                        log.info("Asset $s.asset is forbidden for Bot ${b.getId()}")
+                    } else {
+                        valid = true
+                    }
+                } else {
+                    valid = true
+                }
             } else {
                 log.info("Max open positions  (${b.config.maxPosition}) has reached! Signal $s.id is not valid for TradeBot $b.id. ")
             }
@@ -149,9 +181,9 @@ class TradeBotManager {
     void openPosition(TradeBot bot, Signal s) {
 
         // TODO: calculate based on settings
-        BigDecimal currencyAmount = nextTradeBalance(bot)
+        BigDecimal balanceToSpend = calcBalanceForNextTrade(bot)
 
-        if(currencyAmount > 0) {
+        if(balanceToSpend > 0) {
 
             Position pos = new Position()
 
@@ -160,30 +192,44 @@ class TradeBotManager {
             pos.buySignalId = s.getId()
 
             pos.market = "${bot.config.baseCurrency}-${s.asset}"
-            pos.status = "placing buy order"
+            pos.status = "pending"
             pos.signalRate = s.price
 
             // Too: call exc to place the order...
-            def currency  = bot.config.baseCurrency
-            def asset = s.asset
-            def price = s.price
+            String currency  = bot.config.baseCurrency
+            String asset = s.asset
 
-            // clac price range ....
-
-            /* pos.buyFee = 0.0
-            pos.buyRate = tradePrice
-            pos.amount = currencyAmount / tradePrice //extractFee(this.currency / price)
-            pos.totalBuy =  pos.amount + pos.buyFee
-
-            */
+            // TODO: clac price range ....
+            PriceRange priceRange = new PriceRange()
+            priceRange.minPrice = s.price // + 2 percent
+            priceRange.minPrice = s.price // - 2 percent
 
             positionRepository.save(pos)
             bot.positions << pos
 
-            // TODO... place the order...
-            getExchangeAdapter(b).
+            ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, priceRange, currency, asset)
 
-            log.debug "New position created! $pos"
+            if(newOrderRes.success) {
+
+                IOrder newOrder = newOrderRes.getResult()
+                // update position
+                pos.setBuyFee(newOrder.getCommissionPaid())
+                pos.setBuyDate(newOrder.getCloseDate())
+                pos.setBuyRate(newOrder.getPrice())
+                pos.setAmount( newOrder.getQuantity())
+
+                pos.setStatus("open")
+                log.debug "New position created! $pos"
+
+            } else {
+                pos.setError(true)
+                pos.setErrorMsg(newOrderRes.getMessage())
+                pos.setClosed(true)
+            }
+
+            positionRepository.save(pos)
+
+
         } else {
             // balance to small
 
@@ -217,12 +263,19 @@ class TradeBotManager {
 
     }
 
-    BigDecimal nextTradeBalance(TradeBot bot) {
-        def next = bot.startBalance / 10
+    BigDecimal calcBalanceForNextTrade(TradeBot bot) {
+
+        syncBanlance(bot)
+
+        def maxPositions = bot.config.maxPositions
+        def openPositions = bot.positions.findAll { !it.closed }
+        def positionsLeft = maxPositions - openPositions.size()
+
+        def balanceForNextTrade = bot.currentBalance / positionsLeft
 
         // Todo: check balance on exchange
 
-        return next
+        return balanceForNextTrade
     }
 
 

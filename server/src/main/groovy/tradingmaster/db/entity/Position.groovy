@@ -4,14 +4,7 @@ import groovy.transform.ToString
 import groovy.util.logging.Commons
 import org.springframework.stereotype.Component
 
-import javax.persistence.CascadeType
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
-import javax.persistence.JoinColumn
-import javax.persistence.OneToOne
+import javax.persistence.*
 
 @Entity(name = "positions")
 @Commons
@@ -89,6 +82,11 @@ class Position {
     boolean holdPosition = false
 
     boolean closed = false
+
+    boolean error = false
+
+    @Column(nullable = true)
+    String errorMsg
 
 
 }

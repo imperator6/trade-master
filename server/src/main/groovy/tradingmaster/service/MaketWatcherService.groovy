@@ -15,7 +15,7 @@ import tradingmaster.db.MarketWatcherRepository
 import tradingmaster.db.entity.MarketWatcher
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.model.CryptoMarket
-import tradingmaster.model.IExchangeAdapter
+import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.TradeBatch
 
 @Service

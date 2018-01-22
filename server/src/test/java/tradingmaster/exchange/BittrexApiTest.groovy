@@ -1,6 +1,5 @@
 package tradingmaster.exchange
 
-import com.tictactec.ta.lib.Core
 import junit.framework.TestCase
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -10,6 +9,8 @@ import org.springframework.test.context.junit4.SpringRunner
 import tradingmaster.exchange.bittrex.Bittrex
 import tradingmaster.exchange.bittrex.BittrexApi11
 import tradingmaster.model.CryptoMarket
+import tradingmaster.model.IBalance
+import tradingmaster.model.ITicker
 
 @RunWith(value = SpringRunner.class)
 @SpringBootTest
@@ -35,11 +36,81 @@ class BittrexApiTest extends TestCase {
     @Test
     void testGetOrderHistory() {
 
-        ///def list = bittrexApi11.getOrderHistory("")
-
         def orders = bittrex.getOrderHistory()
 
         assertTrue( !orders.isEmpty() )
+    }
+
+    @Test
+    void testGetOrder() {
+
+        ///def list = bittrexApi11.getOrderHistory("")
+
+        List orders = bittrex.getOrderHistory()
+
+        String orderId = orders.first().getId()
+
+        def order = bittrex.getOrder(orderId)
+
+        assertNotNull( order )
+    }
+
+    @Test
+    void testGetTicker() {
+
+        ///def list = bittrexApi11.getOrderHistory("")
+
+        ITicker ticker = bittrex.getTicker("USDT-BTC")
+
+
+        assertNotNull( ticker )
+
+        assertNotNull( ticker.bid )
+        assertNotNull( ticker.ask )
+        assertNotNull( ticker.last )
+        assertNotNull( ticker.market )
+
+    }
+
+    @Test
+    void testCancelOrder() {
+        String orderid = "42f74473-5be8-4e1a-8149-ccd595efdb3f"
+
+        Boolean isCanceld = bittrex.cancelOrder(orderid)
+
+        assertFalse( isCanceld )
+    }
+
+    @Test
+    void testBalances() {
+
+        List<IBalance> balances = bittrex.getBalances()
+
+        assertTrue( !balances.isEmpty() )
+
+        IBalance first = balances.last()
+
+        assertNotNull( first.getCurrency() )
+    }
+
+    @Test
+    void testSell() {
+
+        String orderId = bittrex.sellLimit("ETH-FUN", 1, 0.0001)
+
+
+
+        assertNotNull( orderId )
+    }
+
+    @Test
+    void testBuy() {
+
+        String orderId = bittrex.buyLimit("ETH-FUN", 1, 0.0001)
+
+
+
+        assertNotNull( orderId )
     }
 
 

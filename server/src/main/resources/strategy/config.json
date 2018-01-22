@@ -1,12 +1,14 @@
 {
   "exchange": "bittrex",
-  "baseCurrency": "USDT",
+  "baseCurrency": "BTC",
   "startBalance": 1,
   "assetName": "NEO",
   "candleSize": "30m",
   "warmup": 5,
 
-  "maxPositions": 10,
+  "maxPositions": 5,
+
+  "forbiddenAssets": ["RISE"],
 
   "dema": {
     "enabled": false,
