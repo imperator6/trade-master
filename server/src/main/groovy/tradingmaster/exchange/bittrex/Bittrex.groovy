@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
 import tradingmaster.exchange.DefaultExchageAdapter
+import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.bittrex.model.*
 import tradingmaster.model.*
 

@@ -1,4 +1,4 @@
-package tradingmaster.exchange.bittrex.model;
+package tradingmaster.exchange;
 
 public class ExchangeResponse<T> {
 

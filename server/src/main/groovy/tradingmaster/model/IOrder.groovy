@@ -12,6 +12,8 @@ interface IOrder {
 
     BigDecimal getPrice()
 
+    BigDecimal getPricePerUnit()
+
     BigDecimal getQuantity()
 
 }

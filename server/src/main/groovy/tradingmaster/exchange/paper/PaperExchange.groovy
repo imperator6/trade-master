@@ -2,7 +2,7 @@ package tradingmaster.exchange.paper
 
 import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.bittrex.model.BittrexBalance
-import tradingmaster.exchange.bittrex.model.ExchangeResponse
+import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.model.*
 
 class PaperExchange extends DefaultExchageAdapter {

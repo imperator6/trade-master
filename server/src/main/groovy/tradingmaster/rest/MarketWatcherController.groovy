@@ -51,7 +51,7 @@ class MarketWatcherController {
     @RequestMapping(value = "/start", method = RequestMethod.GET)
     RestResponse<MarketWatcher> startWacther(@RequestParam String exchange, @RequestParam String market) {
 
-        MarketWatcher  w = marketWatcherService.createMarketWatcher(new CryptoMarket(exchange, market), 10000)
+        MarketWatcher  w = marketWatcherService.createMarketWatcher(new CryptoMarket(exchange, market))
 
 
         return new RestResponse(w)

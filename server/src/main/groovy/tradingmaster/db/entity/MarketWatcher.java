@@ -20,7 +20,7 @@ public class MarketWatcher {
     String market;
 
     @Column(nullable = false)
-    boolean active = true;
+    boolean active = false;
 
     @Column(nullable = false)
     Long intervalMillis = new Long(10000);

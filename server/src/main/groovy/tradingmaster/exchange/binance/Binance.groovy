@@ -7,7 +7,7 @@ import org.springframework.stereotype.Service
 import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.binance.model.BinanceProductInfo
 import tradingmaster.exchange.binance.model.BinanceTrade
-import tradingmaster.exchange.bittrex.model.ExchangeResponse
+import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.model.*
 /**
  *  https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md

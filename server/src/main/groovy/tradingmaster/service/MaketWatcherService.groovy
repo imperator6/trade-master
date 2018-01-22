@@ -42,7 +42,11 @@ class MaketWatcherService {
           log.info("New MaketWatcherService!")
      }
 
-     MarketWatcher createMarketWatcher(final CryptoMarket market, long interval) {
+     MarketWatcher createMarketWatcher(final CryptoMarket market) {
+          return createMarketWatcher(market, 1000 * 20) // 20 sec
+     }
+
+     MarketWatcher createMarketWatcher(final CryptoMarket market, Long interval) {
 
           MarketWatcher w = marketWatcherRepository.findByExchangeAndMarket(market.getExchange(), market.getName())
 
@@ -50,11 +54,16 @@ class MaketWatcherService {
                w  = marketWatcherRepository.save( new MarketWatcher(market.getExchange(), market.getName()))
           }
 
+          if(w.isActive()) {
+               log.warn("MarketWatcher for market $market is already active!")
+               return w
+          }
+
           w.setIntervalMillis(interval)
 
           IExchangeAdapter exchange = exchangeService.getExchangyByName(market.getExchange())
 
-          return createMarketWatcher(w, market, exchange)
+          return startMarketWatcher(w, market, exchange)
      }
 
      MarketWatcher stopMarketWatcher(Integer id) {
@@ -72,9 +81,9 @@ class MaketWatcherService {
           return marketWatcherRepository.save(w)
      }
 
-     MarketWatcher createMarketWatcher(final MarketWatcher w, final CryptoMarket market, final IExchangeAdapter exchange) {
+     private MarketWatcher startMarketWatcher(final MarketWatcher w, final CryptoMarket market, final IExchangeAdapter exchange) {
 
-          log.info("Creating a new MarketWatcher on exchange ${market.getExchange()} for market: $market")
+          log.info("Starting MarketWatcher on exchange ${market.getExchange()} for market: $market")
 
           // new message source
           MessageSource<TradeBatch> tradeMessageSource = new AbstractMessageSource<TradeBatch>() {
@@ -88,14 +97,22 @@ class MaketWatcherService {
                @Override
                protected synchronized TradeBatch doReceive() {
 
-                    TradeBatch batch = exchange.getTrades(null, null, market)
+                    // avoid to many requests per second from one Exchange
+                    synchronized (exchange) {
 
-                    if(first) {
-                         // TODO: merge with existing trades from db if needed
-                         first = false
+                         // -> slow down to reduce request count
+                         Thread.sleep(500)
+
+                         TradeBatch batch = exchange.getTrades(null, null, market)
+
+                         if(first) {
+                              // TODO: merge with existing trades from db if needed
+                              first = false
+                         }
+
+                         return batch
                     }
 
-                    return batch
                }
           }
 

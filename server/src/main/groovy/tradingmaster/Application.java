@@ -32,6 +32,7 @@ public class Application {
             CryptoMarket market = new CryptoMarket(w.getExchange(), w.getMarket());
             w.setActive(false);
             w.setIntegrationFlowId(null);
+            marketWatcherRepository.save(w);
 
             maketWatcherService.createMarketWatcher( market, w.getIntervalMillis() );
 

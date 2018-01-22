@@ -49,21 +49,19 @@ class StrategyRunnerService implements  MessageHandler {
 
     @PostConstruct
     init() {
-        candelChannel1Minute.subscribe(this)
+        //candelChannel1Minute.subscribe(this)
     }
 
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
-
-        Candle c = message.getPayload()
+        // Not active check init()
+       Candle c = message.getPayload()
 
         Map strategies = new HashMap(this.runnerMap)
 
         def matchingStrategies = strategies.values().findAll { ScriptStrategyRun s ->
             s.getMarket().equals( c.getMarket() )
         }
-
-        log.info("Found ${matchingStrategies.size()} matching strategies!")
 
         matchingStrategies.each { ScriptStrategyRun s ->
            s.nextCandle(c)

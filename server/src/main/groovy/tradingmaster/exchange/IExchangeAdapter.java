@@ -1,6 +1,5 @@
 package tradingmaster.exchange;
 
-import tradingmaster.exchange.bittrex.model.ExchangeResponse;
 import tradingmaster.model.*;
 
 import java.math.BigDecimal;

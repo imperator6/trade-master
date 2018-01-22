@@ -4,7 +4,7 @@ import groovy.util.logging.Commons
 import org.springframework.stereotype.Service
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.exchange.IExchangeAdapter
-import tradingmaster.exchange.bittrex.model.ExchangeResponse
+import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.model.BuySell
 import tradingmaster.model.IOrder
 import tradingmaster.model.ITicker
@@ -93,6 +93,7 @@ class OrderExecutorService {
             ExchangeResponse<IOrder> orderRes = exchangeAdapter.getOrder(orderId)
 
             if(!orderRes.success) {
+                log.info("Can't load order from Exchange. $orderRes.message OrderId: $orderId")
                 orderResponse.success = false
                 orderResponse.message = orderRes.message
                 return orderResponse
@@ -101,7 +102,7 @@ class OrderExecutorService {
             IOrder order = orderRes.getResult()
 
             if(order.isOpen()) {
-                log.info("Order is still open")
+                log.info("Order is still open! Try to cancel order with id: $orderId")
                 // order is still open -> cancel and retry
                 if(exchangeAdapter.cancelOrder(orderId)) {
                     // next try
@@ -115,7 +116,8 @@ class OrderExecutorService {
         } catch (Exception e) {
             log.fatal("Error while placing order", e )
             orderResponse.success = false
-            orderResponse.message = e.getMessage()
+            orderResponse.message = "Exception: ${e.getMessage()}"
+            e.printStackTrace()
         }
 
         return orderResponse

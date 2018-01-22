@@ -1,5 +1,7 @@
 package tradingmaster.exchange.mininghamster;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -16,6 +18,8 @@ import java.util.Map;
 
 @Service
 class MiningHamster extends DefaultExchangeRestService {
+
+    static Log LOG = LogFactory.getLog(MiningHamster.class);
 
     @Autowired
     public MiningHamster(@Value("${mininghamster.key}") String publicKey,
@@ -56,6 +60,7 @@ class MiningHamster extends DefaultExchangeRestService {
 
     public List<HamsterSignal> getLatestSignals() {
 
+        LOG.info("Fetching latest Hamster Signals!");
 
         List<HamsterSignal> signals = get("", new ParameterizedTypeReference<List<HamsterSignal>>(){});
 

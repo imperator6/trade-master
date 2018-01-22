@@ -13,9 +13,10 @@ import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
-import tradingmaster.exchange.bittrex.model.ExchangeResponse
+import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.paper.PaperExchange
 import tradingmaster.model.BuySell
+import tradingmaster.model.CryptoMarket
 import tradingmaster.model.IOrder
 import tradingmaster.model.PriceRange
 import tradingmaster.model.ScriptStrategy
@@ -44,6 +45,9 @@ class TradeBotManager {
     @Autowired
     OrderExecutorService orderExecutorService
 
+    @Autowired
+    MaketWatcherService marketWatcheService
+
 
     List<TradeBot> getActiveBots() {
         return new ArrayList(this.TRADE_BOT_MAP.values().findAll { it.active })
@@ -65,9 +69,14 @@ class TradeBotManager {
 
             b.positions = positionRepository.findByBotId(b.id)
 
+            b.positions.findAll { !it.closed && !it.error }.each { Position p ->
+                marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange, p.market) )
+            }
 
-            TRADE_BOT_MAP.put( b.getId(), b)
+            TRADE_BOT_MAP.put( b.getId(), b )
 
+
+            syncBanlance(b)
         }
 
     }
@@ -119,6 +128,8 @@ class TradeBotManager {
         tradeBotRepository.save(p)
 
         log.info("A new trade bot has been initilized: ${p}")
+
+        TRADE_BOT_MAP.put( p.getId(), p )
 
         return p
     }
@@ -215,11 +226,14 @@ class TradeBotManager {
                 // update position
                 pos.setBuyFee(newOrder.getCommissionPaid())
                 pos.setBuyDate(newOrder.getCloseDate())
-                pos.setBuyRate(newOrder.getPrice())
+                pos.setBuyRate(newOrder.getPricePerUnit())
                 pos.setAmount( newOrder.getQuantity())
 
                 pos.setStatus("open")
                 log.debug "New position created! $pos"
+
+                // start the watcher service to observe the market
+                marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, bot.baseCurrency, s.asset))
 
             } else {
                 pos.setError(true)
