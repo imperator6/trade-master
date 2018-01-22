@@ -1,7 +1,6 @@
 package tradingmaster.db.entity
 
 import groovy.transform.ToString
-import tradingmaster.model.IExchangeAdapter
 
 import javax.persistence.*
 
@@ -27,7 +26,10 @@ class TradeBot {
     String baseCurrency
 
     @Column(nullable = false, precision=25, scale=10)
-    BigDecimal startBalance = 0
+    BigDecimal startBalance
+
+    @Column(nullable = false, precision=25, scale=10)
+    BigDecimal currentBalance = 0
 
     @Column(nullable = false)
     boolean active = true

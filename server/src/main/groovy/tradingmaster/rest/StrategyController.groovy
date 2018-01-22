@@ -51,7 +51,7 @@ class StrategyController {
             config.id = UUID.randomUUID().toString()
         }
 
-        strategyRunnerService.startStrategy(config)
+        strategyRunnerService.startStrategy(config.getStrategyId())
 
         return config  // id is now included
     }

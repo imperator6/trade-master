@@ -16,7 +16,6 @@ public class Application {
 
     public static void main(String[] args) throws Exception {
 
-
         ApplicationContext ctx = SpringApplication.run(Application.class, args);
 
         // start all Bots

@@ -75,9 +75,9 @@ class StrategyRunnerService implements  MessageHandler {
 
         log.info("Starting a new ScriptStrategy!")
 
-        ScriptStrategyRun run = crerateStrategyRun(strategyId, false)
+        crerateStrategyRun(strategyId, false)
 
-        runnerMap.put(config.id, run)
+        //runnerMap.put(config.id, run)
     }
 
     String startBacktest(LocalDateTime start, LocalDateTime end, StrategyRunConfig config) {

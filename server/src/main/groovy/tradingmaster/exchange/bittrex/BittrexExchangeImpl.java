@@ -40,16 +40,6 @@ public class BittrexExchangeImpl extends DefaultExchangeRestService {
         return params;
     }
 
-//    @Override
-//    public String buildUrl(String resourcePath) {
-//
-//        UriComponentsBuilder urlBuilder = UriComponentsBuilder.fromPath(resourcePath);
-//        urlBuilder.queryParam("apikey", publicKey);
-//        urlBuilder.queryParam("nonce", EncryptionUtility.generateNonce());
-//
-//        return getBaseUrl() + urlBuilder.toUriString();
-//    }
-
 
 
     @Override

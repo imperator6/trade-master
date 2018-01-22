@@ -5,17 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
 import tradingmaster.exchange.DefaultExchageAdapter
-import tradingmaster.exchange.bittrex.model.BittrexMarketResponse
-import tradingmaster.exchange.bittrex.model.BittrexOrder
-import tradingmaster.exchange.bittrex.model.BittrexOrderResponse
-import tradingmaster.exchange.bittrex.model.BittrexTradeResponse
-import tradingmaster.model.CryptoMarket
-import tradingmaster.model.TradeBatch
+import tradingmaster.exchange.bittrex.model.*
+import tradingmaster.model.*
 
 @Service("Bittrex")
 @Commons
 class Bittrex extends DefaultExchageAdapter {
-
 
     @Autowired
     BittrexExchangeImpl exchange
@@ -24,45 +19,148 @@ class Bittrex extends DefaultExchageAdapter {
         super("Bittrex")
     }
 
-    List<BittrexOrder> getOrderHistory() {
+    @Override
+    ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
+        Map parmas = ["market": market, "quantity": quantity, "rate": rate ]
+        ExchangeBuySellResponse res = exchange.get("market/selllimit", parmas,  new ParameterizedTypeReference<ExchangeBuySellResponse>(){})
 
-        BittrexOrderResponse res = exchange.get("account/getorderhistory", new ParameterizedTypeReference<BittrexOrderResponse>(){})
+        res = handeleResponseError(res)
 
-        if(res.success) {
-            return res.getResult()
+        if(res && res.success) {
+            ExchangeResponse<String> res2 = new ExchangeResponse<String>()
+            res2.success = true
+            res2.setResult( res.getResult().getOrderId())
+            return res2
         }
 
-        log.error("Error: ${res.getMessage()}")
+
+        return res
+    }
+
+    /**
+     * https://bittrex.com/api/v1.1/market/buylimit?apikey=API_KEY&market=BTC-LTC&quantity=1.2&rate=1.3
+     */
+    @Override
+    ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
+
+        Map parmas = ["market": market, "quantity": quantity, "rate": rate ]
+        ExchangeBuySellResponse res = exchange.get("market/buylimit", parmas,  new ParameterizedTypeReference<ExchangeBuySellResponse>(){})
+
+        res = handeleResponseError(res)
+
+        if(res && res.success) {
+            ExchangeResponse<String> res2 = new ExchangeResponse<String>()
+            res2.success = true
+            res2.setResult( res.getResult().getOrderId())
+            return res2
+        }
+
+        return res
+    }
+
+    @Override
+    Boolean cancelOrder(String id) {
+
+        Map parmas = ["uuid": id]
+        ExchangeCancelOrderResponse res = exchange.get("market/cancel", parmas,  new ParameterizedTypeReference<ExchangeCancelOrderResponse>(){})
+
+        handeleResponseError(res)
+
+        return (res && res.success)
+    }
+
+    @Override
+    ExchangeResponse<ITicker> getTicker(String market) {
+        Map parmas = ["market": market]
+        ExchangeTickerResponse res = exchange.get("public/getticker", parmas,  new ParameterizedTypeReference<ExchangeTickerResponse>(){})
+
+        if(res && res.success) {
+            ITicker t =  res.getResult()
+            t.setMarket(market)
+        }
+
+        return handeleResponseError(res)
+    }
+
+    ExchangeResponse<IOrder> getOrder(String id) {
+        Map parmas = ["uuid": id]
+        ExchangeOrderResponse res = exchange.get("account/getorder", parmas,  new ParameterizedTypeReference<ExchangeOrderResponse>(){})
+
+        return handeleResponseError(res)
+    }
+
+    List<BittrexHistoricOrder> getOrderHistory() {
+
+        ExchangeHistoricOrderResponse res = exchange.get("account/getorderhistory", new ParameterizedTypeReference<ExchangeHistoricOrderResponse>(){})
+
+        handeleResponseError(res)
+
+        if(res && res.success) {
+            return res.getResult()
+        }
 
         return []
     }
 
     List<CryptoMarket> getMakets() {
 
-        BittrexMarketResponse info = exchange.get("public/getmarkets", new ParameterizedTypeReference<BittrexMarketResponse>(){})
-        return info.getResult().collect { new CryptoMarket(name, it.getCurrency(), it.getAsset()) }
+        ExchangeMarketResponse info = exchange.get("public/getmarkets", new ParameterizedTypeReference<ExchangeMarketResponse>(){})
+
+        handeleResponseError(info)
+
+        if(info && info.success) {
+            return info.getResult().collect { new CryptoMarket(name, it.getCurrency(), it.getAsset()) }
+        }
+
+        return  []
     }
 
+    /**
+     * https://bittrex.com/api/v1.1/account/getbalances?apikey=API_KEY
+     */
+    @Override
+    List<IBalance> getBalances() {
+
+        ExchangeBalanceResponse res = exchange.get("account/getbalances", new ParameterizedTypeReference<ExchangeBalanceResponse>(){})
+
+        handeleResponseError(res)
+
+        if(res && res.success) {
+            return res.getResult()
+        }
+
+        return []
+    }
 
     @Override
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
 
         Map parmas = ["market": "${market.getCurrency()}-${market.getAsset()}".toString()]
 
-        BittrexTradeResponse res = exchange.get("public/getmarkethistory", parmas,  new ParameterizedTypeReference<BittrexTradeResponse>(){})
+        ExchangeTradeResponse res = exchange.get("public/getmarkethistory", parmas,  new ParameterizedTypeReference<ExchangeTradeResponse>(){})
+
+        handeleResponseError(res)
 
         List tradeList = []
 
-        if(res.success) {
-
-           // res.result.collect { objectMapper.}
-
+        if(res && res.success) {
             tradeList = res.getResult()
-
-        } else {
-            log.error("getTrades was not successful. message: $res.message" )
         }
 
         return new TradeBatch(market, tradeList)
+    }
+
+    ExchangeResponse<Object> handeleResponseError(ExchangeResponse<Object> res) {
+        if(res == null) {
+            res = new ExchangeResponse<Object>()
+            res.success = false
+            res.message = "No response from server! (res=null)"
+        }
+
+        if(res && !res.success) {
+            log.error( "ExchangeResponse errors: ${res.message}!")
+        }
+
+        return res
     }
 }
