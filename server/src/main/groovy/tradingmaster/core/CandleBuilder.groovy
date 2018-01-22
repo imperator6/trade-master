@@ -28,6 +28,8 @@ class CandleBuilder implements MessageHandler {
     @Autowired
     PublishSubscribeChannel candelChannel1Minute
 
+    Instant serverStartMinute = new Date().toInstant().truncatedTo( ChronoUnit.MINUTES )
+
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
         TradeBatch tb = message.getPayload()
@@ -115,7 +117,10 @@ class CandleBuilder implements MessageHandler {
 
                 log.debug("new minute candel: $candle")
                 candle.setPeriod("1min")
-                candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
+
+                def candelMinute = candle.end.toInstant()
+                if(candelMinute > serverStartMinute)
+                    candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
 
             } // last candle is excluded !
 
