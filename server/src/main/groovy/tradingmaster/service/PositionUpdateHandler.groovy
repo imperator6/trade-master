@@ -70,12 +70,12 @@ class PositionUpdateHandler implements  MessageHandler {
                 !it.closed &&
                 candleMarket.equalsIgnoreCase(it.market) }.each { p ->
 
-            updatePosition(p, c)
+            updatePosition(p, c, bot)
 
         }
     }
 
-    private updatePosition(Position p, Candle c) {
+    private updatePosition(Position p, Candle c, TradeBot bot) {
 
         log.info("Updating position $p.id for candle: $c.end")
 
@@ -92,6 +92,27 @@ class PositionUpdateHandler implements  MessageHandler {
         positionRepository.save(p)
 
         log.info("Position $p.id: $p.market buyRate: $p.buyRate  curentRate: $currentPrice result: $resultInPercent")
+
+        checkClosePosition(p, c, bot)
+    }
+
+    void checkClosePosition(Position p, Candle c, TradeBot bot) {
+
+        Map config = bot.config
+
+        if(config.stopLoss && config.stopLoss.enabled) {
+            if(p.result <= config.stopLoss.value) {
+                log.info("Stop Loss < ${config.stopLoss.value}% detected: Position $p.id: $p.market result: $p.result")
+
+                // TODO... call close...
+            }
+        }
+
+        // TODO... check trailing stop loss....
+
+
+        // TODO... check take Profit
+
 
     }
 

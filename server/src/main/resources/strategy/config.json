@@ -42,8 +42,8 @@
   },
 
   "stopLoss": {
-    "enabled": false,
-    "value": 5
+    "enabled": true,
+    "value": -50
   }
 
 }
