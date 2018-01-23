@@ -28,6 +28,9 @@ class CandleBuilder implements MessageHandler {
     @Autowired
     PublishSubscribeChannel candelChannel1Minute
 
+    @Autowired
+    PublishSubscribeChannel lastRecentCandelChannel
+
     Instant serverStartMinute = new Date().toInstant().truncatedTo( ChronoUnit.MINUTES )
 
     @Override
@@ -44,6 +47,8 @@ class CandleBuilder implements MessageHandler {
             log.debug("Previous trades: ${prev.size()} for minute ${prev.first().date.toInstant().truncatedTo(ChronoUnit.MINUTES)} $tb.market" )
             allTrades = allTrades + prev
         }
+
+        Candle lastRecentCandel = null
 
         if(allTrades) {
 
@@ -119,10 +124,16 @@ class CandleBuilder implements MessageHandler {
                 candle.setPeriod("1min")
 
                 def candelMinute = candle.end.toInstant()
-                if(candelMinute > serverStartMinute)
+                if(candelMinute > serverStartMinute) {
+                    lastRecentCandel = candle
                     candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
+                }
 
             } // last candle is excluded !
+
+            if(lastRecentCandel != null) {
+                lastRecentCandelChannel.send( MessageBuilder.withPayload(lastRecentCandel).build() )
+            }
 
         } else {
 

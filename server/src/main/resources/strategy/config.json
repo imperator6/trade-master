@@ -8,42 +8,27 @@
 
   "maxPositions": 5,
 
-  "forbiddenAssets": ["RISE"],
-
-  "dema": {
-    "enabled": false,
-    "shortPeriod": 10,
-    "longPeriod": 50,
-    "up": 0.025,
-    "down": -0.025
+  "signal": {
+    "enabled": true,
+    "listenTo": ["Mining Hamster"]
   },
 
-  "macd": {
-    "enabled": false,
-    "shortPeriod": 11,
-    "longPeriod": 25,
-    "signalPeriod": 12,
-    "up": 0.025,
-    "down": -0.025,
-    "persistence": 3
-  },
-
-  "rsi": {
-    "enabled": false,
-    "interval": 14,
-    "low": 30,
-    "high": 70,
-    "persistence": 1
-  },
+  "forbiddenAssets": [],
 
   "takeProfit": {
-    "enabled": false,
-    "value": 2
+    "enabled": true,
+    "value": 20
   },
 
   "stopLoss": {
-    "enabled": true,
+    "enabled": false,
     "value": -50
+  },
+
+  "trailingStopLoss": {
+    "enabled": true,
+    "value": 1.5,
+    "startAt": 4
   }
 
 }

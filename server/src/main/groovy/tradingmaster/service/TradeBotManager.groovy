@@ -3,7 +3,6 @@ package tradingmaster.service
 import groovy.json.JsonSlurper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.TradeBotRepository
@@ -11,15 +10,12 @@ import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.mariadb.MariaStrategyStore
+import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
-import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.paper.PaperExchange
-import tradingmaster.model.BuySell
-import tradingmaster.model.CryptoMarket
-import tradingmaster.model.IOrder
-import tradingmaster.model.PriceRange
-import tradingmaster.model.ScriptStrategy
+import tradingmaster.model.*
+import tradingmaster.util.NumberHelper
 
 import java.text.DecimalFormat
 import java.util.concurrent.ConcurrentHashMap
@@ -47,6 +43,9 @@ class TradeBotManager {
 
     @Autowired
     MaketWatcherService marketWatcheService
+
+    @Autowired
+    PositionUpdateHandler positionUpdateHandler
 
 
     List<TradeBot> getActiveBots() {
@@ -134,24 +133,7 @@ class TradeBotManager {
         return p
     }
 
-    @Async("orderTaskExecutor")
-    void handleSignal(TradeBot b, Signal s) {
 
-        if("buy".equalsIgnoreCase( s.getBuySell())) {
-
-            if(isValidSignalForBot(b, s)) {
-                openPosition(b, s)
-            }
-
-        } else if ("sell".equalsIgnoreCase( s.getBuySell())){
-
-
-            // TODO... implement ...
-
-        } else {
-            log.error("Unsupported buysell flag ${s.getBuySell()}")
-        }
-    }
 
 
     boolean isValidSignalForBot(TradeBot b, Signal s) {
@@ -223,7 +205,30 @@ class TradeBotManager {
             if(newOrderRes.success) {
 
                 IOrder newOrder = newOrderRes.getResult()
+
+                // validate order !!
+                if(!newOrder.getId()) {
+                  log.error("No order id is provided!")
+                }
+
+                if(newOrder.getCommissionPaid() == null) {
+                    log.error("No getCommissionPaid id is provided!")
+                }
+
+                if(newOrder.getCloseDate() == null) {
+                    log.error("No getCloseDate id is provided!")
+                }
+
+                if(newOrder.getPricePerUnit() == null) {
+                    log.error("No getPricePerUnit id is provided!")
+                }
+
+                if(newOrder.getQuantity() == null) {
+                    log.error("No getQuantity id is provided!")
+                }
+
                 // update position
+                pos.setExtbuyOrderId(newOrder.getId())
                 pos.setBuyFee(newOrder.getCommissionPaid())
                 pos.setBuyDate(newOrder.getCloseDate())
                 pos.setBuyRate(newOrder.getPricePerUnit())
@@ -236,8 +241,10 @@ class TradeBotManager {
                 marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, bot.baseCurrency, s.asset))
 
             } else {
+                def msg = "Error on Buy: ${newOrderRes.getMessage()}"
+                log.error(msg)
                 pos.setError(true)
-                pos.setErrorMsg(newOrderRes.getMessage())
+                pos.setErrorMsg(msg)
                 pos.setClosed(true)
             }
 
@@ -258,23 +265,48 @@ class TradeBotManager {
         return amount
     }
 
-    void closePosition(Position p, Signal s, TradeBot bot) {
+    void closePosition(Position pos, Candle c, TradeBot bot) {
 
-        bot.signals << s
+        PriceRange priceRange = new PriceRange()
+        priceRange.minPrice = c.close
+        priceRange.maxPrice = c.close
 
-        // TODO: Delegate to exchange
-        if(p.isOpen()) {
+        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.SELL, pos.amount, priceRange, pos.market)
 
-            p.extSellOrderId = UUID.randomUUID()
+        if(newOrderRes.success) {
 
-            p.sellRate = s.price
-            p.sellFee = 0
-            p.totalSell = (p.sellRate * p.amount) - p.sellFee
+            IOrder newOrder = newOrderRes.getResult()
+            // update position
+            pos.setExtbuyOrderId(newOrder.getId())
+            pos.setSellFee(newOrder.getCommissionPaid())
+            pos.setSellDate(newOrder.getCloseDate())
+            pos.setSellRate(newOrder.getPricePerUnit())
+            pos.setAmount( newOrder.getQuantity())
 
-            p.total = p.totalBuy - p.totalSell
-            p.open = false
+            // calc final profit
+            def currentPrice = newOrder.getPricePerUnit()
+            BigDecimal resultInPercent = positionUpdateHandler.calculatePositionResult(pos.getBuyRate(), currentPrice)
+            pos.result = resultInPercent
+            pos.setStatus("closed")
+            pos.setClosed(true)
+
+
+
+            log.debug "position ${pos.id} closed! ${NumberHelper.twoDigits(resultInPercent)}%"
+
+            // TODO: stop the watcher service to observe the market
+           // marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, bot.baseCurrency, s.asset))
+
+        } else {
+            log.error("Error on Sell: ${newOrderRes.getMessage()}")
+
+            pos.setError(true)
+            pos.setErrorMsg(newOrderRes.getMessage())
+            pos.setClosed(false)
+            pos.sellInPogress = false
         }
 
+        positionRepository.save(pos)
     }
 
     BigDecimal calcBalanceForNextTrade(TradeBot bot) {

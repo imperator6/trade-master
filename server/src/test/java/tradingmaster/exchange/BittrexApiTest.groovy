@@ -74,7 +74,7 @@ class BittrexApiTest extends TestCase {
 
     @Test
     void testCancelOrder() {
-        String orderid = "42f74473-5be8-4e1a-8149-ccd595efdb3f"
+        String orderid = "5caa7705-915e-4db4-b395-eedd11cf1882"
 
         Boolean isCanceld = bittrex.cancelOrder(orderid)
 

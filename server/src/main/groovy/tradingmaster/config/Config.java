@@ -52,7 +52,25 @@ public class Config {
     }
 
     @Bean
+    TaskExecutor signalExecutor() {
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.setCorePoolSize(5);
+        pool.setMaxPoolSize(50);
+        pool.setWaitForTasksToCompleteOnShutdown(true);
+        return pool;
+    }
+
+    @Bean
     TaskExecutor orderTaskExecutor() {
+        ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
+        pool.setCorePoolSize(5);
+        pool.setMaxPoolSize(25);
+        pool.setWaitForTasksToCompleteOnShutdown(true);
+        return pool;
+    }
+
+    @Bean
+    TaskExecutor positionTaskExecutor() {
         ThreadPoolTaskExecutor pool = new ThreadPoolTaskExecutor();
         pool.setCorePoolSize(5);
         pool.setMaxPoolSize(25);
@@ -74,6 +92,11 @@ public class Config {
 
     @Bean
     public PublishSubscribeChannel candelChannel1Minute() {
+        return MessageChannels.publishSubscribe().get();
+    }
+
+    @Bean
+    public PublishSubscribeChannel lastRecentCandelChannel() {
         return MessageChannels.publishSubscribe().get();
     }
 

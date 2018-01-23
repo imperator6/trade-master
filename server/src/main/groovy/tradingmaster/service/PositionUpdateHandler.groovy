@@ -2,29 +2,19 @@ package tradingmaster.service
 
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.ApplicationContext
 import org.springframework.core.task.TaskExecutor
 import org.springframework.integration.channel.PublishSubscribeChannel
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
-import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
-import tradingmaster.core.CandleAggregator
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
-import tradingmaster.model.*
-import tradingmaster.strategy.*
-import tradingmaster.strategy.runner.CombinedStrategyRun
-import tradingmaster.strategy.runner.IStrategyRunner
-import tradingmaster.strategy.runner.ScriptStrategyRun
+import tradingmaster.model.Candle
+import tradingmaster.util.NumberHelper
 
 import javax.annotation.PostConstruct
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneOffset
-import java.time.temporal.ChronoUnit
 
 @Service
 @Commons
@@ -32,7 +22,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
 
     @Autowired
-    PublishSubscribeChannel candelChannel1Minute
+    PublishSubscribeChannel lastRecentCandelChannel
 
     @Autowired
     TradeBotManager tradeBotManager
@@ -40,9 +30,15 @@ class PositionUpdateHandler implements  MessageHandler {
     @Autowired
     PositionRepository positionRepository
 
+    @Autowired
+    TaskExecutor positionTaskExecutor
+
+    @Autowired
+    TaskExecutor orderTaskExecutor
+
     @PostConstruct
     init() {
-        candelChannel1Minute.subscribe(this)
+        lastRecentCandelChannel.subscribe(this)
     }
 
     @Override
@@ -50,17 +46,19 @@ class PositionUpdateHandler implements  MessageHandler {
 
         Candle c = message.getPayload()
 
-        // TODO... skip old candels
-
         log.info("Processing position for market: ${c.getMarket().getName()}")
 
-        tradeBotManager.getActiveBots().each {
-            processPositions(it, c)
+        tradeBotManager.getActiveBots().each { TradeBot bot ->
+
+            def task = {
+                processPositions(bot, c)
+            } as Runnable
+
+            positionTaskExecutor.execute(task)
         }
     }
 
 
-    @Async
     void processPositions(TradeBot bot, Candle c) {
 
         String candleMarket = c.getMarket().getName()
@@ -72,48 +70,110 @@ class PositionUpdateHandler implements  MessageHandler {
 
             updatePosition(p, c, bot)
 
+            if(checkClosePosition(p, c, bot)) {
+                closePosition(p, c, bot)
+            }
         }
+    }
+
+     BigDecimal calculatePositionResult(BigDecimal buyRate, BigDecimal rate) {
+
+         def diff = (1/rate) - (1/buyRate)
+         BigDecimal resultInPercent = diff / (1/rate) * 100
+
+         if(buyRate > rate) {
+             resultInPercent = resultInPercent.abs() * -1
+         } else {
+             resultInPercent = resultInPercent.abs()
+         }
+
+         return resultInPercent
     }
 
     private updatePosition(Position p, Candle c, TradeBot bot) {
 
         log.info("Updating position $p.id for candle: $c.end")
 
-        def currentPrice = c.close
-
-        def buyRate = p.getBuyRate()
-
-        def diff = (1/currentPrice) - (1/buyRate)
-
-        BigDecimal resultInPercent = diff / (1/currentPrice) * 100
+        BigDecimal resultInPercent = calculatePositionResult(p.getBuyRate(), c.close)
 
         p.setResult(resultInPercent)
 
+        if(p.maxResult == null || resultInPercent > p.maxResult) {
+            p.maxResult = resultInPercent
+        }
+
         positionRepository.save(p)
 
-        log.info("Position $p.id: $p.market buyRate: $p.buyRate  curentRate: $currentPrice result: $resultInPercent")
-
-        checkClosePosition(p, c, bot)
+        log.info("PosId $p.id: buyRate: $p.buyRate curentRate: $c.close $p.market: ${NumberHelper.twoDigits(resultInPercent)} (max: ${NumberHelper.twoDigits(p.maxResult)})")
     }
 
-    void checkClosePosition(Position p, Candle c, TradeBot bot) {
+    boolean checkClosePosition(Position p, Candle c, TradeBot bot) {
 
         Map config = bot.config
+        BigDecimal positionValueInPercent = p.result
 
         if(config.stopLoss && config.stopLoss.enabled) {
-            if(p.result <= config.stopLoss.value) {
-                log.info("Stop Loss < ${config.stopLoss.value}% detected: Position $p.id: $p.market result: $p.result")
-
-                // TODO... call close...
+            if(positionValueInPercent <= config.stopLoss.value) {
+                log.info("Stop Loss <= ${config.stopLoss.value}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
+                return true
             }
         }
 
-        // TODO... check trailing stop loss....
+        if(config.trailingStopLoss && config.trailingStopLoss.enabled) {
 
+            if(p.trailingStopLoss != null && positionValueInPercent <= p.trailingStopLoss) {
+                log.info("Trailing-Stop-Loss <= ${p.trailingStopLoss}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
+                return true
+            }
 
-        // TODO... check take Profit
+            // update trailing
+            if(p.trailingStopLoss != null) {
+                BigDecimal newTrailingStopLoss = positionValueInPercent - config.trailingStopLoss.value
+                if(newTrailingStopLoss > p.trailingStopLoss) {
+                    log.info("Increase Trailing-Stop-Loss for Position $p.id: $p.market new: ${newTrailingStopLoss}%")
+                    p.trailingStopLoss = newTrailingStopLoss
+                    positionRepository.save(p)
+                }
+            }
 
+            // activate trailing
+            if(p.trailingStopLoss == null && positionValueInPercent >= config.trailingStopLoss.startAt) {
+                BigDecimal trailingStopLoss = positionValueInPercent - config.trailingStopLoss.value
+                log.info("Activate Trailing-Stop-Loss for Position $p.id: $p.market trailingStopLoss at: $trailingStopLoss")
+                p.trailingStopLoss = trailingStopLoss
+                positionRepository.save(p)
+            }
+        }
 
+        if(config.takeProfit && config.takeProfit.enabled) {
+            if(positionValueInPercent >= config.takeProfit.value) {
+                log.info("Take-Profit for Position $p.id: $p.market profit: ${positionValueInPercent}%")
+                return true
+            }
+        }
+
+        return false
+    }
+
+    synchronized void closePosition(Position p, Candle c, TradeBot bot) {
+
+        if(p.holdPosition) {
+            log.info("Can't close position $p.id. Flag HoldPosition is active!")
+            return
+        }
+
+        if(p.sellInPogress) {
+            log.info("Can't close position $p.id. Sell is already in pogress!")
+            return
+        }
+
+        p.sellInPogress = true
+
+        def task = {
+            tradeBotManager.closePosition(p, c, bot)
+        } as Runnable
+
+        orderTaskExecutor.execute(task)
     }
 
 

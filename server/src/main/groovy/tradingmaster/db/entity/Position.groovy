@@ -78,6 +78,9 @@ class Position {
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal result
 
+    @Column(nullable = true, precision=25, scale=10)
+    BigDecimal maxResult
+
     //String triggerName
     boolean holdPosition = false
 
@@ -87,6 +90,11 @@ class Position {
 
     @Column(nullable = true)
     String errorMsg
+
+    boolean sellInPogress = false
+
+    @Column(nullable = true)
+    BigDecimal trailingStopLoss
 
 
 }

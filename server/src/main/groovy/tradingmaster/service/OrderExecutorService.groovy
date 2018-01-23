@@ -14,6 +14,18 @@ import tradingmaster.model.PriceRange
 @Commons
 class OrderExecutorService {
 
+    ExchangeResponse<IOrder> placeLimitOrder(TradeBot bot,
+                                             IExchangeAdapter exchangeAdapter,
+                                             BuySell bs,
+                                             BigDecimal spendOrAmount,
+                                             PriceRange priceRange,
+                                             String market) {
+
+        ExchangeResponse<IOrder> res = trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, 1)
+
+        return res
+    }
+
 
 
     ExchangeResponse<IOrder> placeLimitOrder(TradeBot bot,
@@ -101,6 +113,7 @@ class OrderExecutorService {
 
             IOrder order = orderRes.getResult()
 
+            // Check remaining...!
             if(order.isOpen()) {
                 log.info("Order is still open! Try to cancel order with id: $orderId")
                 // order is still open -> cancel and retry
@@ -108,10 +121,21 @@ class OrderExecutorService {
                     // next try
                     tryCount++
                     trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, tryCount )
+                } else {
+                    // closed in the meantime ?
+                    orderRes = exchangeAdapter.getOrder(orderId)
+                    if(orderRes.success) {
+                        order = orderRes.getResult()
+                        if(order.isOpen()) {
+                            orderResponse.setSuccess(false)
+                            orderResponse.setMessage("Not able to cancel the order")
+                        }
+                    }
                 }
             }
 
             orderResponse.setResult(order)
+            orderResponse.setSuccess(true)
 
         } catch (Exception e) {
             log.fatal("Error while placing order", e )
