@@ -16,4 +16,7 @@ interface IOrder {
 
     BigDecimal getQuantity()
 
+    BigDecimal getQuantityRemaining()
+
+
 }

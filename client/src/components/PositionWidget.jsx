@@ -102,55 +102,37 @@ class PositionWidget extends React.Component {
         size="small"
         rowKey="id"
         columns={columns}
-        dataSource={this.store.watcherList.slice()}
+        dataSource={this.store.positions.slice()}
       />
     );
 
-    let exchangeOptions = this.store.exchangeList.map(exc => (
-      <Option key={exc}>
-        {exc}
-      </Option>
-    ));
+    let botOptions = this.store.botList.map(botString => {
+
+      let bot = botString.split("_")
+
+      return (
+        <Option key={bot[0]}>
+          {bot[1]}
+        </Option>
+      )
+    });
 
     let exchangeSelect = (
       <Select
         size="small"
         placeholder="Select Exchange"
-        value={this.store.selectedExchange}
+        value={this.store.selectedBot}
         onChange={(newValue) => { this.store.selectedExchange = newValue }}
         style={{ width: 170 }}
       >
-        {exchangeOptions}
+        {botOptions}
       </Select>
     );
-
-    let assetOptions = null;
-      if (this.store.assetMap.get(this.store.selectedExchange)) {
-        assetOptions = this.store.assetMap
-          .get(this.store.selectedExchange)
-          .map(a => <Option key={a}>{a}</Option>);
-      }
-
-      let assetSelect = (
-        <Select 
-          size="small"
-          showSearch
-          placeholder="Select Market"
-          optionFilterProp="children"
-          value={this.store.selectedAsset}
-          style={{ width: 130 }}
-          onChange={(newMarket) => { this.store.selectedAsset = newMarket}}
-          filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
-        >
-          {assetOptions}
-        </Select>
-      );
 
     return (
       <div className="table-operations">
           {exchangeSelect}
-          {assetSelect}
-          <Tooltip title="Add new Wacther">
+          <Tooltip title="Add new Watcher">
           <Button
             disabled={!(this.store.selectedExchange && this.store.selectedAsset)}
             size="small"

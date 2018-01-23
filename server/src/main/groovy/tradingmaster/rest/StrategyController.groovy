@@ -9,6 +9,7 @@ import tradingmaster.model.RestResponse
 import tradingmaster.model.ScriptStrategy
 import tradingmaster.model.StrategyRunConfig
 import tradingmaster.service.StrategyRunnerService
+import tradingmaster.service.TradeBotManager
 
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -24,6 +25,9 @@ class StrategyController {
     @Autowired
     StrategyRunnerService strategyRunnerService
 
+    @Autowired
+    TradeBotManager tradeBotManager
+
 
     @RequestMapping(value = "/", method = RequestMethod.GET)
     List<ScriptStrategy> list() {
@@ -37,7 +41,11 @@ class StrategyController {
 
         log.info("Savaing startegy ${strategy.name} with id ${strategy.id}")
 
-        return store.saveStrategy(strategy)
+        strategy = store.saveStrategy(strategy)
+
+        tradeBotManager.refreshBotConfig(strategy)
+
+        return strategy
     }
 
     @RequestMapping(value = "/runStrategy", method = RequestMethod.POST)

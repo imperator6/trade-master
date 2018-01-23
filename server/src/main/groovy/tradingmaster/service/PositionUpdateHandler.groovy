@@ -78,6 +78,10 @@ class PositionUpdateHandler implements  MessageHandler {
 
      BigDecimal calculatePositionResult(BigDecimal buyRate, BigDecimal rate) {
 
+         if(buyRate == null || rate == null) {
+             return 0.0
+         }
+
          def diff = (1/rate) - (1/buyRate)
          BigDecimal resultInPercent = diff / (1/rate) * 100
 
@@ -91,6 +95,11 @@ class PositionUpdateHandler implements  MessageHandler {
     }
 
     private updatePosition(Position p, Candle c, TradeBot bot) {
+
+        if(p.sellInPogress) {
+            log.info("Skip update position $p.id. Sell is already in pogress!")
+            return
+        }
 
         log.info("Updating position $p.id for candle: $c.end")
 
@@ -108,6 +117,11 @@ class PositionUpdateHandler implements  MessageHandler {
     }
 
     boolean checkClosePosition(Position p, Candle c, TradeBot bot) {
+
+        if(p.sellInPogress) {
+            log.info("Skip cehck close position $p.id. Sell is already in pogress!")
+            return false
+        }
 
         Map config = bot.config
         BigDecimal positionValueInPercent = p.result

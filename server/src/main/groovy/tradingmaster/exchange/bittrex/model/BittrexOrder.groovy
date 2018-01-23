@@ -1,8 +1,10 @@
 package tradingmaster.exchange.bittrex.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import groovy.transform.ToString
 import tradingmaster.model.IOrder
 
+@ToString
 class BittrexOrder implements IOrder {
 
     @JsonProperty("OrderUuid")

@@ -28,7 +28,7 @@
   "trailingStopLoss": {
     "enabled": true,
     "value": 1.5,
-    "startAt": 4
+    "startAt": 6
   }
 
 }

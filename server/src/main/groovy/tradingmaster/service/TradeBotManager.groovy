@@ -15,6 +15,7 @@ import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.exchange.paper.PaperExchange
 import tradingmaster.model.*
+import tradingmaster.strategy.Strategy
 import tradingmaster.util.NumberHelper
 
 import java.text.DecimalFormat
@@ -62,9 +63,7 @@ class TradeBotManager {
 
             // load the config
             ScriptStrategy strategy = strategyStore.loadStrategyById(b.configId, null)
-            Map params = new JsonSlurper().parseText(strategy.getScript())
-
-            b.config = params
+            b.config = parseBotConfig( strategy.getScript() )
 
             b.positions = positionRepository.findByBotId(b.id)
 
@@ -74,10 +73,23 @@ class TradeBotManager {
 
             TRADE_BOT_MAP.put( b.getId(), b )
 
-
             syncBanlance(b)
         }
 
+    }
+
+    void refreshBotConfig(IScriptStrategy strategy) {
+
+        TRADE_BOT_MAP.values().findAll{ it.configId == strategy.getId() }.each {
+            it.config = parseBotConfig( strategy.getScript() )
+            log.info("Bot config on bot ${it.id} has been updated!")
+        }
+
+    }
+
+    private Map parseBotConfig(String configScript) {
+        Map config = new JsonSlurper().parseText(configScript)
+        return config
     }
 
     void syncBanlance(TradeBot b) {
@@ -115,8 +127,7 @@ class TradeBotManager {
         p.backtest = backtest
 
         ScriptStrategy strategy = strategyStore.loadStrategyById(configId, null)
-
-        Map params = new JsonSlurper().parseText(strategy.getScript())
+        Map params = parseBotConfig(strategy.getScript())
 
         p.config = params
         p.baseCurrency = params.baseCurrency
@@ -277,7 +288,7 @@ class TradeBotManager {
 
             IOrder newOrder = newOrderRes.getResult()
             // update position
-            pos.setExtbuyOrderId(newOrder.getId())
+            pos.setExtSellOrderId(newOrder.getId())
             pos.setSellFee(newOrder.getCommissionPaid())
             pos.setSellDate(newOrder.getCloseDate())
             pos.setSellRate(newOrder.getPricePerUnit())
@@ -289,8 +300,6 @@ class TradeBotManager {
             pos.result = resultInPercent
             pos.setStatus("closed")
             pos.setClosed(true)
-
-
 
             log.debug "position ${pos.id} closed! ${NumberHelper.twoDigits(resultInPercent)}%"
 

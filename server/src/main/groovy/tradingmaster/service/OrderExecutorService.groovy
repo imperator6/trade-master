@@ -77,7 +77,7 @@ class OrderExecutorService {
 
                 // TODO: check allowed price range
 
-                log.info("Attempting to BUY: quantity: $quantity  price: $price")
+                log.info("Attempting to BUY $market quantity: $quantity  price: $price")
 
                 orderIdRes = exchangeAdapter.buyLimit(market, quantity, price)
 
@@ -88,12 +88,13 @@ class OrderExecutorService {
 
                 // TODO: check allowed price range
 
-                log.info("Attempting to SELL: quantity: $quantity  price: $price")
+                log.info("Attempting to SELL $market quantity: $quantity  price: $price")
 
                 orderIdRes = exchangeAdapter.sellLimit(market, quantity, price)
             }
 
             if(!orderIdRes.success) {
+                log.error("Attempting to trade $market was not sucsessful: $orderIdRes.message")
                 orderResponse.success = false
                 orderResponse.message = orderIdRes.message
                 return orderResponse
@@ -101,37 +102,16 @@ class OrderExecutorService {
 
             String orderId = orderIdRes.getResult()
 
-            Thread.sleep(60000) // Wait a minute
-            ExchangeResponse<IOrder> orderRes = exchangeAdapter.getOrder(orderId)
+            log.info("Order with id $orderId has been placed. Waiting to be executed.....")
 
-            if(!orderRes.success) {
-                log.info("Can't load order from Exchange. $orderRes.message OrderId: $orderId")
-                orderResponse.success = false
-                orderResponse.message = orderRes.message
-                return orderResponse
-            }
+            Thread.sleep(60000) // Wait a minute than check
 
-            IOrder order = orderRes.getResult()
+            IOrder order = checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
 
-            // Check remaining...!
-            if(order.isOpen()) {
-                log.info("Order is still open! Try to cancel order with id: $orderId")
-                // order is still open -> cancel and retry
-                if(exchangeAdapter.cancelOrder(orderId)) {
-                    // next try
-                    tryCount++
-                    trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, tryCount )
-                } else {
-                    // closed in the meantime ?
-                    orderRes = exchangeAdapter.getOrder(orderId)
-                    if(orderRes.success) {
-                        order = orderRes.getResult()
-                        if(order.isOpen()) {
-                            orderResponse.setSuccess(false)
-                            orderResponse.setMessage("Not able to cancel the order")
-                        }
-                    }
-                }
+            if(order == null) {
+                tryCount++
+                log.info("Order $market is not executed.")
+                trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, tryCount)
             }
 
             orderResponse.setResult(order)
@@ -145,6 +125,55 @@ class OrderExecutorService {
         }
 
         return orderResponse
+    }
+
+
+    IOrder checkOrderIfExecuted(TradeBot bot, String orderId, String market, IExchangeAdapter exchangeAdapter) {
+
+        try {
+            if(orderId == null) {
+                log.fatal("OrderId for market id null!")
+            }
+
+            Thread.sleep(1000)
+
+            ExchangeResponse<IOrder> orderRes = exchangeAdapter.getOrder(orderId)
+
+            if(!orderRes.success) {
+                log.error("Load order $market was not sucessful! $orderRes.message OrderId: $orderId")
+                throw new RuntimeException("Load order $market was not sucessful! $orderRes.message OrderId: $orderId")
+            }
+
+            IOrder order = orderRes.getResult()
+            log.info("Order $market received: $order")
+
+            // Check remaining...!
+            if(order.getQuantity().equals(order.getQuantityRemaining()) ) {
+                log.info("Order $market has not been executed! Try to cancel order with id: $orderId")
+
+                if(exchangeAdapter.cancelOrder(orderId)) {
+                    log.info("Order $market has been canceld! Let's place a new order!")
+                    return null
+                } else {
+                    log.info("Cancel process of order $market was not sucsesfull! Let's check again!")
+                    return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
+                }
+            } else if (order.getQuantityRemaining() > 0.0) {
+                log.info("Order $market has a remaining quantity! Wair till order is fullfilled id: $orderId")
+                return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
+
+            } else if (order.getQuantityRemaining() == 0.0) {
+
+                return order
+            } else {
+                log.error("Unknown QuantityRemaining state! ${order.getQuantityRemaining()}")
+                throw new RuntimeException("Unknown QuantityRemaining state! ${order.getQuantityRemaining()}")
+            }
+
+        } catch(Exception e) {
+            log.error("Error while checking order $market id: $orderId", e)
+            return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
+        }
     }
 
 }

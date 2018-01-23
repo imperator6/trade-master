@@ -5,7 +5,7 @@ import groovy.transform.ToString
 @ToString
 class ScriptStrategy implements IScriptStrategy {
 
-    BigDecimal id = null
+    Integer id = null
     String name = ""
     String language = ""
     String script = ""

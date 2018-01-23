@@ -8,14 +8,14 @@ class MarketWatcherStore {
 
     log = logger.getLogger('MarketWatcherStore')
 
-    @observable watcherList = []
+    @observable positions = []
 
-    @observable exchangeList = []
+    @observable botList = []
 
     @observable
-    assetMap = new Map()
+    botMap = new Map()
 
-    @observable selectedExchange
+    @observable selectedBot
 
     @observable selectedAsset
 
@@ -28,31 +28,26 @@ class MarketWatcherStore {
 
         this.log.debug("init MarketWatcherStore -> loading available exchanges")
         
-        let url = this.rootStore.remoteApiUrl + "/exchange/";
+        let url = this.rootStore.remoteApiUrl + "/bot/";
   
         axios
         .get(url, this.rootStore.userStore.getHeaderConfig())
         .then(response => {
           if (response.data.success) {
-                this.log.debug("Loaded Exchanges", {...response.data.data})
+                this.log.debug("Loaded Bots", {...response.data.data})
              // console.log( response.data.data)
   
-              let newExchangeList = []
-              response.data.data.forEach((exchange) => {
+              let newBotList = []
+              response.data.data.forEach((bot) => {
                    // console.log( exchange)
-                   newExchangeList.push(exchange.name)
-                   
-                   let newAssetList = exchange.markets.map((market) => {
-                         return market.currency + '-' + market.asset
-                   })
-              
-                   this.assetMap.set(exchange.name, newAssetList)
-              //     this.selectedAssetBySeries.set(exchange.name, newAssetList[0])
+                   newBotList.push(bot.id + "_" + bot.exchange + "_" + bot.baseCurrency)
+                   botMap.set()
+                   //newBotList.push(bot)
               });
               
-              this.exchangeList = newExchangeList
+              this.botList = newBotList
   
-    
+              this.selectedBot = newBotList[0].split("_")[0]
   
           } else {
             // error
@@ -63,7 +58,7 @@ class MarketWatcherStore {
           console.log(error);
         });
 
-        this.load();
+       this.load();
     }
 
     addToChart = (watcher) => {
@@ -146,8 +141,8 @@ class MarketWatcherStore {
 
     load = () => {
 
-      this.log.debug("loading watcher list");
-      let url = this.rootStore.remoteApiUrl + "/marketWatcher/list";
+      this.log.debug("loading position list");
+      let url = this.rootStore.remoteApiUrl + "/bot/positions";
 
       axios
       .get(url, this.rootStore.userStore.getHeaderConfig())
@@ -155,7 +150,7 @@ class MarketWatcherStore {
         if (response.data.success) {
              this.log.debug("Loaded watcher", {...response.data.data})
              
-             this.watcherList = response.data.data
+             this.positions = response.data.data
         } else {
           // error
           console.info(response.data.message)
