@@ -5,7 +5,9 @@ import moment from "moment";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 
-import MarketWatcherControl from "./marketWatcherControl";
+import MarketWatcherControl from "./MarketWatcherControl";
+import PositionWidget from "./PositionWidget";
+import StrategyForm from "./StrategyForm"
 
 import { Tabs, Timeline, Badge } from "antd";
 const TabPane = Tabs.TabPane;
@@ -139,8 +141,14 @@ class StrategyResults extends React.Component {
         onChange={this.tabChangeCallback}
         type="card"
         activeKey={this.store.activeTab}
+        size="small"
       >
-        
+      <TabPane tab="Positions" key="position">
+          <PositionWidget />
+        </TabPane>
+        <TabPane tab="Config" key="confi">
+          <StrategyForm />
+        </TabPane>
         <TabPane tab="Market Watcher" key="watcher">
           <MarketWatcherControl />
         </TabPane>
@@ -149,11 +157,6 @@ class StrategyResults extends React.Component {
             <Timeline>{timeLineItems}</Timeline>
           </Scrollarea>
         </TabPane>
-        <TabPane tab="Parameter" key="param">
-          Parmaeter TODO....
-        </TabPane>
-
-        
       </Tabs>
     );
   }

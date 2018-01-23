@@ -3,6 +3,7 @@ import MarketSelectionStore from "./MarketSelectionStore"
 import ChartStore from "./ChartStore"
 import StompStore from "./StompStore"
 import UserStore from "./UserStore"
+import PositionStore from "./PositionStore"
 import MarketWatcherStore from "./MarketWatcherStore"
 
 import moment from "moment"
@@ -20,6 +21,7 @@ export default class RootStore {
     this.marketSelectionStore = new MarketSelectionStore(this)
     this.chartStore = new ChartStore(this)
     this.marketWatcherStore = new MarketWatcherStore(this)
+    this.positionStore = new PositionStore(this)
 
     this.stompStore = new StompStore(this, this.websocketUrl);
   }

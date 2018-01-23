@@ -9,7 +9,7 @@ export default class StrategyStore {
     this.rootStore = rootStore;
   }
 
-  @observable activeTab = "watcher"
+  @observable activeTab = "position"
 
   @observable loaded = false;
 
