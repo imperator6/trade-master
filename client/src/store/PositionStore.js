@@ -3,6 +3,8 @@ import { observable, computed, action } from "mobx";
 
 import logger from "../logger"
 
+import moment from "moment";
+
 
 class MarketWatcherStore {
 
@@ -68,8 +70,22 @@ class MarketWatcherStore {
         this.rootStore.marketSelectionStore.load()
     }
 
-    loadToChart = (watcher) => {
-        this.rootStore.marketSelectionStore.select(watcher.exchange, watcher.market)
+    loadToChart = (position) => {
+        
+
+        let singnals = []
+        let signal = {
+            type: "buy",
+            date: moment(position.buyDate).toDate()
+        }
+
+        singnals.push(signal)
+
+
+        this.rootStore.chartStore.updateSignales(singnals)
+
+        let exchange = this.botMap.get(this.selectedBot).exchange
+        this.rootStore.marketSelectionStore.select(exchange, position.market)
     }
 
     stop = (watcher) => {

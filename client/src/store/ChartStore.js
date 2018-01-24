@@ -281,6 +281,9 @@ export default class ChartStore {
 
     this.removeSignals(); // We need to call it twice -> No idea why
 
+    console.log("Update signals")
+    console.log(signals)
+
     let buySignales = [];
     let sellSignales = [];
 
