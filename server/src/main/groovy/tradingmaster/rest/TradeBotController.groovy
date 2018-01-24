@@ -5,7 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.domain.Sort
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestMethod
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
+import tradingmaster.db.PositionRepository
 import tradingmaster.db.TradeBotRepository
 import tradingmaster.db.entity.MarketWatcher
 import tradingmaster.db.entity.Position
@@ -21,6 +23,9 @@ class TradeBotController {
     @Autowired
     TradeBotRepository tradeBotRepository
 
+    @Autowired
+    PositionRepository positionRepository
+
     @RequestMapping(value = "/", method = RequestMethod.GET)
     RestResponse<List<TradeBot>> botList() {
 
@@ -30,9 +35,9 @@ class TradeBotController {
     }
 
     @RequestMapping(value = "/positions", method = RequestMethod.GET)
-    RestResponse<List<Position>> positions() {
+    RestResponse<List<Position>> positions(@RequestParam Integer botId) {
 
-        List<TradeBot> list = tradeBotRepository.findAll(new Sort(Sort.Direction.DESC,"active"))
+        List<TradeBot> list = positionRepository.findByBotId(botId)
 
         return new RestResponse(list)
     }

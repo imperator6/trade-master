@@ -145,8 +145,8 @@ class StrategyResults extends React.Component {
       >
       <TabPane tab="Positions" key="position">
           <PositionWidget />
-        </TabPane>
-        <TabPane tab="Config" key="confi">
+        </TabPane> 
+        <TabPane tab="Config" key="config">
           <StrategyForm />
         </TabPane>
         <TabPane tab="Market Watcher" key="watcher">

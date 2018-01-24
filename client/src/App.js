@@ -16,6 +16,7 @@ import ReactHighstock from "react-highcharts/ReactHighstock";
 
 import TimeDisplay from "./components/TimeDisplay";
 import LoginPage from "./components/LoginPage";
+import PositionWidget from "./components/PositionWidget"
 
 import { Layout, Menu, Breadcrumb, Icon } from "antd";
 const { Header, Content, Footer, Sider } = Layout;
@@ -53,7 +54,8 @@ class App extends Component {
               <Switch>
                 <Route exact path="/cpd" component={TimeDisplay} />
                 <Route path="/strategy" component={StrategyPage} />
-           
+                <Route path="/positions" component={PositionWidget} />
+                
               </Switch>
             </Content>
           </Layout>

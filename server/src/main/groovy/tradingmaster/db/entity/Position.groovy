@@ -1,5 +1,6 @@
 package tradingmaster.db.entity
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import groovy.transform.ToString
 import groovy.util.logging.Commons
 import org.springframework.stereotype.Component
@@ -26,6 +27,7 @@ class Position {
     @Column(nullable = false)
     Integer buySignalId
 
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "UTC")
     @Column(nullable = false)
     Date created = new Date()
 
@@ -50,6 +52,7 @@ class Position {
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal amount
 
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "UTC")
     Date buyDate
 
     @Column(nullable = true, precision=25, scale=10)
@@ -61,6 +64,7 @@ class Position {
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal totalBuy
 
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "UTC")
     Date sellDate
 
     @Column(nullable = true, precision=25, scale=10)

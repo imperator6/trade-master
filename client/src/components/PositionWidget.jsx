@@ -5,7 +5,17 @@ import moment from "moment";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 
-import { Table, Icon, Divider, Row, Col, Button, Spin, Tooltip, Select } from "antd";
+import {
+  Table,
+  Icon,
+  Divider,
+  Row,
+  Col,
+  Button,
+  Spin,
+  Tooltip,
+  Select
+} from "antd";
 const Option = Select.Option;
 
 @inject("rootStore")
@@ -18,7 +28,28 @@ class PositionWidget extends React.Component {
   }
 
   componentDidMount() {
-    this.store.init()
+    this.store.init();
+  }
+
+  formtatPercent(value) {
+    let v = 0
+    let sing = "+"
+    if(value) v = Math.abs(value).toFixed(2)
+    if(value < 0)sing = "-"
+    return sing + v + " %"
+  }
+
+  formatDate(value) {
+    if(value == null) return "Unknown"
+   return moment(value).format('DD.MM.YY HH:mm')
+  }
+
+  showPositionDates(record) {
+    return <span>
+      Created: {this.formatDate(record.created)} <br/>
+      Buy Date: {this.formatDate(record.buyDate)} <br/>
+      Sell Date: {this.formatDate(record.sellDate)}
+    </span>
   }
 
   render() {
@@ -29,27 +60,85 @@ class PositionWidget extends React.Component {
         key: "id"
       },
       {
-        title: "Active",
-        dataIndex: "active",
-        key: "active",
+        title: "Closed",
+        key: "closed",
         render: (text, record) => {
-          if (record.active) {
-            return <Icon type="loading" style={{ fontSize: 24 }} spin />;
+          if (!record.closed) {
+            return (
+                <Tooltip title="Position is open!">
+                  <Icon type="loading" />
+                </Tooltip>
+            );
           } else {
-            return <Icon type="warning" />;
+            return (
+              <Tooltip title="Position is closed!">
+                <Icon type="check-circle-o" />
+              </Tooltip>
+          );
+
           }
         }
-      },
-      {
-        title: "Exchange",
-        dataIndex: "exchange",
-        key: "exchange"
       },
       {
         title: "Market",
         dataIndex: "market",
         key: "market"
       },
+      {
+        title: "Date",
+        key: "created",
+        render: (text, record) => {
+            return <Tooltip title={this.showPositionDates(record)}>
+                <Icon type="clock-circle-o" />
+              </Tooltip>
+        }
+      },
+      {
+        title: "Quantity",
+        dataIndex: "amount",
+        key: "amount"
+      },
+      {
+        title: "Buy Rate",
+        dataIndex: "buyRate",
+        key: "buyRate"
+      },
+      {
+        title: "Sell Rate",
+        key: "sellRate",
+        dataIndex: "sellRate"
+      },
+  
+      {
+        title: "result",
+        key: "result",
+        render: (text, record) => {
+          return this.formtatPercent(record.result)
+        }
+      },
+      {
+        title: "Best",
+        key: "maxResult",
+        render: (text, record) => {
+          return this.formtatPercent(record.maxResult)
+        }
+      },
+      {
+        title: "Hold",
+        dataIndex: "holdPosition",
+        key: "holdPosition"
+      },
+      {
+        title: "Error",
+        dataIndex: "error",
+        key: "erros",
+        render: (text, record) => {
+          if (record.error) {
+            return   <Tooltip title={record.errorMsg}><Icon type="warning" /></Tooltip>
+          }
+        }
+      },
+
       {
         title: "",
         key: "action",
@@ -65,11 +154,17 @@ class PositionWidget extends React.Component {
                 </Tooltip>
                 <Divider type="vertical" />
                 <Tooltip title="Load in chart">
-                  <Icon type="to-top" onClick={() => this.store.loadToChart(record)}/>
+                  <Icon
+                    type="to-top"
+                    onClick={() => this.store.loadToChart(record)}
+                  />
                 </Tooltip>
                 <Divider type="vertical" />
                 <Tooltip title="Add to chart">
-                  <Icon type="plus-circle" onClick={() => this.store.addToChart(record)}/>
+                  <Icon
+                    type="plus-circle"
+                    onClick={() => this.store.addToChart(record)}
+                  />
                 </Tooltip>
               </span>
             );
@@ -84,11 +179,17 @@ class PositionWidget extends React.Component {
                 </Tooltip>
                 <Divider type="vertical" />
                 <Tooltip title="Load to chart">
-                  <Icon type="to-top" onClick={() => this.store.loadToChart(record)}/>
+                  <Icon
+                    type="to-top"
+                    onClick={() => this.store.loadToChart(record)}
+                  />
                 </Tooltip>
                 <Divider type="vertical" />
                 <Tooltip title="Add to chart">
-                  <Icon type="plus-circle" onClick={() => this.store.addToChart(record)}/>
+                  <Icon
+                    type="plus-circle"
+                    onClick={() => this.store.addToChart(record)}
+                  />
                 </Tooltip>
               </span>
             );
@@ -107,22 +208,19 @@ class PositionWidget extends React.Component {
     );
 
     let botOptions = this.store.botList.map(botString => {
+      let bot = botString.split("_");
 
-      let bot = botString.split("_")
-
-      return (
-        <Option key={bot[0]}>
-          {bot[1]}
-        </Option>
-      )
+      return <Option key={bot[0]}>{botString}</Option>;
     });
 
-    let exchangeSelect = (
+    let botSelect = (
       <Select
         size="small"
-        placeholder="Select Exchange"
+        placeholder="Select TradeBot"
         value={this.store.selectedBot}
-        onChange={(newValue) => { this.store.selectedExchange = newValue }}
+        onChange={newValue => {
+          this.store.selectedBot = newValue;
+        }}
         style={{ width: 170 }}
       >
         {botOptions}
@@ -131,16 +229,8 @@ class PositionWidget extends React.Component {
 
     return (
       <div className="table-operations">
-          {exchangeSelect}
-          <Tooltip title="Add new Watcher">
-          <Button
-            disabled={!(this.store.selectedExchange && this.store.selectedAsset)}
-            size="small"
-            type="primary"
-            icon="plus"
-            onClick={() => {this.store.addWatcher()}}
-          /></Tooltip>
-          <Divider type="vertical" />
+        {botSelect}
+        <Tooltip title="Reload list fo selected Bot">
           <Button
             size="small"
             type="primary"
@@ -148,10 +238,12 @@ class PositionWidget extends React.Component {
             icon="reload"
             onClick={this.store.load}
           />
-         {table}
-        </div>
-      )
-    
+        </Tooltip>
+        <Divider type="vertical" />
+
+        {table}
+      </div>
+    );
   }
 }
 

@@ -59,8 +59,8 @@ class Sidebar extends React.Component {
       >
         <Logo>{this.state.title}</Logo>,
         <Menu theme="dark" defaultSelectedKeys={[this.props.location.pathname]} mode="inline">
-          <Menu.Item key="/cpd">
-            <Link to="/cpd">
+          <Menu.Item key="/positions">
+            <Link to="/positions">
               <Icon type="table" />
               <span>CPD</span>
             </Link>

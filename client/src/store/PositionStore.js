@@ -41,13 +41,15 @@ class MarketWatcherStore {
               response.data.data.forEach((bot) => {
                    // console.log( exchange)
                    newBotList.push(bot.id + "_" + bot.exchange + "_" + bot.baseCurrency)
-                   botMap.set()
+                   this.botMap.set(bot.id, bot)
                    //newBotList.push(bot)
               });
               
               this.botList = newBotList
   
               this.selectedBot = newBotList[0].split("_")[0]
+
+              this.load();
   
           } else {
             // error
@@ -58,7 +60,7 @@ class MarketWatcherStore {
           console.log(error);
         });
 
-       this.load();
+       
     }
 
     addToChart = (watcher) => {
@@ -144,11 +146,18 @@ class MarketWatcherStore {
       this.log.debug("loading position list");
       let url = this.rootStore.remoteApiUrl + "/bot/positions";
 
+      let config = {
+        params: {
+            botId: this.selectedBot
+        },
+        ...this.rootStore.userStore.getHeaderConfig()
+    } 
+
       axios
-      .get(url, this.rootStore.userStore.getHeaderConfig())
+      .get(url, config)
       .then(response => {
         if (response.data.success) {
-             this.log.debug("Loaded watcher", {...response.data.data})
+             this.log.debug("Loaded positions", {...response.data.data})
              
              this.positions = response.data.data
         } else {
