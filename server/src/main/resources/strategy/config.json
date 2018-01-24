@@ -6,6 +6,9 @@
   "candleSize": "30m",
   "warmup": 5,
 
+  "sellPriceLimitPercent": -1,
+  "buyPriceLimitPercent": 3,
+
   "maxPositions": 5,
 
   "signal": {

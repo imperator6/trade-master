@@ -15,7 +15,6 @@ import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.exchange.paper.PaperExchange
 import tradingmaster.model.*
-import tradingmaster.strategy.Strategy
 import tradingmaster.util.NumberHelper
 
 import java.text.DecimalFormat
@@ -203,15 +202,15 @@ class TradeBotManager {
             String currency  = bot.config.baseCurrency
             String asset = s.asset
 
-            // TODO: clac price range ....
-            PriceRange priceRange = new PriceRange()
-            priceRange.minPrice = s.price // + 2 percent
-            priceRange.minPrice = s.price // - 2 percent
+            PriceLimit priceLimit = null
+            if(bot.config.buyPriceLimitPercent && s.getPrice()) {
+                priceLimit = new PriceLimit(s.getPrice(), bot.config.buyPriceLimitPercent)
+            }
 
             positionRepository.save(pos)
             bot.positions << pos
 
-            ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, priceRange, currency, asset)
+            ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset)
 
             if(newOrderRes.success) {
 
@@ -278,11 +277,12 @@ class TradeBotManager {
 
     void closePosition(Position pos, Candle c, TradeBot bot) {
 
-        PriceRange priceRange = new PriceRange()
-        priceRange.minPrice = c.close
-        priceRange.maxPrice = c.close
+        PriceLimit priceLimit = null
+        if(bot.config.sellPriceLimitPercent && c.close) {
+            priceLimit = new PriceLimit(c.close, (BigDecimal) bot.config.sellPriceLimitPercent)
+        }
 
-        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.SELL, pos.amount, priceRange, pos.market)
+        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.SELL, pos.amount, (PriceLimit) priceLimit, pos.market)
 
         if(newOrderRes.success) {
 

@@ -8,7 +8,7 @@ import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.model.BuySell
 import tradingmaster.model.IOrder
 import tradingmaster.model.ITicker
-import tradingmaster.model.PriceRange
+import tradingmaster.model.PriceLimit
 
 @Service
 @Commons
@@ -18,7 +18,7 @@ class OrderExecutorService {
                                              IExchangeAdapter exchangeAdapter,
                                              BuySell bs,
                                              BigDecimal spendOrAmount,
-                                             PriceRange priceRange,
+                                             PriceLimit priceRange,
                                              String market) {
 
         ExchangeResponse<IOrder> res = trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, 1)
@@ -29,12 +29,12 @@ class OrderExecutorService {
 
 
     ExchangeResponse<IOrder> placeLimitOrder(TradeBot bot,
-                                                     IExchangeAdapter exchangeAdapter,
-                                                     BuySell bs,
-                                                     BigDecimal spendOrAmount,
-                                                     PriceRange priceRange,
-                                                     String currency,
-                                                     String asset) {
+                                             IExchangeAdapter exchangeAdapter,
+                                             BuySell bs,
+                                             BigDecimal spendOrAmount,
+                                             PriceLimit priceRange,
+                                             String currency,
+                                             String asset) {
 
         String market = exchangeAdapter.buildMarket(currency, asset)
 
@@ -44,11 +44,11 @@ class OrderExecutorService {
     }
 
     private ExchangeResponse<IOrder> trade(TradeBot bot,
-                                   IExchangeAdapter exchangeAdapter,
-                                   BuySell bs,
-                                   BigDecimal spendOrAmount,
-                                   PriceRange priceRange,
-                                   String market, int tryCount) {
+                                           IExchangeAdapter exchangeAdapter,
+                                           BuySell bs,
+                                           BigDecimal spendOrAmount,
+                                           PriceLimit priceLimit,
+                                           String market, int tryCount) {
 
         ExchangeResponse<IOrder> orderResponse = new ExchangeResponse<IOrder>()
 
@@ -75,7 +75,16 @@ class OrderExecutorService {
                 def quantity = spendOrAmount / ticker.getAsk()
                 def price = ticker.getBid()
 
-                // TODO: check allowed price range
+                if(priceLimit != null) {
+                    log.info("BUY: Checking price limit: $priceLimit")
+                    if(price > priceLimit.getPriceLimit()) {
+                        String msg = "Price to HIGH! Signal: ${priceLimit.signalPrice} Current: ${price} > ${priceLimit.priceLimitPercent}% diff"
+                        log.warn(msg)
+                        orderResponse.success = false
+                        orderResponse.message = msg
+                        return orderResponse
+                    }
+                }
 
                 log.info("Attempting to BUY $market quantity: $quantity  price: $price")
 
@@ -86,7 +95,16 @@ class OrderExecutorService {
                 def quantity = spendOrAmount
                 def price = ticker.getAsk()
 
-                // TODO: check allowed price range
+                if(priceLimit != null) {
+                    log.info("SELL: Checking price limit: $priceLimit")
+                    if(price < priceLimit.getPriceLimit()) {
+                        String msg = "Price to LOW! Signal: ${priceLimit.signalPrice} Current: ${price} > ${priceLimit.priceLimitPercent}% diff"
+                        log.warn(msg)
+                        orderResponse.success = false
+                        orderResponse.message = msg
+                        return orderResponse
+                    }
+                }
 
                 log.info("Attempting to SELL $market quantity: $quantity  price: $price")
 
@@ -111,7 +129,7 @@ class OrderExecutorService {
             if(order == null) {
                 tryCount++
                 log.info("Order $market is not executed.")
-                trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, tryCount)
+                return trade(bot, exchangeAdapter, bs, spendOrAmount, priceLimit, market, tryCount)
             }
 
             orderResponse.setResult(order)

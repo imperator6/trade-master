@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.ToString
 import tradingmaster.model.IOrder
 
-@ToString
+@ToString(includeNames=true)
 class BittrexOrder implements IOrder {
 
     @JsonProperty("OrderUuid")
