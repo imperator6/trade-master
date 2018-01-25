@@ -45,15 +45,30 @@ class TradeBotController {
     }
 
     @RequestMapping(value = "/sell", method = RequestMethod.GET)
-    RestResponse<Position> sell(@RequestParam Integer positionId) {
+    RestResponse<Position> sell(@RequestParam Integer botId, @RequestParam Integer positionId) {
 
-        Position pos = tradeBotManager.findPositionById(positionId)
+        Position pos = tradeBotManager.findPositionById(botId, positionId)
 
-        TradeBot bot = tradeBotManager.findBotById(pos.getBotId())
+        TradeBot bot = tradeBotManager.findBotById(botId)
 
         if(pos != null && bot != null) {
             tradeBotManager.closePosition(pos, null, bot)
-            return
+            return new RestResponse(pos)
+        }
+
+        return new RestResponse(false, "Psosition $positionId ot TradeBot not found!")
+    }
+
+    @RequestMapping(value = "/syncPosition", method = RequestMethod.GET)
+    RestResponse<Position> syncPosition(@RequestParam Integer botId, @RequestParam Integer positionId) {
+
+        Position pos = tradeBotManager.findPositionById(botId, positionId)
+
+        TradeBot bot = tradeBotManager.findBotById(botId)
+
+        if(pos != null && bot != null) {
+            tradeBotManager.syncPosition(pos, bot)
+            return new RestResponse(pos)
         }
 
         return new RestResponse(false, "Psosition $positionId ot TradeBot not found!")

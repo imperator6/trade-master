@@ -96,6 +96,37 @@ class MarketWatcherStore {
 
         let config = {
             params: {
+                botId: this.selectedBot,
+                positionId: position.id
+            },
+            ...this.rootStore.userStore.getHeaderConfig()
+        }
+
+        axios
+        .get(url, config)
+        .then(response => {
+            if (response.data.success) {
+                //reload position list
+                this.load()
+            } else {
+            // error
+                console.info(response.data.message)
+            }
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+
+    syncPosition = (position) => {
+
+        this.log.debug("sync position ", position)
+
+        let url = this.rootStore.remoteApiUrl + "/bot/syncPosition";
+
+        let config = {
+            params: {
+                botId: this.selectedBot,
                 positionId: position.id
             },
             ...this.rootStore.userStore.getHeaderConfig()

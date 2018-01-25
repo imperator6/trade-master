@@ -56,18 +56,8 @@ class TradeBotManager {
         return TRADE_BOT_MAP.get(botId)
     }
 
-    Position findPositionById(Integer posId) {
-
-        this.TRADE_BOT_MAP.values().each { TradeBot  bot ->
-
-                bot.getPositions().each { Position pos ->
-                    if(pos.id == posId) {
-                        return pos
-                    }
-                }
-        }
-
-        return null
+    Position findPositionById(Integer botId, Integer posId) {
+        return this.TRADE_BOT_MAP.get(botId).positions.find { it.id == posId }
     }
 
     void startBots() {
@@ -234,35 +224,7 @@ class TradeBotManager {
 
                 IOrder newOrder = newOrderRes.getResult()
 
-                // validate order !!
-                if(!newOrder.getId()) {
-                  log.error("No order id is provided!")
-                }
-
-                if(newOrder.getCommissionPaid() == null) {
-                    log.error("No getCommissionPaid id is provided!")
-                }
-
-                if(newOrder.getCloseDate() == null) {
-                    log.error("No getCloseDate id is provided!")
-                }
-
-                if(newOrder.getPricePerUnit() == null) {
-                    log.error("No getPricePerUnit id is provided!")
-                }
-
-                if(newOrder.getQuantity() == null) {
-                    log.error("No getQuantity id is provided!")
-                }
-
-                // update position
-                pos.setExtbuyOrderId(newOrder.getId())
-                pos.setBuyFee(newOrder.getCommissionPaid())
-                pos.setBuyDate(newOrder.getCloseDate())
-                pos.setBuyRate(newOrder.getPricePerUnit())
-                pos.setAmount( newOrder.getQuantity())
-
-                pos.setStatus("open")
+                updateBuyPosition(pos, newOrder)
                 log.debug "New position created! $pos"
 
                 // start the watcher service to observe the market
@@ -293,6 +255,73 @@ class TradeBotManager {
         return amount
     }
 
+    void syncPosition(Position pos, TradeBot bot) {
+        if(pos.extSellOrderId) {
+           ExchangeResponse<IOrder> sellOrder = getExchangeAdapter(bot).getOrder(pos.extSellOrderId)
+            if(sellOrder.success) {
+
+                updateSellPosition(pos, sellOrder.getResult())
+            }
+        }
+
+        if(pos.extbuyOrderId) {
+            ExchangeResponse<IOrder> buyOrder = getExchangeAdapter(bot).getOrder(pos.extbuyOrderId)
+            if(buyOrder.success) {
+                updateBuyPosition(pos, buyOrder.getResult())
+            }
+        }
+
+        positionRepository.save(pos)
+    }
+
+    private void updateSellPosition(Position pos, IOrder newOrder) {
+        pos.setExtSellOrderId(newOrder.getId())
+        pos.setSellFee(newOrder.getCommissionPaid())
+        pos.setSellDate(newOrder.getCloseDate())
+        pos.setSellRate(newOrder.getPricePerUnit())
+        pos.setAmount( newOrder.getQuantity())
+
+        // calc final profit
+        def currentPrice = newOrder.getPricePerUnit()
+        BigDecimal resultInPercent = positionUpdateHandler.calculatePositionResult(pos.getBuyRate(), currentPrice)
+        pos.result = resultInPercent
+        pos.setStatus("closed")
+        pos.setClosed(true)
+        pos.sellInPogress = false
+    }
+
+    private void updateBuyPosition(Position pos, IOrder newOrder) {
+        // validate order !!
+        if(!newOrder.getId()) {
+            log.error("No order id is provided!")
+        }
+
+        if(newOrder.getCommissionPaid() == null) {
+            log.error("No getCommissionPaid id is provided!")
+        }
+
+        if(newOrder.getCloseDate() == null) {
+            log.error("No getCloseDate id is provided!")
+        }
+
+        if(newOrder.getPricePerUnit() == null) {
+            log.error("No getPricePerUnit id is provided!")
+        }
+
+        if(newOrder.getQuantity() == null) {
+            log.error("No getQuantity id is provided!")
+        }
+
+        // update position
+        pos.setExtbuyOrderId(newOrder.getId())
+        pos.setBuyFee(newOrder.getCommissionPaid())
+        pos.setBuyDate(newOrder.getCloseDate())
+        pos.setBuyRate(newOrder.getPricePerUnit())
+        pos.setAmount( newOrder.getQuantity())
+
+        pos.setStatus("open")
+    }
+
     void closePosition(Position pos, Candle c, TradeBot bot) {
         closePosition(pos, c.close, bot)
     }
@@ -312,22 +341,9 @@ class TradeBotManager {
         if(newOrderRes.success) {
 
             IOrder newOrder = newOrderRes.getResult()
-            // update position
-            pos.setExtSellOrderId(newOrder.getId())
-            pos.setSellFee(newOrder.getCommissionPaid())
-            pos.setSellDate(newOrder.getCloseDate())
-            pos.setSellRate(newOrder.getPricePerUnit())
-            pos.setAmount( newOrder.getQuantity())
+            updateSellPosition(pos, newOrder)
 
-            // calc final profit
-            def currentPrice = newOrder.getPricePerUnit()
-            BigDecimal resultInPercent = positionUpdateHandler.calculatePositionResult(pos.getBuyRate(), currentPrice)
-            pos.result = resultInPercent
-            pos.setStatus("closed")
-            pos.setClosed(true)
-            pos.sellInPogress = false
-
-            log.debug "position ${pos.id} closed! ${NumberHelper.twoDigits(resultInPercent)}%"
+            log.debug "position ${pos.id} closed! ${NumberHelper.twoDigits(pos.result)}%"
 
             // TODO: stop the watcher service to observe the market
            // marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, bot.baseCurrency, s.asset))

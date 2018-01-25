@@ -15,7 +15,8 @@ import {
   Spin,
   Tooltip,
   Select,
-  Popconfirm
+  Popconfirm,
+  Tag
 } from "antd";
 const Option = Select.Option;
 
@@ -33,53 +34,70 @@ class PositionWidget extends React.Component {
   }
 
   formtatPercent(value) {
-    let v = 0
-    let sing = "+"
-    if(value) v = Math.abs(value).toFixed(2)
-    if(value < 0)sing = "-"
-    return sing + v + " %"
+    //color 35823fde
+    // bg #dfffbe
+    // border: b7eb8f
+    let v = 0;
+    let sing = "+";
+    let tagColor = "green";
+    if (value) v = Math.abs(value).toFixed(2);
+    if (value < 0) {
+      sing = "-";
+      tagColor = "red";
+    }
+    return <Tag color={tagColor}>{sing + v + " %"}</Tag>;
   }
 
   formatDate(value) {
-    if(value == null) return "Unknown"
-   return moment(value).format('DD.MM.YY HH:mm')
+    if (value == null) return "Unknown";
+    return moment(value).format("DD.MM.YY HH:mm");
   }
 
   showPositionDates(record) {
-    return <span>
-      Created: {this.formatDate(record.created)} <br/>
-      Buy Date: {this.formatDate(record.buyDate)} <br/>
-      Sell Date: {this.formatDate(record.sellDate)}
-    </span>
+    return (
+      <span>
+        Created: {this.formatDate(record.created)} <br />
+        Buy Date: {this.formatDate(record.buyDate)} <br />
+        Sell Date: {this.formatDate(record.sellDate)}
+      </span>
+    );
   }
 
   buildPositionActions(record) {
+    let actionButtons = [];
 
-    let actionButtons = []
+    actionButtons.push(
+      <Tooltip key="loadToChart" title="Load in chart">
+        <Icon type="to-top" onClick={() => this.store.loadToChart(record)} />
+      </Tooltip>
+    );
 
-    actionButtons.push(<Tooltip key="loadToChart" title="Load in chart">
-    <Icon
-      type="to-top"
-      onClick={() => this.store.loadToChart(record)}
-    />
-  </Tooltip>)
+    actionButtons.push(<Divider key="div1" type="vertical" />);
+    actionButtons.push(
+      <Tooltip key="sync" title="Sync with exchange">
+        <Icon type="sync" onClick={() => this.store.syncPosition(record)} />
+      </Tooltip>
+    );
 
     if (!record.closed && !record.sellInPogress) {
+      actionButtons.push(<Divider key="div2" type="vertical" />);
+      actionButtons.push(
+        <Tooltip key="selButton" title="Sell Position">
+          <Popconfirm
+            title="Are you sure to close this position?"
+            onConfirm={() => {
+              this.store.sellPosition(record.id);
+            }}
+            okText="Yes I'm sure!"
+            cancelText="No"
+          >
+            <Icon type="shopping-cart" />
+          </Popconfirm>
+        </Tooltip>
+      );
+    }
 
-      actionButtons.push( <Divider key="div1" type="vertical" />)
-      actionButtons.push(  <Tooltip key="selButton" title="Sell Position">
-        <Popconfirm title="Are you sure to close this position?" onConfirm={() => {this.store.sellPosition(record.id)}} okText="Yes I'm sure!" cancelText="No">
-      <Icon
-        type="shopping-cart"
-       
-      />
-      </Popconfirm>
-    </Tooltip>)
-           
-    } 
-
-    return ( <span >{actionButtons}</span>)
-
+    return <span>{actionButtons}</span>;
   }
 
   render() {
@@ -90,26 +108,6 @@ class PositionWidget extends React.Component {
         key: "id"
       },
       {
-        title: "Closed",
-        key: "closed",
-        render: (text, record) => {
-          if (!record.closed) {
-            return (
-                <Tooltip title="Position is open!">
-                  <Icon type="loading" />
-                </Tooltip>
-            );
-          } else {
-            return (
-              <Tooltip title="Position is closed!">
-                <Icon type="check-circle-o" />
-              </Tooltip>
-          );
-
-          }
-        }
-      },
-      {
         title: "Market",
         dataIndex: "market",
         key: "market"
@@ -118,9 +116,11 @@ class PositionWidget extends React.Component {
         title: "Date",
         key: "created",
         render: (text, record) => {
-            return <Tooltip title={this.showPositionDates(record)}>
-                <Icon type="clock-circle-o" />
-              </Tooltip>
+          return (
+            <Tooltip title={this.showPositionDates(record)}>
+              <Icon type="clock-circle-o" />
+            </Tooltip>
+          );
         }
       },
       {
@@ -137,26 +137,45 @@ class PositionWidget extends React.Component {
         title: "Sell Rate",
         key: "sellRate",
         dataIndex: "sellRate"
-      },   
+      },
       {
         title: "Min",
         key: "minResult",
         render: (text, record) => {
-          return this.formtatPercent(record.minResult)
+          return this.formtatPercent(record.minResult);
         }
       },
       {
         title: "Max",
         key: "maxResult",
         render: (text, record) => {
-          return this.formtatPercent(record.maxResult)
+          return this.formtatPercent(record.maxResult);
         }
       },
       {
         title: "result",
         key: "result",
         render: (text, record) => {
-          return this.formtatPercent(record.result)
+          return this.formtatPercent(record.result);
+        }
+      },
+      {
+        title: "Closed",
+        key: "closed",
+        render: (text, record) => {
+          if (!record.closed) {
+            return (
+              <Tooltip title="Position is open!">
+                <Icon type="loading" />
+              </Tooltip>
+            );
+          } else {
+            return (
+              <Tooltip title="Position is closed!">
+                <Icon type="check-circle-o" />
+              </Tooltip>
+            );
+          }
         }
       },
       {
@@ -170,7 +189,11 @@ class PositionWidget extends React.Component {
         key: "erros",
         render: (text, record) => {
           if (record.error) {
-            return   <Tooltip title={record.errorMsg}><Icon type="warning" /></Tooltip>
+            return (
+              <Tooltip title={record.errorMsg}>
+                <Icon type="warning" />
+              </Tooltip>
+            );
           }
         }
       },
@@ -179,7 +202,7 @@ class PositionWidget extends React.Component {
         title: "",
         key: "action",
         render: (text, record) => {
-          return this.buildPositionActions(record)
+          return this.buildPositionActions(record);
         }
       }
     ];
