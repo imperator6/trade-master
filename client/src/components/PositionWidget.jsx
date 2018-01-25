@@ -14,7 +14,8 @@ import {
   Button,
   Spin,
   Tooltip,
-  Select
+  Select,
+  Popconfirm
 } from "antd";
 const Option = Select.Option;
 
@@ -50,6 +51,35 @@ class PositionWidget extends React.Component {
       Buy Date: {this.formatDate(record.buyDate)} <br/>
       Sell Date: {this.formatDate(record.sellDate)}
     </span>
+  }
+
+  buildPositionActions(record) {
+
+    let actionButtons = []
+
+    actionButtons.push(<Tooltip key="loadToChart" title="Load in chart">
+    <Icon
+      type="to-top"
+      onClick={() => this.store.loadToChart(record)}
+    />
+  </Tooltip>)
+
+    if (!record.closed && !record.sellInPogress) {
+
+      actionButtons.push( <Divider key="div1" type="vertical" />)
+      actionButtons.push(  <Tooltip key="selButton" title="Sell Position">
+        <Popconfirm title="Are you sure to close this position?" onConfirm={() => {this.store.sellPosition(record.id)}} okText="Yes I'm sure!" cancelText="No">
+      <Icon
+        type="shopping-cart"
+       
+      />
+      </Popconfirm>
+    </Tooltip>)
+           
+    } 
+
+    return ( <span >{actionButtons}</span>)
+
   }
 
   render() {
@@ -107,20 +137,26 @@ class PositionWidget extends React.Component {
         title: "Sell Rate",
         key: "sellRate",
         dataIndex: "sellRate"
+      },   
+      {
+        title: "Min",
+        key: "minResult",
+        render: (text, record) => {
+          return this.formtatPercent(record.minResult)
+        }
       },
-  
+      {
+        title: "Max",
+        key: "maxResult",
+        render: (text, record) => {
+          return this.formtatPercent(record.maxResult)
+        }
+      },
       {
         title: "result",
         key: "result",
         render: (text, record) => {
           return this.formtatPercent(record.result)
-        }
-      },
-      {
-        title: "Best",
-        key: "maxResult",
-        render: (text, record) => {
-          return this.formtatPercent(record.maxResult)
         }
       },
       {
@@ -143,57 +179,7 @@ class PositionWidget extends React.Component {
         title: "",
         key: "action",
         render: (text, record) => {
-          if (record.active) {
-            return (
-              <span>
-                <Tooltip title="Start Wacther">
-                  <Icon
-                    type="pause-circle"
-                    onClick={() => this.store.stop(record)}
-                  />
-                </Tooltip>
-                <Divider type="vertical" />
-                <Tooltip title="Load in chart">
-                  <Icon
-                    type="to-top"
-                    onClick={() => this.store.loadToChart(record)}
-                  />
-                </Tooltip>
-                <Divider type="vertical" />
-                <Tooltip title="Add to chart">
-                  <Icon
-                    type="plus-circle"
-                    onClick={() => this.store.addToChart(record)}
-                  />
-                </Tooltip>
-              </span>
-            );
-          } else {
-            return (
-              <span>
-                <Tooltip title="Start Wacther">
-                  <Icon
-                    type="play-circle"
-                    onClick={() => this.store.start(record)}
-                  />
-                </Tooltip>
-                <Divider type="vertical" />
-                <Tooltip title="Load to chart">
-                  <Icon
-                    type="to-top"
-                    onClick={() => this.store.loadToChart(record)}
-                  />
-                </Tooltip>
-                <Divider type="vertical" />
-                <Tooltip title="Add to chart">
-                  <Icon
-                    type="plus-circle"
-                    onClick={() => this.store.addToChart(record)}
-                  />
-                </Tooltip>
-              </span>
-            );
-          }
+          return this.buildPositionActions(record)
         }
       }
     ];

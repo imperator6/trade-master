@@ -117,7 +117,8 @@ class PositionUpdateHandler implements  MessageHandler {
 
         positionRepository.save(p)
 
-        log.info("PosId $p.id: buyRate: $p.buyRate curentRate: $c.close $p.market: ${NumberHelper.twoDigits(resultInPercent)} (max: ${NumberHelper.twoDigits(p.maxResult)})")
+        // buyRate: $p.buyRate curentRate: $c.close
+        log.info("PosId $p.id: $p.market: (range:${NumberHelper.twoDigits(p.minResult)}%  ${NumberHelper.twoDigits(p.maxResult)}%) -> ${NumberHelper.twoDigits(resultInPercent)}%")
     }
 
     boolean checkClosePosition(Position p, Candle c, TradeBot bot) {

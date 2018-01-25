@@ -52,6 +52,24 @@ class TradeBotManager {
         return new ArrayList(this.TRADE_BOT_MAP.values().findAll { it.active })
     }
 
+    TradeBot findBotById(Integer botId) {
+        return TRADE_BOT_MAP.get(botId)
+    }
+
+    Position findPositionById(Integer posId) {
+
+        this.TRADE_BOT_MAP.values().each { TradeBot  bot ->
+
+                bot.getPositions().each { Position pos ->
+                    if(pos.id == posId) {
+                        return pos
+                    }
+                }
+        }
+
+        return null
+    }
+
     void startBots() {
 
         tradeBotRepository.findByActive(true).each { TradeBot b ->
@@ -276,11 +294,18 @@ class TradeBotManager {
     }
 
     void closePosition(Position pos, Candle c, TradeBot bot) {
+        closePosition(pos, c.close, bot)
+    }
+
+    void closePosition(Position pos, BigDecimal sellPrice, TradeBot bot) {
 
         PriceLimit priceLimit = null
-        if(bot.config.sellPriceLimitPercent && c.close) {
-            priceLimit = new PriceLimit(c.close, (BigDecimal) bot.config.sellPriceLimitPercent)
+        if(bot.config.sellPriceLimitPercent && sellPrice) {
+            priceLimit = new PriceLimit(sellPrice, (BigDecimal) bot.config.sellPriceLimitPercent)
         }
+
+        pos.sellInPogress = true
+        positionRepository.save(pos)
 
         ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.SELL, pos.amount, (PriceLimit) priceLimit, pos.market)
 
@@ -300,6 +325,7 @@ class TradeBotManager {
             pos.result = resultInPercent
             pos.setStatus("closed")
             pos.setClosed(true)
+            pos.sellInPogress = false
 
             log.debug "position ${pos.id} closed! ${NumberHelper.twoDigits(resultInPercent)}%"
 

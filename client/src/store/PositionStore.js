@@ -88,15 +88,15 @@ class MarketWatcherStore {
         this.rootStore.marketSelectionStore.select(exchange, position.market)
     }
 
-    stop = (watcher) => {
+    sellPosition = (position) => {
 
-        this.log.debug("stopping watcher ", watcher.exchange, " ", watcher.market)
+        this.log.debug("selling position ", position)
 
-        let url = this.rootStore.remoteApiUrl + "/marketWatcher/stop";
+        let url = this.rootStore.remoteApiUrl + "/bot/sell";
 
         let config = {
             params: {
-                watcherId: watcher.id
+                positionId: position.id
             },
             ...this.rootStore.userStore.getHeaderConfig()
         }
@@ -105,13 +105,11 @@ class MarketWatcherStore {
         .get(url, config)
         .then(response => {
             if (response.data.success) {
-                this.log.debug("Wacther stopped Markets", {...response.data.data})
-                
-                //reload wacther list
+                //reload position list
                 this.load()
             } else {
             // error
-            console.info(response.data.message)
+                console.info(response.data.message)
             }
         })
         .catch(function(error) {
@@ -119,43 +117,6 @@ class MarketWatcherStore {
         });
     }
 
-    addWatcher = () => {
-        let watcher = {exchange: this.selectedExchange, market: this.selectedAsset }
-        this.start( watcher )
-        this.loadToChart( watcher )
-    }
-
-    start = (watcher) => {
-
-        this.log.debug("starting watcher for ", watcher.exchange, " ", watcher.market)
-
-        let url = this.rootStore.remoteApiUrl + "/marketWatcher/start";
-
-        let config = {
-            params: {
-                exchange: watcher.exchange,
-                market: watcher.market
-            },
-            ...this.rootStore.userStore.getHeaderConfig()
-        }
-
-        axios
-        .get(url, config)
-        .then(response => {
-            if (response.data.success) {
-                this.log.debug("Wacther started Markets", {...response.data.data})
-                
-                //reload wacther list
-                this.load()
-            } else {
-            // error
-            console.info(response.data.message)
-            }
-        })
-        .catch(function(error) {
-            console.log(error);
-        });
-    }
 
     load = () => {
 
