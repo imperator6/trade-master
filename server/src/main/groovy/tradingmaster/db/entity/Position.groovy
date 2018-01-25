@@ -85,6 +85,9 @@ class Position {
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal maxResult
 
+    @Column(nullable = true, precision=25, scale=10)
+    BigDecimal minResult
+
     //String triggerName
     boolean holdPosition = false
 

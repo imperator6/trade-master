@@ -107,6 +107,10 @@ class PositionUpdateHandler implements  MessageHandler {
 
         p.setResult(resultInPercent)
 
+        if(p.minResult == null || resultInPercent < p.minResult) {
+            p.minResult = resultInPercent
+        }
+
         if(p.maxResult == null || resultInPercent > p.maxResult) {
             p.maxResult = resultInPercent
         }
