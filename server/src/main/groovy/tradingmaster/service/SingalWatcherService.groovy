@@ -21,6 +21,9 @@ class SingalWatcherService implements MessageHandler {
     TradeBotManager tradeBotManager
 
     @Autowired
+    PositionService positionService
+
+    @Autowired
     PublishSubscribeChannel signalChannel
 
     @Autowired
@@ -65,7 +68,7 @@ class SingalWatcherService implements MessageHandler {
             }
 
             if(tradeBotManager.isValidSignalForBot(b, s)) {
-                tradeBotManager.openPosition(b, s)
+                positionService.openPosition(b, s)
             }
 
         } else if ("sell".equalsIgnoreCase( s.getBuySell())) {

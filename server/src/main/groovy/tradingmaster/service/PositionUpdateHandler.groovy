@@ -36,6 +36,9 @@ class PositionUpdateHandler implements  MessageHandler {
     @Autowired
     TaskExecutor orderTaskExecutor
 
+    @Autowired
+    PositionService positionService
+
     @PostConstruct
     init() {
         lastRecentCandelChannel.subscribe(this)
@@ -78,7 +81,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
      BigDecimal calculatePositionResult(BigDecimal buyRate, BigDecimal rate) {
 
-         if(buyRate == null || rate == null) {
+         if(buyRate == null || rate == null || rate == 0 || buyRate == 0) {
              return 0.0
          }
 
@@ -189,7 +192,7 @@ class PositionUpdateHandler implements  MessageHandler {
         p.sellInPogress = true
 
         def task = {
-            tradeBotManager.closePosition(p, c, bot)
+            positionService.closePosition(p, c, bot)
         } as Runnable
 
         orderTaskExecutor.execute(task)

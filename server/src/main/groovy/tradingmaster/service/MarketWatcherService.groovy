@@ -12,15 +12,19 @@ import org.springframework.integration.endpoint.AbstractMessageSource
 import org.springframework.messaging.MessageChannel
 import org.springframework.stereotype.Service
 import tradingmaster.db.MarketWatcherRepository
+import tradingmaster.db.PositionRepository
+import tradingmaster.db.TradeBotRepository
 import tradingmaster.db.entity.MarketWatcher
+import tradingmaster.db.entity.Position
+import tradingmaster.db.entity.TradeBot
 import tradingmaster.exchange.ExchangeService
-import tradingmaster.model.CryptoMarket
 import tradingmaster.exchange.IExchangeAdapter
+import tradingmaster.model.CryptoMarket
 import tradingmaster.model.TradeBatch
 
 @Service
 @Commons
-class MaketWatcherService {
+class MarketWatcherService {
 
      @Autowired
      MessageChannel tradeChannel
@@ -37,9 +41,15 @@ class MaketWatcherService {
      @Autowired
      MarketWatcherRepository marketWatcherRepository
 
+     @Autowired
+     PositionRepository positionRepository
 
-     MaketWatcherService() {
-          log.info("New MaketWatcherService!")
+     @Autowired
+     TradeBotRepository tradeBotRepository
+
+
+     MarketWatcherService() {
+          log.info("New MarketWatcherService!")
      }
 
      MarketWatcher createMarketWatcher(final CryptoMarket market) {
@@ -79,6 +89,39 @@ class MaketWatcherService {
           }
 
           return marketWatcherRepository.save(w)
+     }
+
+     void stopMarketWatcher(String  exchange, String market) {
+
+          log.info("Stopping MarketWatcher with id ${exchange} ${market}")
+
+          // check for open positions..
+          List<Position> openPositions = positionRepository.findByMarketAndClosed(market, false)
+
+          boolean stoppable = true
+
+          if(!openPositions.isEmpty()) {
+               // check exchange
+               openPositions.each { Position p ->
+                    TradeBot bot = tradeBotRepository.findOne(p.getBotId())
+                    if(bot.getExchange().equalsIgnoreCase(exchange)) {
+                         log.warn("Can't stop market watcher for exchange $exchange and market $market as position ${p.id} is still open!")
+                         stoppable = false
+                    }
+               }
+          }
+
+          if(stoppable) {
+               MarketWatcher w = marketWatcherRepository.findByExchangeAndMarket(exchange, market)
+               if(w ==  null) {
+                    log.error("No market watcher found for exchange $exchange and market $market")
+                    return
+               }
+
+               stopMarketWatcher(w.id)
+
+          }
+
      }
 
      private MarketWatcher startMarketWatcher(final MarketWatcher w, final CryptoMarket market, final IExchangeAdapter exchange) {

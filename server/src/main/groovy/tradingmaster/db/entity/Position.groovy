@@ -24,7 +24,7 @@ class Position {
 
     //@OneToOne(cascade = CascadeType.ALL)
     //@JoinColumn(name = "buySignalId")
-    @Column(nullable = false)
+    @Column(nullable = true)
     Integer buySignalId
 
     @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "UTC")
@@ -103,5 +103,6 @@ class Position {
     @Column(nullable = true)
     BigDecimal trailingStopLoss
 
+    //boolean deleted = false
 
 }

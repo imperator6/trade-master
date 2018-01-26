@@ -10,12 +10,12 @@ import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.mariadb.MariaStrategyStore
-import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.exchange.paper.PaperExchange
-import tradingmaster.model.*
-import tradingmaster.util.NumberHelper
+import tradingmaster.model.CryptoMarket
+import tradingmaster.model.IScriptStrategy
+import tradingmaster.model.ScriptStrategy
 
 import java.text.DecimalFormat
 import java.util.concurrent.ConcurrentHashMap
@@ -39,13 +39,7 @@ class TradeBotManager {
     PositionRepository positionRepository
 
     @Autowired
-    OrderExecutorService orderExecutorService
-
-    @Autowired
-    MaketWatcherService marketWatcheService
-
-    @Autowired
-    PositionUpdateHandler positionUpdateHandler
+    MarketWatcherService marketWatcheService
 
 
     List<TradeBot> getActiveBots() {
@@ -152,8 +146,6 @@ class TradeBotManager {
     }
 
 
-
-
     boolean isValidSignalForBot(TradeBot b, Signal s) {
         boolean valid = false
 
@@ -189,176 +181,6 @@ class TradeBotManager {
         return valid
     }
 
-    void openPosition(TradeBot bot, Signal s) {
-
-        // TODO: calculate based on settings
-        BigDecimal balanceToSpend = calcBalanceForNextTrade(bot)
-
-        if(balanceToSpend > 0) {
-
-            Position pos = new Position()
-
-            pos.created = new Date()
-            pos.botId = bot.getId()
-            pos.buySignalId = s.getId()
-
-            pos.market = "${bot.config.baseCurrency}-${s.asset}"
-            pos.status = "pending"
-            pos.signalRate = s.price
-
-            // Too: call exc to place the order...
-            String currency  = bot.config.baseCurrency
-            String asset = s.asset
-
-            PriceLimit priceLimit = null
-            if(bot.config.buyPriceLimitPercent && s.getPrice()) {
-                priceLimit = new PriceLimit(s.getPrice(), bot.config.buyPriceLimitPercent)
-            }
-
-            positionRepository.save(pos)
-            bot.positions << pos
-
-            ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset)
-
-            if(newOrderRes.success) {
-
-                IOrder newOrder = newOrderRes.getResult()
-
-                updateBuyPosition(pos, newOrder)
-                log.debug "New position created! $pos"
-
-                // start the watcher service to observe the market
-                marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, bot.baseCurrency, s.asset))
-
-            } else {
-                def msg = "Error on Buy: ${newOrderRes.getMessage()}"
-                log.error(msg)
-                pos.setError(true)
-                pos.setErrorMsg(msg)
-                pos.setClosed(true)
-            }
-
-            positionRepository.save(pos)
-
-
-        } else {
-            // balance to small
-
-        }
-    }
-
-    BigDecimal extractFee(BigDecimal amount, BigDecimal fee) {
-        amount *= 1e8
-        amount *= fee
-        amount = Math.floor(amount)
-        amount /= 1e8
-        return amount
-    }
-
-    void syncPosition(Position pos, TradeBot bot) {
-        if(pos.extSellOrderId) {
-           ExchangeResponse<IOrder> sellOrder = getExchangeAdapter(bot).getOrder(pos.extSellOrderId)
-            if(sellOrder.success) {
-
-                updateSellPosition(pos, sellOrder.getResult())
-            }
-        }
-
-        if(pos.extbuyOrderId) {
-            ExchangeResponse<IOrder> buyOrder = getExchangeAdapter(bot).getOrder(pos.extbuyOrderId)
-            if(buyOrder.success) {
-                updateBuyPosition(pos, buyOrder.getResult())
-            }
-        }
-
-        positionRepository.save(pos)
-    }
-
-    private void updateSellPosition(Position pos, IOrder newOrder) {
-        pos.setExtSellOrderId(newOrder.getId())
-        pos.setSellFee(newOrder.getCommissionPaid())
-        pos.setSellDate(newOrder.getCloseDate())
-        pos.setSellRate(newOrder.getPricePerUnit())
-        pos.setAmount( newOrder.getQuantity())
-
-        // calc final profit
-        def currentPrice = newOrder.getPricePerUnit()
-        BigDecimal resultInPercent = positionUpdateHandler.calculatePositionResult(pos.getBuyRate(), currentPrice)
-        pos.result = resultInPercent
-        pos.setStatus("closed")
-        pos.setClosed(true)
-        pos.sellInPogress = false
-    }
-
-    private void updateBuyPosition(Position pos, IOrder newOrder) {
-        // validate order !!
-        if(!newOrder.getId()) {
-            log.error("No order id is provided!")
-        }
-
-        if(newOrder.getCommissionPaid() == null) {
-            log.error("No getCommissionPaid id is provided!")
-        }
-
-        if(newOrder.getCloseDate() == null) {
-            log.error("No getCloseDate id is provided!")
-        }
-
-        if(newOrder.getPricePerUnit() == null) {
-            log.error("No getPricePerUnit id is provided!")
-        }
-
-        if(newOrder.getQuantity() == null) {
-            log.error("No getQuantity id is provided!")
-        }
-
-        // update position
-        pos.setExtbuyOrderId(newOrder.getId())
-        pos.setBuyFee(newOrder.getCommissionPaid())
-        pos.setBuyDate(newOrder.getCloseDate())
-        pos.setBuyRate(newOrder.getPricePerUnit())
-        pos.setAmount( newOrder.getQuantity())
-
-        pos.setStatus("open")
-    }
-
-    void closePosition(Position pos, Candle c, TradeBot bot) {
-        closePosition(pos, c.close, bot)
-    }
-
-    void closePosition(Position pos, BigDecimal sellPrice, TradeBot bot) {
-
-        PriceLimit priceLimit = null
-        if(bot.config.sellPriceLimitPercent && sellPrice) {
-            priceLimit = new PriceLimit(sellPrice, (BigDecimal) bot.config.sellPriceLimitPercent)
-        }
-
-        pos.sellInPogress = true
-        positionRepository.save(pos)
-
-        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, getExchangeAdapter(bot), BuySell.SELL, pos.amount, (PriceLimit) priceLimit, pos.market)
-
-        if(newOrderRes.success) {
-
-            IOrder newOrder = newOrderRes.getResult()
-            updateSellPosition(pos, newOrder)
-
-            log.debug "position ${pos.id} closed! ${NumberHelper.twoDigits(pos.result)}%"
-
-            // TODO: stop the watcher service to observe the market
-           // marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, bot.baseCurrency, s.asset))
-
-        } else {
-            log.error("Error on Sell: ${newOrderRes.getMessage()}")
-
-            pos.setError(true)
-            pos.setErrorMsg(newOrderRes.getMessage())
-            pos.setClosed(false)
-            pos.sellInPogress = false
-        }
-
-        positionRepository.save(pos)
-    }
 
     BigDecimal calcBalanceForNextTrade(TradeBot bot) {
 

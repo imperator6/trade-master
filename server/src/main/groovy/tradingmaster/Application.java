@@ -6,7 +6,7 @@ import org.springframework.context.ApplicationContext;
 import tradingmaster.db.MarketWatcherRepository;
 import tradingmaster.exchange.mininghamster.HamsterWatcherService;
 import tradingmaster.model.CryptoMarket;
-import tradingmaster.service.MaketWatcherService;
+import tradingmaster.service.MarketWatcherService;
 import tradingmaster.service.TradeBotManager;
 
 
@@ -23,7 +23,7 @@ public class Application {
         botManager.startBots();
 
         // start market watcher
-        MaketWatcherService maketWatcherService = ctx.getBean(MaketWatcherService.class);
+        MarketWatcherService maketWatcherService = ctx.getBean(MarketWatcherService.class);
 
         MarketWatcherRepository marketWatcherRepository = ctx.getBean(MarketWatcherRepository.class);
 

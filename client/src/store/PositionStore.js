@@ -92,7 +92,37 @@ class MarketWatcherStore {
 
         this.log.debug("selling position ", position)
 
-        let url = this.rootStore.remoteApiUrl + "/bot/sell";
+        let url = this.rootStore.remoteApiUrl + "/position/sell";
+
+        let config = {
+            params: {
+                botId: this.selectedBot,
+                positionId: position.id
+            },
+            ...this.rootStore.userStore.getHeaderConfig()
+        }
+
+        axios
+        .get(url, config)
+        .then(response => {
+            if (response.data.success) {
+                //reload position list
+                this.load()
+            } else {
+            // error
+                console.info(response.data.message)
+            }
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+
+    deletePosition = (position) => {
+
+        this.log.debug("deleteing position ", position)
+
+        let url = this.rootStore.remoteApiUrl + "/position/delete";
 
         let config = {
             params: {
@@ -122,7 +152,7 @@ class MarketWatcherStore {
 
         this.log.debug("sync position ", position)
 
-        let url = this.rootStore.remoteApiUrl + "/bot/syncPosition";
+        let url = this.rootStore.remoteApiUrl + "/position/syncPosition";
 
         let config = {
             params: {
@@ -148,11 +178,68 @@ class MarketWatcherStore {
         });
     }
 
+    deletePosition = (position) => {
+
+        this.log.debug("deleteing position ", position)
+
+        let url = this.rootStore.remoteApiUrl + "/position/deletePos";
+
+        let config = {
+            params: {
+                botId: this.selectedBot,
+                positionId: position.id
+            },
+            ...this.rootStore.userStore.getHeaderConfig()
+        }
+
+        axios
+        .get(url, config)
+        .then(response => {
+            if (response.data.success) {
+                //reload position list
+                this.load()
+            } else {
+            // error
+                console.info(response.data.message)
+            }
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+
+    importFromExchange = () => {
+
+        let url = this.rootStore.remoteApiUrl + "/position/importFromExchange";
+
+        let config = {
+            params: {
+                botId: this.selectedBot
+            },
+            ...this.rootStore.userStore.getHeaderConfig()
+        }
+
+        axios
+        .get(url, config)
+        .then(response => {
+            if (response.data.success) {
+                //reload position list
+                this.load()
+            } else {
+            // error
+                console.info(response.data.message)
+            }
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+
 
     load = () => {
 
       this.log.debug("loading position list");
-      let url = this.rootStore.remoteApiUrl + "/bot/positions";
+      let url = this.rootStore.remoteApiUrl + "/position/list";
 
       let config = {
         params: {

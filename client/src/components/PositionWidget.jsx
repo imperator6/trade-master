@@ -79,6 +79,24 @@ class PositionWidget extends React.Component {
       </Tooltip>
     );
 
+   
+      actionButtons.push(<Divider key="div3" type="vertical" />);
+      actionButtons.push(
+        <Tooltip key="delButton" title="DELETE Position">
+          <Popconfirm
+            title="Are you sure to DELTE this position?"
+            onConfirm={() => {
+              this.store.deletePosition(record);
+            }}
+            okText="Yes, please DELETE!"
+            cancelText="No"
+          >
+            <Icon type="delete" />
+          </Popconfirm>
+        </Tooltip>
+      );
+    
+
     if (!record.closed && !record.sellInPogress) {
       actionButtons.push(<Divider key="div2" type="vertical" />);
       actionButtons.push(
@@ -86,7 +104,7 @@ class PositionWidget extends React.Component {
           <Popconfirm
             title="Are you sure to close this position?"
             onConfirm={() => {
-              this.store.sellPosition(record.id);
+              this.store.sellPosition(record);
             }}
             okText="Yes I'm sure!"
             cancelText="No"
@@ -239,7 +257,8 @@ class PositionWidget extends React.Component {
     return (
       <div className="table-operations">
         {botSelect}
-        <Tooltip title="Reload list fo selected Bot">
+        <Divider type="vertical" />
+        <Tooltip title="Reload list for selected Bot">
           <Button
             size="small"
             type="primary"
@@ -249,6 +268,23 @@ class PositionWidget extends React.Component {
           />
         </Tooltip>
         <Divider type="vertical" />
+        <Tooltip title="Import open balances from Exchange">
+        <Popconfirm
+            title="Are you sure you wabt to import the balance from the Exchange?"
+            onConfirm={() => {
+              this.store.importFromExchange()
+            }}
+            okText="Yes, please Import from Exchange!"
+            cancelText="No"
+          >
+          <Button
+            size="small"
+            type="primary"
+            shape="circle"
+            icon="cloud-download-o"
+          />
+          </Popconfirm>
+        </Tooltip>
 
         {table}
       </div>

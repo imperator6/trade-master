@@ -13,7 +13,7 @@ import tradingmaster.db.MarketWatcherRepository
 import tradingmaster.db.entity.MarketWatcher
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.RestResponse
-import tradingmaster.service.MaketWatcherService
+import tradingmaster.service.MarketWatcherService
 
 @RestController
 @RequestMapping("/api/marketWatcher")
@@ -27,7 +27,7 @@ class MarketWatcherController {
     MarketWatcherRepository marketWatcherRepository
 
     @Autowired
-    MaketWatcherService marketWatcherService
+    MarketWatcherService marketWatcherService
 
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
