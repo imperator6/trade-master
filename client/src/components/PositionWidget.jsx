@@ -29,7 +29,35 @@ class PositionWidget extends React.Component {
   constructor(props) {
     super(props);
 
+    this.state = {
+      filteredInfo: {  },
+      sortedInfo: {
+        order: 'descend',
+        columnKey: 'created',
+      },
+    };
+
     this.store = this.props.rootStore.positionStore;
+  }
+
+  clearFilters = () => {
+    this.setState({ filteredInfo: null });
+  }
+
+  setAgeSort = () => {
+    this.setState({
+      sortedInfo: {
+        order: 'descend',
+        columnKey: 'age',
+      },
+    });
+  }
+
+  handleTableChange = (pagination, filters, sorter) => {
+    this.setState({
+      filteredInfo: filters,
+      sortedInfo: sorter,
+    });
   }
 
   componentDidMount() {
@@ -169,27 +197,39 @@ class PositionWidget extends React.Component {
   }
 
   render() {
+    let { sortedInfo, filteredInfo } = this.state;
+    sortedInfo = sortedInfo || {};
+    filteredInfo = filteredInfo || {};
+
     const columns = [
       {
         title: "Id",
         dataIndex: "id",
-        key: "id"
+        key: "id",
+        sorter: (a, b) => a.id - b.id,
+        sortOrder: sortedInfo.columnKey === 'id' && sortedInfo.order,
       },
       {
         title: "Market",
         dataIndex: "market",
-        key: "market"
+        key: "market",
+        sorter: (a, b) => (a.market > b.market) - (a.market < b.market),
+        sortOrder: sortedInfo.columnKey === 'market' && sortedInfo.order,
       },
       {
         title: "Age",
         key: "created",
+        sorter: (a, b) => {  if (a.created > b.created) return 1;
+          if (a.created < b.created) return -1;
+          return 0; },
+        sortOrder: sortedInfo.columnKey === 'created' && sortedInfo.order,
         render: (text, record) => {
           let elements = [];
           let age = null;
           if (!record.closed) {
             age = record.age;
             elements.push(age);
-            elements.push(<Divider type="vertical" />);
+            elements.push(<Divider key="div0" type="vertical" />);
           }
 
           return (
@@ -203,21 +243,29 @@ class PositionWidget extends React.Component {
       {
         title: "Quantity",
         dataIndex: "amount",
-        key: "amount"
+        key: "amount",
+        sorter: (a, b) => a.amount - b.amount,
+        sortOrder: sortedInfo.columnKey === 'amount' && sortedInfo.order,
       },
       {
         title: "Buy Rate",
         dataIndex: "buyRate",
-        key: "buyRate"
+        key: "buyRate",
+        sorter: (a, b) => a.buyRate - b.buyRate,
+        sortOrder: sortedInfo.columnKey === 'buyRate' && sortedInfo.order,
       },
       {
         title: "Sell Rate",
         key: "sellRate",
-        dataIndex: "sellRate"
+        dataIndex: "sellRate",
+        sorter: (a, b) => a.sellRate - b.sellRate,
+        sortOrder: sortedInfo.columnKey === 'sellRate' && sortedInfo.order,
       },
       {
         title: "Min",
         key: "minResult",
+        sorter: (a, b) => a.minResult - b.minResult,
+        sortOrder: sortedInfo.columnKey === 'minResult' && sortedInfo.order,
         render: (text, record) => {
           return this.formtatPercent(record.minResult);
         }
@@ -225,6 +273,8 @@ class PositionWidget extends React.Component {
       {
         title: "Max",
         key: "maxResult",
+        sorter: (a, b) => a.maxResult - b.maxResult,
+        sortOrder: sortedInfo.columnKey === 'maxResult' && sortedInfo.order,
         render: (text, record) => {
           return this.formtatPercent(record.maxResult);
         }
@@ -232,6 +282,8 @@ class PositionWidget extends React.Component {
       {
         title: "result",
         key: "result",
+        sorter: (a, b) => a.result - b.result,
+        sortOrder: sortedInfo.columnKey === 'result' && sortedInfo.order,
         render: (text, record) => {
           return this.buildResultCell(record);
         }
@@ -240,13 +292,14 @@ class PositionWidget extends React.Component {
         title: "Closed",
         key: "closed",
         filters: [{ text: "Open", value: "o" }, { text: "Closed", value: "c" }],
-        filtered: true,
-        filteredValue: ["o"],
+        filteredValue: filteredInfo.closed || null,
         onFilter: (value, record) => {
           if (value === "o" && !record.closed) return true;
           if (value === "c" && record.closed) return true;
           return false;
         },
+        sorter: (a, b) => {  return (a.closed === b.closed)? 0 : a.closed? -1 : 1; },
+        sortOrder: sortedInfo.columnKey === 'closed' && sortedInfo.order,
         render: (text, record) => {
           if (!record.closed) {
             return (
@@ -271,7 +324,9 @@ class PositionWidget extends React.Component {
       {
         title: "Error",
         dataIndex: "error",
-        key: "erros",
+        key: "error",
+        sorter: (a, b) => {  return (a.error === b.error)? 0 : a.error? -1 : 1; },
+        sortOrder: sortedInfo.columnKey === 'error' && sortedInfo.order,
         render: (text, record) => {
           if (record.error) {
             return (
@@ -303,6 +358,7 @@ class PositionWidget extends React.Component {
         columns={columns}
         pagination={paginationSettings}
         dataSource={this.store.positions.slice()}
+        onChange={this.handleTableChange}
       />
     );
 

@@ -74,7 +74,7 @@ class MarketWatcherStore {
           console.log(error);
         });
     }
-    
+
     @action
     onBotSelected =() => {
 
