@@ -58,10 +58,34 @@ class HamsterSignalPublisher implements MessageHandler {
                 store.save(it)
 
                 // now we have the id - let's publich a signals
-               if(it.getSignalDate() > this.applicationStartDate)
-                    publishHamsterSignal(it)
+               if(it.getSignalDate() > this.applicationStartDate && !hasASimilarSignalAlredyPublished(it)) {
+                   publishHamsterSignal(it)
+               }
+
             }
         }
+    }
+
+    boolean hasASimilarSignalAlredyPublished(HamsterSignal s) {
+
+        // check if we had raised an signals for this market in the last 24 hours
+        Date date = s.signalDate
+        Calendar cal = Calendar.getInstance()
+        cal.setTime(date)
+        cal.add(Calendar.HOUR, -24)
+        cal.set(Calendar.MINUTE, 0)
+        cal.set(Calendar.SECOND, 0)
+        cal.set(Calendar.MILLISECOND, 0)
+        date = cal.getTime()
+
+        List<HamsterSignal> signals = store.findByExchangeAndMarketAndSignalDateAfter(s.getExchange(), s.market, date )
+
+        if(signals > 0) {
+            log.warn("A similar signals has already been published! This signal will be skipped. ${s}")
+            return true
+        }
+
+        return false
     }
 
     private publishHamsterSignal(HamsterSignal hs) {

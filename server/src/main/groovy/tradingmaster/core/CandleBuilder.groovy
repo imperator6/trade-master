@@ -31,7 +31,7 @@ class CandleBuilder implements MessageHandler {
     @Autowired
     PublishSubscribeChannel lastRecentCandelChannel
 
-    Instant serverStartMinute = new Date().toInstant().truncatedTo( ChronoUnit.MINUTES )
+    Instant serverStartMinute = Instant.now().truncatedTo( ChronoUnit.MINUTES ) // UTC Time now
 
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
@@ -127,6 +127,8 @@ class CandleBuilder implements MessageHandler {
                 if(candelMinute > serverStartMinute) {
                     lastRecentCandel = candle
                     candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
+                } else {
+                    log.warn("Candele is to old: ($candelMinute is befor serverStartMinute $serverStartMinute) $candle")
                 }
 
             } // last candle is excluded !
