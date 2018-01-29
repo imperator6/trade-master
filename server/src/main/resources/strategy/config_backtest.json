@@ -1,13 +1,15 @@
 {
   "exchange": "bittrex",
   "baseCurrency": "BTC",
-
-  "amountPerOrder": 0.00055,
-  "maxPositions": 5,
-  "maxOpenPositions": 30,
+  "startBalance": 1,
+  "assetName": "NEO",
+  "candleSize": "30m",
+  "warmup": 5,
 
   "sellPriceLimitPercent": -1,
   "buyPriceLimitPercent": 3,
+
+  "maxPositions": 5,
 
   "signal": {
     "enabled": true,
@@ -23,13 +25,13 @@
 
   "stopLoss": {
     "enabled": false,
-    "value": -5
+    "value": -50
   },
 
   "trailingStopLoss": {
     "enabled": true,
-    "value": 2,
-    "startAt": 4
+    "value": 1.5,
+    "startAt": 6
   }
 
 }

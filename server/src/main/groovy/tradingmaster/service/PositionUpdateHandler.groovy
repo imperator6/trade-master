@@ -15,6 +15,11 @@ import tradingmaster.model.Candle
 import tradingmaster.util.NumberHelper
 
 import javax.annotation.PostConstruct
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 @Service
 @Commons
@@ -49,15 +54,38 @@ class PositionUpdateHandler implements  MessageHandler {
 
         Candle c = message.getPayload()
 
-        log.info("Processing position for market: ${c.getMarket().getName()}")
+        log.debug("Processing position for market: ${c.getMarket().getName()}")
 
         tradeBotManager.getActiveBots().each { TradeBot bot ->
 
             def task = {
+                processBotUpdate(bot, c)
                 processPositions(bot, c)
             } as Runnable
 
             positionTaskExecutor.execute(task)
+        }
+    }
+
+    void processBotUpdate(TradeBot bot, Candle c) {
+
+        if(c.getMarket().getName().equalsIgnoreCase("USDT-${bot.baseCurrency}")) {
+            bot.setFxDollar( c.getClose() )
+            bot.startBalanceDollar = bot.startBalance * bot.fxDollar
+            bot.currentBalanceDollar = bot.currentBalance * bot.fxDollar
+            bot.totalBaseCurrencyValue = bot.currentBalance
+            bot.totalBalanceDollar = bot.currentBalanceDollar
+
+            bot.getPositions().findAll { !it.closed }.each {
+                if(it.lastKnowBaseCurrencyValue != null) {
+                    bot.totalBalanceDollar += it.lastKnowBaseCurrencyValue * bot.fxDollar
+                }
+                if(it.lastKnowBaseCurrencyValue != null) {
+                    bot.totalBaseCurrencyValue += it.lastKnowBaseCurrencyValue
+                }
+            }
+
+            bot.result = NumberHelper.xPercentFromBase(bot.startBalanceDollar, bot.totalBalanceDollar)
         }
     }
 
@@ -104,7 +132,31 @@ class PositionUpdateHandler implements  MessageHandler {
             return
         }
 
-        log.info("Updating position $p.id for candle: $c.end")
+        log.debug("Updating position $p.id for candle: $c.end")
+
+        p.lastKnowRate = c.close
+        if(p.amount != null)
+            p.lastKnowBaseCurrencyValue = c.close * p.amount
+
+        p.lastUpdate = new Date()
+
+        // calc age...
+        ZonedDateTime positionCreateDate = p.created.toInstant().atZone(ZoneOffset.UTC)
+        ZonedDateTime now = p.lastUpdate.toInstant().atZone(ZoneOffset.UTC)
+        def minutes = ChronoUnit.MINUTES.between(positionCreateDate, now)
+        if(minutes > 59) {
+            def hours = ChronoUnit.HOURS.between(positionCreateDate, now)
+
+            if(hours > 24) {
+                def days = ChronoUnit.DAYS.between(positionCreateDate, now)
+                p.setAge("$days Days")
+            } else {
+                p.setAge("$hours Hours")
+            }
+        } else {
+            p.setAge("$minutes Min.")
+
+        }
 
         BigDecimal resultInPercent = calculatePositionResult(p.getBuyRate(), c.close)
 
@@ -121,7 +173,7 @@ class PositionUpdateHandler implements  MessageHandler {
         positionRepository.save(p)
 
         // buyRate: $p.buyRate curentRate: $c.close
-        log.info("PosId $p.id: $p.market: (range:${NumberHelper.twoDigits(p.minResult)}%  ${NumberHelper.twoDigits(p.maxResult)}%) -> ${NumberHelper.twoDigits(resultInPercent)}%")
+        log.debug("PosId $p.id: $p.market: (range:${NumberHelper.twoDigits(p.minResult)}%  ${NumberHelper.twoDigits(p.maxResult)}%) -> ${NumberHelper.twoDigits(resultInPercent)}%")
     }
 
     boolean checkClosePosition(Position p, Candle c, TradeBot bot) {
@@ -131,8 +183,23 @@ class PositionUpdateHandler implements  MessageHandler {
             return false
         }
 
+        if(p.holdPosition) {
+            return false
+        }
+
         Map config = bot.config
         BigDecimal positionValueInPercent = p.result
+
+        if(p.fixResultTarget != null) {
+            // let's onyl sell if we reached the target!
+            if(positionValueInPercent >= p.fixResultTarget) {
+                log.info("Position $p.id reached the amined target of ${p.fixResultTarget}%.")
+                return true
+            } else {
+                // no other check is needed in this case, as we only sell on te target!
+                return false
+            }
+        }
 
         if(config.stopLoss && config.stopLoss.enabled) {
             if(positionValueInPercent <= config.stopLoss.value) {
@@ -197,13 +264,6 @@ class PositionUpdateHandler implements  MessageHandler {
 
         orderTaskExecutor.execute(task)
     }
-
-
-
-
-
-
-
 
 
 

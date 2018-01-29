@@ -3,6 +3,7 @@ package tradingmaster.db.entity
 import groovy.transform.ToString
 
 import javax.persistence.*
+import java.util.concurrent.ConcurrentHashMap
 
 @Entity
 @ToString
@@ -34,12 +35,48 @@ class TradeBot {
     @Column(nullable = false)
     boolean active = true
 
-
     @Transient
     Map config
 
     @Transient
-    List<Position> positions = []
+    Map<Integer, Position> positionMap = new ConcurrentHashMap<Integer,Position>()
+
+    @Transient
+    BigDecimal fxDollar // fx for base currency to dollar
+
+    @Transient
+    BigDecimal startBalanceDollar
+
+    @Transient
+    BigDecimal currentBalanceDollar
+
+    @Transient
+    BigDecimal totalBalanceDollar
+
+    @Transient
+    BigDecimal totalBaseCurrencyValue
+
+    @Transient
+    BigDecimal result
+
+
+
+
+    List<Position> getPositions() {
+       return new ArrayList(positionMap.values())
+    }
+
+    Position addPosition(Position pos) {
+        return this.positionMap.put(pos.getId(), pos)
+    }
+
+    Position removePosition(Position pos) {
+        return this.positionMap.remove(pos.getId())
+    }
+
+
+
+
 
 
     /*

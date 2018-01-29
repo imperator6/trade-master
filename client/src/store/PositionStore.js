@@ -14,6 +14,16 @@ class MarketWatcherStore {
 
     @observable botList = []
 
+    @observable baseCurrency = "BTC"
+    @observable startBalance = 0
+    @observable currentBalance = 0
+
+    @observable fxDollar = 0
+    @observable startBalanceDollar = 0
+    @observable currentBalanceDollar = 0
+    @observable totalBalanceDollar = 0
+    @observable totalBotResult = 0
+
     @observable
     botMap = new Map()
 
@@ -51,6 +61,8 @@ class MarketWatcherStore {
   
               this.selectedBot = newBotList[0].split("_")[0]
 
+              this.onBotSelected()
+
               this.load();
   
           } else {
@@ -61,8 +73,26 @@ class MarketWatcherStore {
         .catch(function(error) {
           console.log(error);
         });
+    }
+    
+    @action
+    onBotSelected =() => {
 
-       
+        let bot = this.botMap.get(this.selectedBot)
+        if(bot != null) {
+            this.baseCurrency = bot.baseCurrency
+            this.currentBalance = this.botMap.get(this.selectedBot).currentBalance
+            this.startBalance = bot.startBalance
+
+            this.fxDollar = bot.fxDollar
+            this.startBalanceDollar = bot.startBalanceDollar
+            this.currentBalanceDollar = bot.currentBalanceDollar
+            this.totalBalanceDollar = bot.totalBalanceDollar
+            this.totalBotResult = bot.result
+
+           // console.log(bot)
+        }
+        
     }
 
     addToChart = (watcher) => {
@@ -101,6 +131,8 @@ class MarketWatcherStore {
             },
             ...this.rootStore.userStore.getHeaderConfig()
         }
+
+        position.sellInPogress = true
 
         axios
         .get(url, config)
@@ -235,6 +267,37 @@ class MarketWatcherStore {
         });
     }
 
+    syncBalance = () => {
+
+        let url = this.rootStore.remoteApiUrl + "/bot/syncBalance";
+
+        let config = {
+            params: {
+                botId: this.selectedBot
+            },
+            ...this.rootStore.userStore.getHeaderConfig()
+        }
+
+        axios
+        .get(url, config)
+        .then(response => {
+            if (response.data.success) {
+                //reload position list
+                let bot = data.result
+                this.botMap.set(bot.id, bot)
+                this.onBotSelected()
+
+                console.log(bot)
+            } else {
+            // error
+                console.info(response.data.message)
+            }
+        })
+        .catch(function(error) {
+            console.log(error);
+        });
+    }
+
 
     load = () => {
 
@@ -252,7 +315,7 @@ class MarketWatcherStore {
       .get(url, config)
       .then(response => {
         if (response.data.success) {
-             this.log.debug("Loaded positions", {...response.data.data})
+             //this.log.debug("Loaded positions", {...response.data.data})
              
              this.positions = response.data.data
         } else {

@@ -68,6 +68,15 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
             String url = buildQueryString(resourcePath, params);
 
             URI uri = new URI(url);
+
+           /* ResponseEntity<String> response
+                    =  restTemplate.exchange(uri ,
+                    GET,
+                    securityHeaders(uri.toString(), resourcePath,
+                            "GET",
+                            ""),
+                    new ParameterizedTypeReference<String>(){}); */
+
             //String uri = buildUrl(urlBuilder.toUriString());
             ResponseEntity<T> responseEntity = restTemplate.exchange(uri ,
                     GET,

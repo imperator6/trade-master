@@ -51,7 +51,7 @@ class TradeBotManager {
     }
 
     Position findPositionById(Integer botId, Integer posId) {
-        return this.TRADE_BOT_MAP.get(botId).positions.find { it.id == posId }
+        return this.TRADE_BOT_MAP.get(botId).getPositions().find { it.id == posId }
     }
 
     void startBots() {
@@ -66,11 +66,16 @@ class TradeBotManager {
             ScriptStrategy strategy = strategyStore.loadStrategyById(b.configId, null)
             b.config = parseBotConfig( strategy.getScript() )
 
-            b.positions = positionRepository.findByBotId(b.id)
+            positionRepository.findByBotId(b.id).each {
+                b.addPosition(it)
+            }
 
-            b.positions.findAll { !it.closed && !it.error }.each { Position p ->
+            b.getPositions().findAll { !it.closed && !it.error }.each { Position p ->
                 marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange, p.market) )
             }
+
+            // for Dollar conversion start a market watcher for USDT
+            marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-${b.baseCurrency}"))
 
             TRADE_BOT_MAP.put( b.getId(), b )
 
@@ -106,6 +111,8 @@ class TradeBotManager {
 
         log.info("Setting current balance for bot ${b.id} to $balanceOnExchange")
         b.currentBalance = balanceOnExchange
+
+        tradeBotRepository.save(b)
     }
 
     IExchangeAdapter getExchangeAdapter(TradeBot b) {
@@ -154,7 +161,7 @@ class TradeBotManager {
             // check if asset is supported
             //getExchangeAdapter(b).
 
-            if(b.positions.findAll { !it.closed }.size() < b.config.maxPositions) {
+            if(b.getPositions().findAll { !it.closed }.size() < b.config.maxOpenPositions) {
 
                 // check forbiddenAssets
                 if( b.config.forbiddenAssets) {
@@ -186,15 +193,19 @@ class TradeBotManager {
 
         syncBanlance(bot)
 
-        def maxPositions = bot.config.maxPositions
-        def openPositions = bot.positions.findAll { !it.closed }
-        def positionsLeft = maxPositions - openPositions.size()
+        if(bot.config.amountPerOrder) {
 
-        def balanceForNextTrade = bot.currentBalance / positionsLeft
+            if(bot.currentBalance >= bot.config.amountPerOrder) {
+                return bot.config.amountPerOrder
+            } else {
+             // use whatever is left
+                return bot.currentBalance
 
-        // Todo: check balance on exchange
-
-        return balanceForNextTrade
+            }
+        } else {
+            log.fatal("Property amountPerOrder is missing! Can't calc next order amount!")
+            return 0.0
+        }
     }
 
 

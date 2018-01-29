@@ -13,4 +13,11 @@ class NumberHelper {
         def toAdd =  (value * percent/ 100)
         return value + toAdd
     }
+
+
+    static BigDecimal xPercentFromBase(BigDecimal base, BigDecimal value ) {
+        def result =  (value / base * 100) - 100
+        return result
+    }
+
 }

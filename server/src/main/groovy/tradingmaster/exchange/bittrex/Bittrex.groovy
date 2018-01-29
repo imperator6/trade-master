@@ -22,6 +22,11 @@ class Bittrex extends DefaultExchageAdapter {
 
     @Override
     ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
+
+        log.info("---------------------- SELL LIMIT ---------------------")
+        log.info("- market: $market   quantity: $quantity   rate: $rate ")
+        log.info("-------------------------------------------------------")
+
         Map parmas = ["market": market, "quantity": quantity, "rate": rate ]
         ExchangeBuySellResponse res = exchange.get("market/selllimit", parmas,  new ParameterizedTypeReference<ExchangeBuySellResponse>(){})
 
@@ -43,6 +48,10 @@ class Bittrex extends DefaultExchageAdapter {
      */
     @Override
     ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
+
+        log.info("---------------------- BUY LIMIT ----------------------")
+        log.info("- market: $market   quantity: $quantity   rate: $rate ")
+        log.info("-------------------------------------------------------")
 
         Map parmas = ["market": market, "quantity": quantity, "rate": rate ]
         ExchangeBuySellResponse res = exchange.get("market/buylimit", parmas,  new ParameterizedTypeReference<ExchangeBuySellResponse>(){})

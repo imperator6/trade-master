@@ -101,7 +101,22 @@ class Position {
     boolean sellInPogress = false
 
     @Column(nullable = true)
-    BigDecimal trailingStopLoss
+    BigDecimal trailingStopLoss // in percent
+
+    @Column(nullable = true)
+    BigDecimal fixResultTarget // if set the position will be closed of the target of x% has reached
+
+    @Column(nullable = true, precision=25, scale=10)
+    BigDecimal lastKnowRate
+
+    @Column(nullable = true, precision=25, scale=10)
+    BigDecimal lastKnowBaseCurrencyValue // Quantitiy * lastKnowRate
+
+    @Column(nullable = true)
+    String age
+
+    @Column(nullable = true)
+    Date lastUpdate = new Date()
 
     //boolean deleted = false
 

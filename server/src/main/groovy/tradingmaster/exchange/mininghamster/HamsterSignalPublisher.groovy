@@ -48,6 +48,11 @@ class HamsterSignalPublisher implements MessageHandler {
         Date maxDate = store.findMaxSignalDate()
 
         signals.each {
+
+            if(it.exchange == null) {
+                log.error("Invalid Hamster Singnal received! $it")
+            }
+
             if(maxDate == null || it.signalDate > maxDate) {
                 log.debug("Saving a new hamster signal $it")
                 store.save(it)

@@ -16,7 +16,10 @@ import {
   Tooltip,
   Select,
   Popconfirm,
-  Tag
+  Tag,
+  Pagination,
+  Popover,
+  Input
 } from "antd";
 const Option = Select.Option;
 
@@ -56,51 +59,24 @@ class PositionWidget extends React.Component {
   showPositionDates(record) {
     return (
       <span>
+        Age: {record.age} <br />
         Created: {this.formatDate(record.created)} <br />
         Buy Date: {this.formatDate(record.buyDate)} <br />
-        Sell Date: {this.formatDate(record.sellDate)}
+        Sell Date: {this.formatDate(record.sellDate)} <br />
+        Last Update: {this.formatDate(record.lastUpdate)}
       </span>
     );
   }
 
-  buildPositionActions(record) {
-    let actionButtons = [];
-
-    actionButtons.push(
-      <Tooltip key="loadToChart" title="Load in chart">
-        <Icon type="to-top" onClick={() => this.store.loadToChart(record)} />
-      </Tooltip>
+  buildResultCell(record) {
+    let content = [];
+    content.push(
+      <span key="result">{this.formtatPercent(record.result)}</span>
     );
-
-    actionButtons.push(<Divider key="div1" type="vertical" />);
-    actionButtons.push(
-      <Tooltip key="sync" title="Sync with exchange">
-        <Icon type="sync" onClick={() => this.store.syncPosition(record)} />
-      </Tooltip>
-    );
-
-   
-      actionButtons.push(<Divider key="div3" type="vertical" />);
-      actionButtons.push(
-        <Tooltip key="delButton" title="DELETE Position">
-          <Popconfirm
-            title="Are you sure to DELTE this position?"
-            onConfirm={() => {
-              this.store.deletePosition(record);
-            }}
-            okText="Yes, please DELETE!"
-            cancelText="No"
-          >
-            <Icon type="delete" />
-          </Popconfirm>
-        </Tooltip>
-      );
-    
 
     if (!record.closed && !record.sellInPogress) {
-      actionButtons.push(<Divider key="div2" type="vertical" />);
-      actionButtons.push(
-        <Tooltip key="selButton" title="Sell Position">
+      content.push(
+        <Tooltip key="sellButton" placement="bottom" title="Sell Position">
           <Popconfirm
             title="Are you sure to close this position?"
             onConfirm={() => {
@@ -113,9 +89,83 @@ class PositionWidget extends React.Component {
           </Popconfirm>
         </Tooltip>
       );
-    }
 
-    return <span>{actionButtons}</span>;
+      content.push(<Divider key="div0" type="vertical" />);
+
+      let settingsFrom = (
+        <div>
+            <Input addonBefore="Fix Result Target" addonAfter="%" defaultValue={record.fixResultTarget} />
+            <a>Apply Settings</a>
+        </div>
+      );
+
+      content.push(
+        <Tooltip key="settingsButton" placement="bottom" title="Settings">
+          <Popover
+            title="Fix Result Target"
+            content={settingsFrom}
+            trigger="click"
+          >
+            <Icon type="setting" />
+          </Popover>
+        </Tooltip>
+      );
+    }
+    return content;
+  }
+
+  buildPositionActions(record) {
+    let actionButtons = [];
+
+    actionButtons.push(
+      <Tooltip
+        key="exchangeChart"
+        placement="bottom"
+        title="Open Exchange Chart"
+      >
+        <a
+          href={"https://bittrex.com/Market/Index?MarketName=" + record.market}
+          target="_blank"
+        >
+          <Icon
+            type="line-chart"
+            onClick={() => this.store.loadToChart(record)}
+          />
+        </a>
+      </Tooltip>
+    );
+    actionButtons.push(<Divider key="div0" type="vertical" />);
+
+    actionButtons.push(
+      <Tooltip key="loadToChart" placement="bottom" title="Load in chart">
+        <Icon type="to-top" onClick={() => this.store.loadToChart(record)} />
+      </Tooltip>
+    );
+
+    actionButtons.push(<Divider key="div1" type="vertical" />);
+    actionButtons.push(
+      <Tooltip key="sync" placement="bottom" title="Sync with exchange">
+        <Icon type="sync" onClick={() => this.store.syncPosition(record)} />
+      </Tooltip>
+    );
+
+    actionButtons.push(<Divider key="div3" type="vertical" />);
+    actionButtons.push(
+      <Tooltip key="delButton" placement="bottom" title="DELETE Position">
+        <Popconfirm
+          title="Are you sure to DELTE this position?"
+          onConfirm={() => {
+            this.store.deletePosition(record);
+          }}
+          okText="Yes, please DELETE!"
+          cancelText="No"
+        >
+          <Icon type="delete" />
+        </Popconfirm>
+      </Tooltip>
+    );
+
+    return <span key="buttons">{actionButtons}</span>;
   }
 
   render() {
@@ -131,11 +181,20 @@ class PositionWidget extends React.Component {
         key: "market"
       },
       {
-        title: "Date",
+        title: "Age",
         key: "created",
         render: (text, record) => {
+          let elements = [];
+          let age = null;
+          if (!record.closed) {
+            age = record.age;
+            elements.push(age);
+            elements.push(<Divider type="vertical" />);
+          }
+
           return (
             <Tooltip title={this.showPositionDates(record)}>
+              {elements}
               <Icon type="clock-circle-o" />
             </Tooltip>
           );
@@ -174,12 +233,20 @@ class PositionWidget extends React.Component {
         title: "result",
         key: "result",
         render: (text, record) => {
-          return this.formtatPercent(record.result);
+          return this.buildResultCell(record);
         }
       },
       {
         title: "Closed",
         key: "closed",
+        filters: [{ text: "Open", value: "o" }, { text: "Closed", value: "c" }],
+        filtered: true,
+        filteredValue: ["o"],
+        onFilter: (value, record) => {
+          if (value === "o" && !record.closed) return true;
+          if (value === "c" && record.closed) return true;
+          return false;
+        },
         render: (text, record) => {
           if (!record.closed) {
             return (
@@ -225,11 +292,16 @@ class PositionWidget extends React.Component {
       }
     ];
 
+    let paginationSettings = {
+      pageSize: 30
+    };
+
     let table = (
       <Table
         size="small"
         rowKey="id"
         columns={columns}
+        pagination={paginationSettings}
         dataSource={this.store.positions.slice()}
       />
     );
@@ -269,23 +341,58 @@ class PositionWidget extends React.Component {
         </Tooltip>
         <Divider type="vertical" />
         <Tooltip title="Import open balances from Exchange">
-        <Popconfirm
+          <Popconfirm
             title="Are you sure you wabt to import the balance from the Exchange?"
             onConfirm={() => {
-              this.store.importFromExchange()
+              this.store.importFromExchange();
             }}
             okText="Yes, please Import from Exchange!"
             cancelText="No"
           >
+            <Button
+              size="small"
+              type="primary"
+              shape="circle"
+              icon="cloud-download-o"
+            />
+          </Popconfirm>
+        </Tooltip>
+
+        <Tooltip
+          title={
+            "Bot has started with this amount of " + this.store.baseCurrency
+          }
+        >
+          <Tag color="geekblue">
+            Start Balance: {this.store.startBalance} {this.store.baseCurrency}{" "}
+            (${this.store.startBalanceDollar})
+          </Tag>
+        </Tooltip>
+        <Tooltip title="Balance left for opening new Positions">
+          <Tag color="orange">
+            Available: {this.store.currentBalance} {this.store.baseCurrency} (${
+              this.store.currentBalanceDollar
+            })
+          </Tag>
+        </Tooltip>
+        <Tooltip title="Total Balance incl. open positions">
+          <Tag color="purple">
+            Total: {this.store.totalBaseCurrencyValue} {this.store.baseCurrency}{" "}
+            (${this.store.totalBalanceDollar})
+          </Tag>
+        </Tooltip>
+        <Tooltip title="Total PnL in percent">
+          {this.formtatPercent(this.store.totalBotResult)}
+        </Tooltip>
+        <Tooltip title="Sync Balance with Exchange">
           <Button
             size="small"
             type="primary"
             shape="circle"
-            icon="cloud-download-o"
+            icon="retweet"
+            onClick={this.store.syncBalance}
           />
-          </Popconfirm>
         </Tooltip>
-
         {table}
       </div>
     );

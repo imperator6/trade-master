@@ -33,14 +33,17 @@ class PositionService {
 
 
     Position findPositionById(Integer botId, Integer posId) {
-        return tradeBotManager.TRADE_BOT_MAP.get(botId).positions.find { it.id == posId }
+        return tradeBotManager.TRADE_BOT_MAP.get(botId).getPositions().find { it.id == posId }
     }
 
     void deletePosition(Position pos) {
 
-        positionRepository.delete(pos)
+        log.info("Deleting position with id ${pos.id}")
 
         TradeBot bot = tradeBotManager.findBotById(pos.getBotId())
+
+        bot.removePosition(pos)
+        positionRepository.delete(pos.getId())
 
         marketWatcheService.stopMarketWatcher(bot.getExchange() ,pos.getMarket())
     }
@@ -73,7 +76,7 @@ class PositionService {
             }
 
             positionRepository.save(pos)
-            bot.positions << pos
+            bot.addPosition(pos)
 
             ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset)
 
@@ -240,6 +243,8 @@ class PositionService {
             } catch(Exception e) {
                 log.error("Error while trying to stop the market watcher!")
             }
+
+            tradeBotManager.syncBanlance(bot)
 
         } else {
             log.error("Error on Sell: ${newOrderRes.getMessage()}")

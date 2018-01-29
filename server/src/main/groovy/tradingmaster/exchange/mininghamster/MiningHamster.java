@@ -60,9 +60,11 @@ class MiningHamster extends DefaultExchangeRestService {
 
     public List<HamsterSignal> getLatestSignals() {
 
-        LOG.info("Fetching latest Hamster Signals!");
 
         List<HamsterSignal> signals = get("", new ParameterizedTypeReference<List<HamsterSignal>>(){});
+
+        if(signals != null)
+            LOG.info("Fetched Hamster Signals! -> " + signals.size());
 
         return signals;
     }
