@@ -93,7 +93,6 @@ class PositionUpdateHandler implements  MessageHandler {
         String candleMarket = c.getMarket().getName()
 
         bot.getPositions().findAll {
-            !it.error &&
                 !it.closed &&
                 candleMarket.equalsIgnoreCase(it.market) }.each { p ->
 
