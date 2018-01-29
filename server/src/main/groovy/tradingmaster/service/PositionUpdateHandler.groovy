@@ -15,8 +15,6 @@ import tradingmaster.model.Candle
 import tradingmaster.util.NumberHelper
 
 import javax.annotation.PostConstruct
-import java.time.LocalDate
-import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -54,7 +52,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
         Candle c = message.getPayload()
 
-        log.debug("Processing position for market: ${c.getMarket().getName()}")
+        log.info("Processing position for market: ${c.getMarket().getName()}")
 
         tradeBotManager.getActiveBots().each { TradeBot bot ->
 
