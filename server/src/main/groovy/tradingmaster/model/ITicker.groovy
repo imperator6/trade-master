@@ -8,6 +8,6 @@ interface ITicker {
 
     BigDecimal getAsk()
 
-    BigDecimal getLast()
+    //BigDecimal getLast()
 
 }

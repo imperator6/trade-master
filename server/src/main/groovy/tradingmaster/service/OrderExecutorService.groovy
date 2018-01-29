@@ -73,7 +73,7 @@ class OrderExecutorService {
             if(bs == BuySell.BUY) {
 
                 def quantity = spendOrAmount / ticker.getAsk()
-                def price = ticker.getBid()
+                def price = ticker.getBid() // use aks instead to sell son as possible?
 
                 if(priceLimit != null) {
                     log.info("BUY: Checking price limit: $priceLimit")
@@ -93,7 +93,7 @@ class OrderExecutorService {
             } else if (bs == BuySell.SELL) {
 
                 def quantity = spendOrAmount
-                def price = ticker.getAsk()
+                def price = ticker.getBid() // use the current bid to sell soon as possible
 
                 if(priceLimit != null) {
                     log.info("SELL: Checking price limit: $priceLimit")

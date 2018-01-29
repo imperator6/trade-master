@@ -128,7 +128,7 @@ class CandleBuilder implements MessageHandler {
                     lastRecentCandel = candle
                     candelChannel1Minute.send( MessageBuilder.withPayload(candle).build() )
                 } else {
-                    log.warn("Candele is to old: ($candelMinute is befor serverStartMinute $serverStartMinute) $candle")
+                    //log.warn("Candele is to old: ($candelMinute is befor serverStartMinute $serverStartMinute) $candle")
                 }
 
             } // last candle is excluded !

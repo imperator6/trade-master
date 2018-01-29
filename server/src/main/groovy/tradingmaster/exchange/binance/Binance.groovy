@@ -5,9 +5,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
 import tradingmaster.exchange.DefaultExchageAdapter
-import tradingmaster.exchange.binance.model.BinanceProductInfo
-import tradingmaster.exchange.binance.model.BinanceTrade
 import tradingmaster.exchange.ExchangeResponse
+import tradingmaster.exchange.binance.model.BinanceAccount
+import tradingmaster.exchange.binance.model.BinanceOrder
+import tradingmaster.exchange.binance.model.BinanceProductInfo
+import tradingmaster.exchange.binance.model.BinanceTicker
+import tradingmaster.exchange.binance.model.BinanceTrade
 import tradingmaster.model.*
 /**
  *  https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
@@ -31,7 +34,7 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
 
 
         Map params = [:]
-        params.put("symbol", "${market.getAsset()}${market.getCurrency()}".toString())
+        params.put("symbol", convertMarketToSymbol(market.getName()))
         params.put("interval", interval.getKey())
 
         if(startDate) {
@@ -73,9 +76,37 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         return info.symbols.collect { new CryptoMarket(name, it.getQuoteAsset(), it.getBaseAsset()) }
     }
 
+    List<IOrder> getOrderHistory() {
+
+        List<BinanceOrder> orderList = []
+        getMakets().each {
+            orderList.addAll( getOrderHistory( it.getName()))
+            Thread.sleep(200)
+        }
+        return orderList
+    }
+
+    List<IOrder> getOrderHistory(String market) {
+
+        Map params = [:]
+        params.put("symbol", convertMarketToSymbol(market))
+
+        List<BinanceOrder> orderList = exchange.get("api/v3/allOrders", params, new ParameterizedTypeReference<List<BinanceOrder>>(){})
+
+        return orderList
+    }
+
     @Override
     List<IBalance> getBalances() {
-        return null
+
+        BinanceAccount res = exchange.get("/api/v3/account", new ParameterizedTypeReference<BinanceAccount>(){})
+
+        if(res) {
+            return res.getBalances()
+        }
+
+        return []
+
     }
 
     @Override
@@ -95,7 +126,25 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
 
     @Override
     ExchangeResponse<ITicker> getTicker(String market) {
-        return null
+        Map params = [:]
+        params.put("symbol", convertMarketToSymbol(market))
+
+        ExchangeResponse<ITicker> res = new ExchangeResponse()
+
+        try {
+            BinanceTicker ticker = exchange.get("api/v3/ticker/bookTicker", params, new ParameterizedTypeReference<BinanceTicker>(){})
+
+            if(res) {
+                res.setSuccess(true)
+                res.setResult(ticker)
+            }
+
+        } catch (all) {
+            res.setSuccess(false)
+            res.setMessage(all.getMessage())
+        }
+
+        return handeleResponseError(res)
     }
 
     @Override
@@ -107,10 +156,15 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
 
         Map params = [:]
-        params.put("symbol", "${market.getAsset()}${market.getCurrency()}".toString())
+        params.put("symbol", convertMarketToSymbol(market.getName()))
 
         List<BinanceTrade> trades = exchange.getAsList("api/v1/aggTrades", params, new ParameterizedTypeReference<BinanceTrade[]>(){})
 
         return new TradeBatch(market, trades)
+    }
+
+    String convertMarketToSymbol(String market) {
+        String[] symbols = market.split("-")
+        return symbols[1]+ symbols[0]
     }
 }

@@ -38,6 +38,11 @@ class PaperExchange extends DefaultExchageAdapter {
         return null
     }
 
+    @Override
+    List<IOrder> getOrderHistory() {
+        return null
+    }
+
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
         return null
     }

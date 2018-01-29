@@ -20,6 +20,7 @@ class Bittrex extends DefaultExchageAdapter {
         super("Bittrex")
     }
 
+
     @Override
     ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
 
@@ -99,7 +100,7 @@ class Bittrex extends DefaultExchageAdapter {
         return handeleResponseError(res)
     }
 
-    List<BittrexHistoricOrder> getOrderHistory() {
+    List<IOrder> getOrderHistory() {
 
         ExchangeHistoricOrderResponse res = exchange.get("account/getorderhistory", new ParameterizedTypeReference<ExchangeHistoricOrderResponse>(){})
 
@@ -160,17 +161,4 @@ class Bittrex extends DefaultExchageAdapter {
         return new TradeBatch(market, tradeList)
     }
 
-    ExchangeResponse<Object> handeleResponseError(ExchangeResponse<Object> res) {
-        if(res == null) {
-            res = new ExchangeResponse<Object>()
-            res.success = false
-            res.message = "No response from server! (res=null)"
-        }
-
-        if(res && !res.success) {
-            log.error( "ExchangeResponse errors: ${res.message}!")
-        }
-
-        return res
-    }
 }

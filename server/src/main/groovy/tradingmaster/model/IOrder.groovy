@@ -4,6 +4,10 @@ interface IOrder {
 
     String getId()
 
+    String getMarket()
+
+    Date getTimeStamp()
+
     Boolean isOpen()
 
     Date getCloseDate()

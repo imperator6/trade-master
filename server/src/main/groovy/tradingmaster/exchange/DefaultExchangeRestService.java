@@ -212,7 +212,7 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
         log.debug(curlTest);
     }
 
-    private String buildQueryString(String resourcePath, Map<String,?> params) {
+    protected String buildQueryString(String resourcePath, Map<String,?> params) {
 
         boolean first = true;
         String result = getBaseUrl() + resourcePath;
@@ -229,6 +229,6 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
         }
 
         return result;
-
     }
+
 }

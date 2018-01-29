@@ -20,6 +20,10 @@ public interface IExchangeAdapter {
 
     ExchangeResponse<IOrder> getOrder(String id);
 
+    List<IOrder> getOrderHistory();
+
+    List<IOrder> getOrderHistory(String market);
+
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market);
 
     List<CryptoMarket> getMakets();

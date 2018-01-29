@@ -2,9 +2,10 @@ package tradingmaster.exchange.bittrex.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import groovy.transform.ToString
+import tradingmaster.model.IOrder
 
 @ToString
-class BittrexHistoricOrder {
+class BittrexHistoricOrder implements IOrder {
 
 
     @JsonProperty("OrderUuid")
@@ -49,5 +50,23 @@ class BittrexHistoricOrder {
     @JsonProperty("ImmediateOrCancel")
     Boolean immediateOrCancel
 
+    @Override
+    Date getTimeStamp() {
+        return date
+    }
 
+    @Override
+    Boolean isOpen() {
+        return false
+    }
+
+    @Override
+    Date getCloseDate() {
+        return date
+    }
+
+    @Override
+    BigDecimal getCommissionPaid() {
+        return commission
+    }
 }

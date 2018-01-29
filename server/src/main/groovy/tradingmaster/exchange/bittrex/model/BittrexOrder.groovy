@@ -16,8 +16,8 @@ class BittrexOrder implements IOrder {
     @JsonProperty("Exchange")
     String market
 
-    @JsonProperty("type")
-    Date orderType
+    @JsonProperty("OrderType")
+    String orderType
 
     @JsonProperty("Quantity")
     BigDecimal quantity
@@ -77,6 +77,10 @@ class BittrexOrder implements IOrder {
     @JsonProperty("ConditionTarget")
     String conditionTarget
 
+    @Override
+    Date getTimeStamp() {
+        return openDate
+    }
 
     Boolean isOpen() {
         return open

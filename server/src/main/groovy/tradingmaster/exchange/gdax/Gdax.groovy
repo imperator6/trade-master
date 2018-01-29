@@ -65,6 +65,13 @@ class Gdax extends DefaultExchageAdapter {
     }
 
     @Override
+    List<IOrder> getOrderHistory() {
+        return null
+    }
+
+
+
+    @Override
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
 
         def productId = "${market.getAsset()}-${market.getCurrency()}"
