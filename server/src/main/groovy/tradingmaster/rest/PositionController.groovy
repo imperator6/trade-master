@@ -2,14 +2,12 @@ package tradingmaster.rest
 
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestMethod
-import org.springframework.web.bind.annotation.RequestParam
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.TradeBotRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
+import tradingmaster.db.entity.json.PositionSettings
 import tradingmaster.model.RestResponse
 import tradingmaster.service.PositionService
 import tradingmaster.service.TradeBotManager
@@ -91,6 +89,21 @@ class PositionController {
 
         if(bot != null) {
             positionService.loadPositionsFromExchange(bot)
+            return new RestResponse(true)
+        }
+
+        return new RestResponse(false, "TradeBot not found!")
+    }
+
+    @RequestMapping(value = "/applySettings", method = RequestMethod.POST)
+    RestResponse<Position> applySettings(@RequestParam Integer botId, @RequestParam Integer positionId, @RequestBody PositionSettings settings) {
+
+        log.info(settings)
+        Position pos = positionService.findPositionById(botId, positionId)
+
+        if(pos != null) {
+            pos.settings = settings
+            positionRepository.save(pos)
             return new RestResponse(true)
         }
 

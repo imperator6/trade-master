@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import PropTypes from "prop-types";
 import moment from "moment";
+import PositionSettings from './PositionSettings'
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 
@@ -26,6 +27,7 @@ const Option = Select.Option;
 @inject("rootStore")
 @observer
 class PositionWidget extends React.Component {
+  
   constructor(props) {
     super(props);
 
@@ -120,18 +122,11 @@ class PositionWidget extends React.Component {
 
       content.push(<Divider key="div0" type="vertical" />);
 
-      let settingsFrom = (
-        <div>
-            <Input addonBefore="Fix Result Target" addonAfter="%" defaultValue={record.fixResultTarget} />
-            <a>Apply Settings</a>
-        </div>
-      );
-
       content.push(
         <Tooltip key="settingsButton" placement="bottom" title="Settings">
           <Popover
-            title="Fix Result Target"
-            content={settingsFrom}
+            title={record.market}
+            content={(<PositionSettings position={record} />)}
             trigger="click"
           >
             <Icon type="setting" />
