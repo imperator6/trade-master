@@ -57,6 +57,14 @@ class BinaceApiTest extends DefaultExchangeTest {
         assertNotNull(orders)
     }
 
+    @Test
+    void testsellLimit() {
+
+        String result = binance.sellLimit("BTC-LTC", 0.1, 0.000)
+
+        assertNotNull(result)
+    }
+
 
 
     @Test

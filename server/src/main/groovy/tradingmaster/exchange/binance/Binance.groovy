@@ -116,11 +116,42 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
 
     @Override
     ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
-        return null
+        return newOrder(market, "SELL", "LIMIT", quantity, rate)
     }
 
     @Override
     ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
+        return null
+    }
+
+    ExchangeResponse<String> newOrder(String market, String buySell, String type, BigDecimal quantity, BigDecimal rate) {
+
+        Map params = [:]
+        params.put("symbol", convertMarketToSymbol(market))
+        params.put("side", buySell)
+        params.put("type", type)
+        params.put("timeInForce", "GTC")
+        params.put("quantity", quantity)
+        params.put("price", rate)
+
+
+        ExchangeResponse<String> res = new ExchangeResponse()
+
+        try {
+            String ticker = exchange.post("api/v3/order", params, new ParameterizedTypeReference<String>(){}, "")
+
+            if(res) {
+                res.setSuccess(true)
+                res.setResult(ticker)
+            }
+
+        } catch (all) {
+            res.setSuccess(false)
+            res.setMessage(all.getMessage())
+        }
+
+        return handeleResponseError(res)
+
         return null
     }
 

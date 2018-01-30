@@ -54,14 +54,15 @@ class HamsterSignalPublisher implements MessageHandler {
             }
 
             if(maxDate == null || it.signalDate > maxDate) {
-                log.debug("Saving a new hamster signal $it")
-                store.save(it)
+
 
                 // now we have the id - let's publich a signals
                if(it.getSignalDate() > this.applicationStartDate && !hasASimilarSignalAlredyPublished(it)) {
                    publishHamsterSignal(it)
                }
 
+                log.debug("Saving a new hamster signal $it")
+                store.save(it)
             }
         }
     }

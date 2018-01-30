@@ -67,6 +67,8 @@ class PositionUpdateHandler implements  MessageHandler {
 
     void processBotUpdate(TradeBot bot, Candle c) {
 
+        // Exchange check needed?
+       // if(bot.exchange.equalsIgnoreCase(c.getMarket().getExchange())) {}
         if(c.getMarket().getName().equalsIgnoreCase("USDT-${bot.baseCurrency}")) {
             bot.setFxDollar( c.getClose() )
             bot.startBalanceDollar = bot.startBalance * bot.fxDollar
@@ -92,14 +94,17 @@ class PositionUpdateHandler implements  MessageHandler {
 
         String candleMarket = c.getMarket().getName()
 
-        bot.getPositions().findAll {
+        // Check exchange
+        if(bot.exchange.equalsIgnoreCase(c.getMarket().getExchange())) {
+            bot.getPositions().findAll {
                 !it.closed &&
-                candleMarket.equalsIgnoreCase(it.market) }.each { p ->
+                        candleMarket.equalsIgnoreCase(it.market) }.each { p ->
 
-            updatePosition(p, c, bot)
+                updatePosition(p, c, bot)
 
-            if(checkClosePosition(p, c, bot)) {
-                closePosition(p, c, bot)
+                if(checkClosePosition(p, c, bot)) {
+                    closePosition(p, c, bot)
+                }
             }
         }
     }

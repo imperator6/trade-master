@@ -93,6 +93,13 @@ public class BinanceExchangeImpl extends DefaultExchangeRestService {
         //String timestamp = Instant.now().getEpochSecond() + "";
         String resource = uri.toString().replace(getBaseUrl(), "");
 
+        String query = "";
+        int queryStartIndex = resource.indexOf("?");
+        if(queryStartIndex > -1) {
+            query = resource.substring(queryStartIndex+1);
+            //jsonBody = query;
+        }
+
         if(applySecutity(resourcePath)) {
             headers.add("X-MBX-APIKEY", this.publicKey);
         }
