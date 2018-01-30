@@ -65,6 +65,7 @@ class TradeBotManager {
             // load the config
             ScriptStrategy strategy = strategyStore.loadStrategyById(b.configId, null)
             b.config = parseBotConfig( strategy.getScript() )
+            b.config.exchange = b.exchange // sync exchange
 
             positionRepository.findByBotId(b.id).each {
                 b.addPosition(it)
@@ -123,7 +124,7 @@ class TradeBotManager {
             return exchange
 
         } else {
-           return exchangeService.getExchangyByName( b.config.exchange )
+           return exchangeService.getExchangyByName( b.exchange )
         }
     }
 

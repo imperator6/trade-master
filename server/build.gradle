@@ -54,7 +54,7 @@ dependencies {
 
     compile 'org.telegram:telegramapi:66.2'
 
-
+    compile 'com.vladmihalcea:hibernate-types-5:1.2.0' // Hibernate JSON Types https://github.com/vladmihalcea/hibernate-types
 
     compile 'com.google.code.gson:gson:2.4'
     compile 'org.mariadb.jdbc:mariadb-java-client:2.1.2'

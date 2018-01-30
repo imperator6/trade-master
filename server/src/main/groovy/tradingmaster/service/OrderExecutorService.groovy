@@ -155,7 +155,7 @@ class OrderExecutorService {
 
             Thread.sleep(1000)
 
-            ExchangeResponse<IOrder> orderRes = exchangeAdapter.getOrder(orderId)
+            ExchangeResponse<IOrder> orderRes = exchangeAdapter.getOrder(market, orderId)
 
             if(!orderRes.success) {
                 log.error("Load order $market was not sucessful! $orderRes.message OrderId: $orderId")
@@ -169,7 +169,7 @@ class OrderExecutorService {
             if(order.getQuantity().equals(order.getQuantityRemaining()) ) {
                 log.info("Order $market has not been executed! Try to cancel order with id: $orderId")
 
-                if(exchangeAdapter.cancelOrder(orderId)) {
+                if(exchangeAdapter.cancelOrder(market, orderId)) {
                     log.info("Order $market has been canceld! Let's place a new order!")
                     return null
                 } else {

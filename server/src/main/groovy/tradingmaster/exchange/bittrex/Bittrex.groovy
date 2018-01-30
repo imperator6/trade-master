@@ -70,7 +70,7 @@ class Bittrex extends DefaultExchageAdapter {
     }
 
     @Override
-    Boolean cancelOrder(String id) {
+    Boolean cancelOrder(String market, String id) {
 
         Map parmas = ["uuid": id]
         ExchangeCancelOrderResponse res = exchange.get("market/cancel", parmas,  new ParameterizedTypeReference<ExchangeCancelOrderResponse>(){})
@@ -93,7 +93,7 @@ class Bittrex extends DefaultExchageAdapter {
         return handeleResponseError(res)
     }
 
-    ExchangeResponse<IOrder> getOrder(String id) {
+    ExchangeResponse<IOrder> getOrder(String market, String id) {
         Map parmas = ["uuid": id]
         ExchangeOrderResponse res = exchange.get("account/getorder", parmas,  new ParameterizedTypeReference<ExchangeOrderResponse>(){})
 

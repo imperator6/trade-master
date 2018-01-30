@@ -11,6 +11,9 @@ import org.springframework.stereotype.Service
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
+import tradingmaster.db.entity.json.StopLoss
+import tradingmaster.db.entity.json.TakeProfit
+import tradingmaster.db.entity.json.TrailingStopLoss
 import tradingmaster.model.Candle
 import tradingmaster.util.NumberHelper
 
@@ -178,6 +181,10 @@ class PositionUpdateHandler implements  MessageHandler {
         log.debug("PosId $p.id: $p.market: (range:${NumberHelper.twoDigits(p.minResult)}%  ${NumberHelper.twoDigits(p.maxResult)}%) -> ${NumberHelper.twoDigits(resultInPercent)}%")
     }
 
+    boolean checkOpenPosition(Position p, Candle c, TradeBot bot) {
+
+    }
+
     boolean checkClosePosition(Position p, Candle c, TradeBot bot) {
 
         if(p.sellInPogress) {
@@ -185,15 +192,15 @@ class PositionUpdateHandler implements  MessageHandler {
             return false
         }
 
-        if(p.holdPosition) {
+        if(p.settings && p.settings.holdPosition) {
             return false
         }
 
         Map config = bot.config
         BigDecimal positionValueInPercent = p.result
 
-        if(p.fixResultTarget != null) {
-            // let's onyl sell if we reached the target!
+        /*if(p.fixResultTarget != null) {
+            // let's only sell if we reached the target!
             if(positionValueInPercent >= p.fixResultTarget) {
                 log.info("Position $p.id reached the amined target of ${p.fixResultTarget}%.")
                 return true
@@ -201,17 +208,27 @@ class PositionUpdateHandler implements  MessageHandler {
                 // no other check is needed in this case, as we only sell on te target!
                 return false
             }
+        } */
+
+        StopLoss stopLoss = config.stopLoss as StopLoss
+        if(p.settings && p.settings.stopLoss) {
+            stopLoss = p.settings.stopLoss
         }
 
-        if(config.stopLoss && config.stopLoss.enabled) {
-            if(positionValueInPercent <= config.stopLoss.value) {
-                log.info("Stop Loss <= ${config.stopLoss.value}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
+        if(stopLoss && stopLoss.enabled) {
+            if(positionValueInPercent <= stopLoss.value) {
+                log.info("Stop Loss <= ${stopLoss.value}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
                 return true
             }
         }
 
-        if(config.trailingStopLoss && config.trailingStopLoss.enabled) {
+        TrailingStopLoss trailingStopLoss = config.trailingStopLoss as TrailingStopLoss
+        if(p.settings && p.settings.trailingStopLoss) {
+            trailingStopLoss = p.settings.trailingStopLoss
+        }
 
+        if(trailingStopLoss && trailingStopLoss.enabled) {
+            // check if we need to sell
             if(p.trailingStopLoss != null && positionValueInPercent <= p.trailingStopLoss) {
                 log.info("Trailing-Stop-Loss <= ${p.trailingStopLoss}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
                 return true
@@ -219,7 +236,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
             // update trailing
             if(p.trailingStopLoss != null) {
-                BigDecimal newTrailingStopLoss = positionValueInPercent - config.trailingStopLoss.value
+                BigDecimal newTrailingStopLoss = positionValueInPercent - trailingStopLoss.value
                 if(newTrailingStopLoss > p.trailingStopLoss) {
                     log.info("Increase Trailing-Stop-Loss for Position $p.id: $p.market new: ${newTrailingStopLoss}%")
                     p.trailingStopLoss = newTrailingStopLoss
@@ -228,16 +245,21 @@ class PositionUpdateHandler implements  MessageHandler {
             }
 
             // activate trailing
-            if(p.trailingStopLoss == null && positionValueInPercent >= config.trailingStopLoss.startAt) {
-                BigDecimal trailingStopLoss = positionValueInPercent - config.trailingStopLoss.value
-                log.info("Activate Trailing-Stop-Loss for Position $p.id: $p.market trailingStopLoss at: $trailingStopLoss")
-                p.trailingStopLoss = trailingStopLoss
+            if(p.trailingStopLoss == null && positionValueInPercent >= trailingStopLoss.startAt) {
+                BigDecimal trailingStopLossInitValue = positionValueInPercent - trailingStopLoss.value
+                log.info("Activate Trailing-Stop-Loss for Position $p.id: $p.market trailingStopLoss at: $trailingStopLossInitValue")
+                p.trailingStopLoss = trailingStopLossInitValue
                 positionRepository.save(p)
             }
         }
 
-        if(config.takeProfit && config.takeProfit.enabled) {
-            if(positionValueInPercent >= config.takeProfit.value) {
+        TakeProfit takeProfit = config.takeProfit as TakeProfit
+        if(p.settings && p.settings.takeProfit) {
+            takeProfit = p.settings.takeProfit
+        }
+
+        if(takeProfit && takeProfit.enabled) {
+            if(positionValueInPercent >= takeProfit.value) {
                 log.info("Take-Profit for Position $p.id: $p.market profit: ${positionValueInPercent}%")
                 return true
             }
@@ -248,7 +270,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
     synchronized void closePosition(Position p, Candle c, TradeBot bot) {
 
-        if(p.holdPosition) {
+        if(p.settings && p.settings.holdPosition) {
             log.info("Can't close position $p.id. Flag HoldPosition is active!")
             return
         }
@@ -266,7 +288,5 @@ class PositionUpdateHandler implements  MessageHandler {
 
         orderTaskExecutor.execute(task)
     }
-
-
 
 }

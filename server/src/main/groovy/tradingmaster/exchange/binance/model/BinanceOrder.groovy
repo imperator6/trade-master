@@ -23,6 +23,8 @@ class BinanceOrder implements IOrder {
         null
     }
 
+
+
     @JsonProperty("price")
     BigDecimal price
 
@@ -31,6 +33,15 @@ class BinanceOrder implements IOrder {
 
     @JsonProperty("executedQty")
     BigDecimal executedQty
+
+    @JsonProperty("status")
+    String status
+
+    @JsonProperty("side")
+    String side
+
+    @JsonProperty("timeInForce")
+    String timeInForce
 
     @JsonProperty("QuantityRemaining")
     BigDecimal getQuantityRemaining() {
@@ -54,7 +65,7 @@ class BinanceOrder implements IOrder {
     boolean isWorking
 
     Boolean isOpen() {
-        return isWorking
+        return  getQuantityRemaining() > 0.0
     }
 
     BigDecimal getCommissionPaid() {

@@ -86,9 +86,9 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
                     responseType);
             return responseEntity.getBody();
         } catch (HttpClientErrorException ex) {
-            log.error("GET request Failed for '" + resourcePath + "': " + ex.getResponseBodyAsString());
+            log.error("GET request Failed for '" + resourcePath + "(params " + params + ")': " + ex.getResponseBodyAsString());
         } catch (Exception e) {
-            log.error("GET request Failed for '" + resourcePath + "': " + e.getMessage());
+            log.error("GET request Failed for '" + resourcePath + "(params " + params + ")': " + e.getMessage());
         }
         return null;
     }

@@ -41,7 +41,7 @@ class BittrexApiTest extends DefaultExchangeTest {
 
         String orderId = orders.first().getId()
 
-        def order = bittrex.getOrder(orderId)
+        def order = bittrex.getOrder(null, orderId)
 
         assertNotNull( order )
     }
@@ -68,7 +68,7 @@ class BittrexApiTest extends DefaultExchangeTest {
     void testCancelOrder() {
         String orderid = "5caa7705-915e-4db4-b395-eedd11cf1882"
 
-        Boolean isCanceld = bittrex.cancelOrder(orderid)
+        Boolean isCanceld = bittrex.cancelOrder(null, orderid)
 
         assertFalse( isCanceld )
     }

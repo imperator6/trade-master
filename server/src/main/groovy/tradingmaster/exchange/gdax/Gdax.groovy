@@ -40,7 +40,7 @@ class Gdax extends DefaultExchageAdapter {
     }
 
     @Override
-    Boolean cancelOrder(String id) {
+    Boolean cancelOrder(String market, String id) {
         return null
     }
 
@@ -60,7 +60,7 @@ class Gdax extends DefaultExchageAdapter {
     }
 
     @Override
-    ExchangeResponse<IOrder> getOrder(String id) {
+    ExchangeResponse<IOrder> getOrder(String market, String id) {
         return null
     }
 

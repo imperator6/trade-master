@@ -9,6 +9,7 @@ import tradingmaster.exchange.binance.Binance
 import tradingmaster.model.Candle
 import tradingmaster.model.CandleInterval
 import tradingmaster.model.CryptoMarket
+import tradingmaster.model.IOrder
 import tradingmaster.model.ITicker
 import tradingmaster.service.CandleImportService
 
@@ -52,18 +53,39 @@ class BinaceApiTest extends DefaultExchangeTest {
     @Override
     void testGetOrderHistory() {
 
-        def orders = getExchangeAdapter().getOrderHistory("USDT-BTC")
+        def orders = getExchangeAdapter().getOrderHistory("ETH-BCC")
 
-        assertNotNull(orders)
+        assertFalse(orders.isEmpty())
     }
 
     @Test
-    void testsellLimit() {
+    void testGetOrder() {
 
-        String result = binance.sellLimit("BTC-LTC", 0.1, 0.000)
+        List orders = getExchangeAdapter().getOrderHistory("ETH-BCC")
 
-        assertNotNull(result)
+        IOrder order1 = orders.first()
+
+        def order2 = getExchangeAdapter().getOrder(order1.getMarket(), order1.getId()).getResult()
+
+        assertNotNull( order2 )
     }
+
+    @Test
+    void testSellAndCancelOrder() {
+
+        //
+        /* String orderId = getExchangeAdapter().sellLimit("ETH-BCC", 0.01, 2).getResult()
+
+        IOrder order = getExchangeAdapter().getOrder("ETH-BCC", orderId).getResult()
+
+        Thread.sleep(2000)
+
+        boolean cancel = getExchangeAdapter().cancelOrder(order.getMarket(), order.getId())
+
+        assertTrue(cancel) */
+    }
+
+
 
 
 

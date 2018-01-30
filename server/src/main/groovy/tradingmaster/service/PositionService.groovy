@@ -149,7 +149,7 @@ class PositionService {
 
     void syncPosition(Position pos, TradeBot bot) {
         if(pos.extSellOrderId) {
-           ExchangeResponse<IOrder> sellOrder = tradeBotManager.getExchangeAdapter(bot).getOrder(pos.extSellOrderId)
+           ExchangeResponse<IOrder> sellOrder = tradeBotManager.getExchangeAdapter(bot).getOrder(pos.getMarket(), pos.extSellOrderId)
             if(sellOrder.success) {
 
                 updateSellPosition(pos, sellOrder.getResult())
@@ -157,7 +157,7 @@ class PositionService {
         }
 
         if(pos.extbuyOrderId) {
-            ExchangeResponse<IOrder> buyOrder = tradeBotManager.getExchangeAdapter(bot).getOrder(pos.extbuyOrderId)
+            ExchangeResponse<IOrder> buyOrder = tradeBotManager.getExchangeAdapter(bot).getOrder(pos.getMarket(), pos.extbuyOrderId)
             if(buyOrder.success) {
                 updateBuyPosition(pos, buyOrder.getResult())
             }

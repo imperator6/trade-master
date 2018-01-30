@@ -84,8 +84,6 @@ public class BinanceExchangeImpl extends DefaultExchangeRestService {
         return url;
     }
 
-
-
     @Override
     public HttpEntity<String> securityHeaders(String uri, String resourcePath, String method, String jsonBody) {
         HttpHeaders headers = new HttpHeaders();
@@ -110,6 +108,6 @@ public class BinanceExchangeImpl extends DefaultExchangeRestService {
 
         curlRequest(method, jsonBody, headers, resource);
 
-        return new HttpEntity<>(jsonBody, headers);
+        return new HttpEntity<>(null, headers);
     }
 }

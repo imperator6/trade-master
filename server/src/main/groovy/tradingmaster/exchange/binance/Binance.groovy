@@ -6,12 +6,9 @@ import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Service
 import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.ExchangeResponse
-import tradingmaster.exchange.binance.model.BinanceAccount
-import tradingmaster.exchange.binance.model.BinanceOrder
-import tradingmaster.exchange.binance.model.BinanceProductInfo
-import tradingmaster.exchange.binance.model.BinanceTicker
-import tradingmaster.exchange.binance.model.BinanceTrade
+import tradingmaster.exchange.binance.model.*
 import tradingmaster.model.*
+
 /**
  *  https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
  */
@@ -100,18 +97,36 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
     List<IBalance> getBalances() {
 
         BinanceAccount res = exchange.get("/api/v3/account", new ParameterizedTypeReference<BinanceAccount>(){})
-
         if(res) {
             return res.getBalances()
         }
 
         return []
-
     }
 
     @Override
-    Boolean cancelOrder(String id) {
-        return null
+    Boolean cancelOrder(String market, String id) {
+
+        Map params = [:]
+        params.put("symbol", convertMarketToSymbol(market))
+        params.put("orderId", id)
+
+        ExchangeResponse<BinanceCancel> res = new ExchangeResponse<BinanceCancel>()
+
+        try {
+            BinanceCancel cancel = exchange.delete("api/v3/order", params, new ParameterizedTypeReference<BinanceCancel>(){})
+
+            if(res) {
+                res.setSuccess(true)
+                return true
+            }
+        } catch (all) {
+            res.setSuccess(false)
+            res.setMessage(all.getMessage())
+            handeleResponseError(res)
+        }
+
+        return false
     }
 
     @Override
@@ -121,12 +136,12 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
 
     @Override
     ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
-        return null
+        return newOrder(market, "BUY", "LIMIT", quantity, rate)
     }
 
     ExchangeResponse<String> newOrder(String market, String buySell, String type, BigDecimal quantity, BigDecimal rate) {
 
-        Map params = [:]
+        LinkedHashMap params = new LinkedHashMap()
         params.put("symbol", convertMarketToSymbol(market))
         params.put("side", buySell)
         params.put("type", type)
@@ -138,11 +153,11 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         ExchangeResponse<String> res = new ExchangeResponse()
 
         try {
-            String ticker = exchange.post("api/v3/order", params, new ParameterizedTypeReference<String>(){}, "")
+            BinanceOrder order = exchange.post("api/v3/order", params, new ParameterizedTypeReference<BinanceOrder>(){}, null)
 
             if(res) {
                 res.setSuccess(true)
-                res.setResult(ticker)
+                res.setResult(order.getId())
             }
 
         } catch (all) {
@@ -151,8 +166,6 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         }
 
         return handeleResponseError(res)
-
-        return null
     }
 
     @Override
@@ -179,8 +192,28 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
     }
 
     @Override
-    ExchangeResponse<IOrder> getOrder(String id) {
-        return null
+    ExchangeResponse<IOrder> getOrder(String market, String id) {
+
+        Map params = [:]
+        params.put("symbol", convertMarketToSymbol(market))
+        params.put("orderId", id)
+
+        ExchangeResponse<BinanceOrder> res = new ExchangeResponse()
+
+        try {
+            BinanceOrder order = exchange.get("api/v3/order", params, new ParameterizedTypeReference<BinanceOrder>(){})
+
+            if(res) {
+                res.setSuccess(true)
+                res.setResult(order)
+            }
+
+        } catch (all) {
+            res.setSuccess(false)
+            res.setMessage(all.getMessage())
+        }
+
+        return handeleResponseError(res)
     }
 
     @Override

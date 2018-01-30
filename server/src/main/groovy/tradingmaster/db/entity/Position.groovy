@@ -3,7 +3,9 @@ package tradingmaster.db.entity
 import com.fasterxml.jackson.annotation.JsonFormat
 import groovy.transform.ToString
 import groovy.util.logging.Commons
+import org.hibernate.annotations.Type
 import org.springframework.stereotype.Component
+import tradingmaster.db.entity.json.PositionSettings
 
 import javax.persistence.*
 
@@ -88,9 +90,6 @@ class Position {
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal minResult
 
-    //String triggerName
-    boolean holdPosition = false
-
     boolean closed = false
 
     boolean error = false
@@ -103,9 +102,6 @@ class Position {
     @Column(nullable = true)
     BigDecimal trailingStopLoss // in percent
 
-    @Column(nullable = true)
-    BigDecimal fixResultTarget // if set the position will be closed of the target of x% has reached
-
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal lastKnowRate
 
@@ -117,6 +113,10 @@ class Position {
 
     @Column(nullable = true)
     Date lastUpdate = new Date()
+
+    @Type(type = "json")
+    @Column(columnDefinition = "json")
+    PositionSettings settings = new PositionSettings()
 
     //boolean deleted = false
 

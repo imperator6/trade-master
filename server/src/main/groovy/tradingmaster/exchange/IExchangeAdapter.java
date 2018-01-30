@@ -8,7 +8,7 @@ import java.util.List;
 
 public interface IExchangeAdapter {
 
-    Boolean cancelOrder(String id);
+    Boolean cancelOrder(String market, String id);
 
     ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate);
 
@@ -18,7 +18,7 @@ public interface IExchangeAdapter {
 
     String getExchangeName();
 
-    ExchangeResponse<IOrder> getOrder(String id);
+    ExchangeResponse<IOrder> getOrder(String market, String id);
 
     List<IOrder> getOrderHistory();
 
