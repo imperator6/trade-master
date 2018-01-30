@@ -80,7 +80,7 @@ class HamsterSignalPublisher implements MessageHandler {
 
         List<HamsterSignal> signals = store.findByExchangeAndMarketAndSignalDateAfter(s.getExchange(), s.market, date )
 
-        if(signals > 0) {
+        if(signals != null && signals.size() > 0) {
             log.warn("A similar signals has already been published! This signal will be skipped. ${s}")
             return true
         }
