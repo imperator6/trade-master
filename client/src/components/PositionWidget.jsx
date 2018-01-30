@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import PropTypes from "prop-types";
 import moment from "moment";
-import PositionSettings from './PositionSettings'
+//import PositionSettings from './PositionSettings'
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 
@@ -43,14 +43,32 @@ class PositionWidget extends React.Component {
   }
 
   clearFilters = () => {
-    this.setState({ filteredInfo: null });
+    this.setState({
+      filteredInfo: null,
+      sortedInfo: {
+        order: 'descend',
+        columnKey: 'created',
+      }
+     });
+  }
+
+  setFilterOpen = () => {
+    this.setState({
+      filteredInfo: { closed: ['o'] },
+    });
+  }
+
+  setFilterClosed = () => {
+    this.setState({
+      filteredInfo: { closed: ['c'] },
+    });
   }
 
   setAgeSort = () => {
     this.setState({
       sortedInfo: {
         order: 'descend',
-        columnKey: 'age',
+        columnKey: 'created',
       },
     });
   }
@@ -126,7 +144,7 @@ class PositionWidget extends React.Component {
         <Tooltip key="settingsButton" placement="bottom" title="Settings">
           <Popover
             title={record.market}
-            content={(<PositionSettings position={record} />)}
+            //content={(<PositionSettings position={record} />)}
             trigger="click"
           >
             <Icon type="setting" />
@@ -369,7 +387,7 @@ class PositionWidget extends React.Component {
         placeholder="Select TradeBot"
         value={this.store.selectedBot}
         onChange={newValue => {
-          this.store.selectedBot = newValue;
+          this.store.onBotSelected(newValue)
         }}
         style={{ width: 170 }}
       >
@@ -378,7 +396,8 @@ class PositionWidget extends React.Component {
     );
 
     return (
-      <div className="table-operations">
+      <div>
+      <div style={{paddingBottom: 8+ 'px'}}>
         {botSelect}
         <Divider type="vertical" />
         <Tooltip title="Reload list for selected Bot">
@@ -391,24 +410,12 @@ class PositionWidget extends React.Component {
           />
         </Tooltip>
         <Divider type="vertical" />
-        <Tooltip title="Import open balances from Exchange">
-          <Popconfirm
-            title="Are you sure you wabt to import the balance from the Exchange?"
-            onConfirm={() => {
-              this.store.importFromExchange();
-            }}
-            okText="Yes, please Import from Exchange!"
-            cancelText="No"
-          >
-            <Button
-              size="small"
-              type="primary"
-              shape="circle"
-              icon="cloud-download-o"
-            />
-          </Popconfirm>
-        </Tooltip>
-
+        <Button size="small" onClick={this.setFilterOpen}>open</Button>
+        <Divider type="vertical" />
+        <Button size="small" onClick={this.setFilterClosed}>closed</Button>
+        <Divider type="vertical" />
+        <Button size="small" onClick={this.clearFilters}>all</Button>
+        <Divider type="vertical" />
         <Tooltip
           title={
             "Bot has started with this amount of " + this.store.baseCurrency
@@ -435,6 +442,7 @@ class PositionWidget extends React.Component {
         <Tooltip title="Total PnL in percent">
           {this.formtatPercent(this.store.totalBotResult)}
         </Tooltip>
+        <Divider type="vertical" />
         <Tooltip title="Sync Balance with Exchange">
           <Button
             size="small"
@@ -444,8 +452,28 @@ class PositionWidget extends React.Component {
             onClick={this.store.syncBalance}
           />
         </Tooltip>
-        {table}
+        <Divider type="vertical" />
+        <Tooltip title="Import open balances from Exchange">
+          <Popconfirm
+            title="Are you sure you want to import the balance from the Exchange?"
+            onConfirm={() => {
+              this.store.importFromExchange();
+            }}
+            okText="Yes, please Import from Exchange!"
+            cancelText="No"
+          >
+            <Button
+              size="small"
+              type="primary"
+              shape="circle"
+              icon="cloud-download-o"
+            />
+          </Popconfirm>
+        </Tooltip>
+       
       </div>
+       {table}
+       </div>
     );
   }
 }

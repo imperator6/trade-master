@@ -59,9 +59,8 @@ class MarketWatcherStore {
 
           this.selectedBot = newBotList[0].split("_")[0];
 
-          this.onBotSelected();
+          this.onBotSelected(this.selectedBot);
 
-          this.load();
         } else {
           // error
           console.info(response.data.message);
@@ -73,11 +72,12 @@ class MarketWatcherStore {
   };
 
   @action
-  onBotSelected = () => {
-    let bot = this.botMap.get(this.selectedBot);
+  onBotSelected = (botId) => {
+    this.selectedBot = botId
+    let bot = this.botMap.get(botId);
     if (bot != null) {
       this.baseCurrency = bot.baseCurrency;
-      this.currentBalance = this.botMap.get(this.selectedBot).currentBalance;
+      this.currentBalance = this.botMap.get(botId).currentBalance;
       this.startBalance = bot.startBalance;
 
       this.fxDollar = bot.fxDollar;
@@ -85,6 +85,8 @@ class MarketWatcherStore {
       this.currentBalanceDollar = bot.currentBalanceDollar;
       this.totalBalanceDollar = bot.totalBalanceDollar;
       this.totalBotResult = bot.result;
+
+      this.load();
 
       // console.log(bot)
     }

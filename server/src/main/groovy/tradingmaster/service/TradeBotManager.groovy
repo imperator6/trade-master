@@ -105,7 +105,7 @@ class TradeBotManager {
 
         def balanceOnExchange = getExchangeAdapter(b).getBalance(b.config.baseCurrency).getValue()
 
-        if(b.startBalance == null) {
+        if(b.startBalance == null || (b.startBalance == 0 && balanceOnExchange > 0)) {
             log.info("Setting start balance for bot ${b.id} to $balanceOnExchange")
             b.startBalance = balanceOnExchange
         }
