@@ -92,7 +92,9 @@ class BinaceApiTest extends DefaultExchangeTest {
     @Test
     void testGetMarkets() {
 
-        assertTrue( !binance.getMakets().isEmpty() )
+        List markets = binance.getMakets()
+
+        assertTrue( !markets.isEmpty() )
     }
 
     @Test

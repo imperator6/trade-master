@@ -11,8 +11,8 @@ import moment from "moment"
 export default class RootStore {
 
   constructor() {
-    this.remoteApiUrl = 'http://127.0.0.1:8080/api'
-    this.websocketUrl = "http://127.0.0.1:8080/socket"
+    this.remoteApiUrl = SERVICE_URL + '/api'
+    this.websocketUrl = SERVICE_URL + '/socket'
 
     moment.locale('de')
 

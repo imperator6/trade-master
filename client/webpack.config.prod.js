@@ -8,13 +8,13 @@ module.exports = {
   devtool: "eval",
   entry:  ["babel-polyfill", "./src/index"],
   output: {
-    path: path.join(__dirname, "dist"),
+    path: path.join(__dirname, "../server/src/main/webapp/resources/js"),
     filename: "bundle.js",
     publicPath: "/static/"
   },
   plugins: [new webpack.HotModuleReplacementPlugin(),
-      new webpack.DefinePlugin({
-      SERVICE_URL: JSON.stringify("http://127.0.0.1:8080") 
+    new webpack.DefinePlugin({
+      SERVICE_URL: JSON.stringify("")  // don't use any api roor as the app is hosted directly in the spring container!
     })],
   resolve: {
     extensions: [".js", ".jsx"],

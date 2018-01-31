@@ -31,6 +31,15 @@ repositories {
     mavenCentral()
 }
 
+jar {
+    baseName = 'tradingmaster'
+    //version =  '1.0'
+}
+
+bootRepackage {
+    executable = true
+}
+
 dependencies {
     compile 'org.codehaus.groovy:groovy-all:2.4.12'
     compile "org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}"

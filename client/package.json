@@ -5,6 +5,9 @@
   "scripts": {
     "start2": "webpack-dev-server --hot --open --history-api-fallback --host 0.0.0.0",
     "start": "webpack-dev-server --hot --open  --history-api-fallback --port 8081",
+    "build": "webpack -p --config ./webpack.config.prod.js --progress --colors",
+    "build:dev": "NODE_ENV=develop npm run build",
+    "build:production": "NODE_ENV=production npm run build",
     "lint": "eslint src",
     "storybook": "start-storybook -p 9001 -c .storybook"
   },
