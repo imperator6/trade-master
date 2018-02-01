@@ -1,10 +1,13 @@
 package tradingmaster.db.entity.json
 
+import groovy.transform.ToString
+
+@ToString
 class TrailingStopLoss {
 
-    Boolean enabled
+    Boolean enabled = false
 
-    BigDecimal value  // sell if it lost 5% after the 20% has reached
+    BigDecimal value  = 2 // sell if it lost 2% after the 12% has reached
 
-    BigDecimal startAt  // start trailing at 20% profit
+    BigDecimal startAt  = 12 // start trailing at 12% profit
 }

@@ -1,10 +1,13 @@
 package tradingmaster.db.entity.json
 
+import groovy.transform.ToString
+
+@ToString
 class GlobalSettings {
 
-    TakeProfit takeProfit
+    TakeProfit takeProfit = new TakeProfit()
 
-    TrailingStopLoss trailingStopLoss
+    TrailingStopLoss trailingStopLoss = new TrailingStopLoss()
 
-    StopLoss stopLoss
+    StopLoss stopLoss = new StopLoss()
 }

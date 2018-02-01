@@ -8,6 +8,7 @@ import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.binance.model.*
 import tradingmaster.model.*
+import tradingmaster.util.NumberHelper
 
 /**
  *  https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
@@ -71,6 +72,24 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         BinanceProductInfo info = exchange.get("api/v1/exchangeInfo", new ParameterizedTypeReference<BinanceProductInfo>(){})
 
         return info.symbols.collect { new CryptoMarket(name, it.getQuoteAsset(), it.getBaseAsset()) }
+    }
+
+    Symbol getSymbol(String market) {
+
+        String[] data = market.split("-")
+        String asset = data[1]
+        String baseCurrency = data[0]
+
+        BinanceProductInfo info = exchange.get("api/v1/exchangeInfo", new ParameterizedTypeReference<BinanceProductInfo>(){})
+
+        Symbol sym = info.symbols.find { it.baseAsset == asset && it.quoteAsset == baseCurrency }
+
+        if(sym)
+            return sym
+
+        log.error("Can't find symbol for market $market")
+
+        return null
     }
 
     List<IOrder> getOrderHistory() {
@@ -141,6 +160,27 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
 
     ExchangeResponse<String> newOrder(String market, String buySell, String type, BigDecimal quantity, BigDecimal rate) {
 
+        ExchangeResponse<String> res = new ExchangeResponse()
+
+        // correct quantity based on the LOT_SIZE Filter StepSize
+        Symbol sym = getSymbol(market)
+
+        BigDecimal stepSize = sym.getLotStepSize()
+
+        int r = (quantity) / (stepSize) // cast as int
+        quantity = r * stepSize
+
+        quantity = quantity.setScale(sym.baseAssetPrecision, BigDecimal.ROUND_HALF_DOWN)
+        rate = rate.setScale( sym.quotePrecision, BigDecimal.ROUND_HALF_DOWN)
+
+        def notional = quantity * rate
+
+        if(notional < sym.getMinNotional()) {
+            res.setSuccess(false)
+            res.setMessage("Position to small. Min notional for ${sym.baseAsset} is ${sym.getMinNotional()} ${sym.quoteAsset}")
+            return res
+        }
+
         LinkedHashMap params = new LinkedHashMap()
         params.put("symbol", convertMarketToSymbol(market))
         params.put("side", buySell)
@@ -150,7 +190,7 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         params.put("price", rate)
 
 
-        ExchangeResponse<String> res = new ExchangeResponse()
+
 
         try {
             BinanceOrder order = exchange.post("api/v3/order", params, new ParameterizedTypeReference<BinanceOrder>(){}, null)

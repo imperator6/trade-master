@@ -2,7 +2,8 @@ import React from "react";
 import styled from "styled-components";
 import PropTypes from "prop-types";
 import moment from "moment";
-//import PositionSettings from './PositionSettings'
+import PositionSettings from "./PositionSettings";
+import NewPosition from "./NewPosition";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 
@@ -27,16 +28,17 @@ const Option = Select.Option;
 @inject("rootStore")
 @observer
 class PositionWidget extends React.Component {
-  
   constructor(props) {
     super(props);
 
     this.state = {
-      filteredInfo: {  },
+      filteredInfo: {},
       sortedInfo: {
-        order: 'descend',
-        columnKey: 'created',
+        order: "descend",
+        columnKey: "created"
       },
+
+      newPositionFormVisible: false
     };
 
     this.store = this.props.rootStore.positionStore;
@@ -44,41 +46,46 @@ class PositionWidget extends React.Component {
 
   clearFilters = () => {
     this.setState({
+      ...this.state,
       filteredInfo: null,
       sortedInfo: {
-        order: 'descend',
-        columnKey: 'created',
+        order: "descend",
+        columnKey: "created"
       }
-     });
-  }
+    });
+  };
 
   setFilterOpen = () => {
     this.setState({
-      filteredInfo: { closed: ['o'] },
+      ...this.state,
+      filteredInfo: { closed: ["o"] }
     });
-  }
+  };
 
   setFilterClosed = () => {
     this.setState({
-      filteredInfo: { closed: ['c'] },
+      ...this.state,
+      filteredInfo: { closed: ["c"] }
     });
-  }
+  };
 
   setAgeSort = () => {
     this.setState({
+      ...this.state,
       sortedInfo: {
-        order: 'descend',
-        columnKey: 'created',
-      },
+        order: "descend",
+        columnKey: "created"
+      }
     });
-  }
+  };
 
   handleTableChange = (pagination, filters, sorter) => {
     this.setState({
+      ...this.state,
       filteredInfo: filters,
-      sortedInfo: sorter,
+      sortedInfo: sorter
     });
-  }
+  };
 
   componentDidMount() {
     this.store.init();
@@ -144,7 +151,7 @@ class PositionWidget extends React.Component {
         <Tooltip key="settingsButton" placement="bottom" title="Settings">
           <Popover
             title={record.market}
-            //content={(<PositionSettings position={record} />)}
+            content={<PositionSettings position={record}  showApplySettings={true}/>}
             trigger="click"
           >
             <Icon type="setting" />
@@ -157,6 +164,18 @@ class PositionWidget extends React.Component {
 
   buildPositionActions(record) {
     let actionButtons = [];
+    let bot = this.store.getSelectedBot();
+    let chartLink = this.store.botMap.get(this.store.selectedBot).config
+      .chartLink;
+
+    if (chartLink) {
+      let baseCurrency = bot.config.baseCurrency;
+      let asset = record.market.replace("-", "").replace(baseCurrency, "");
+
+      chartLink = chartLink.replace("$market", record.market);
+      chartLink = chartLink.replace("$asset", asset);
+      chartLink = chartLink.replace("$baseCurrency", baseCurrency);
+    }
 
     actionButtons.push(
       <Tooltip
@@ -164,10 +183,7 @@ class PositionWidget extends React.Component {
         placement="bottom"
         title="Open Exchange Chart"
       >
-        <a
-          href={"https://bittrex.com/Market/Index?MarketName=" + record.market}
-          target="_blank"
-        >
+        <a href={chartLink} target="_blank">
           <Icon
             type="line-chart"
             onClick={() => this.store.loadToChart(record)}
@@ -220,22 +236,24 @@ class PositionWidget extends React.Component {
         dataIndex: "id",
         key: "id",
         sorter: (a, b) => a.id - b.id,
-        sortOrder: sortedInfo.columnKey === 'id' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === "id" && sortedInfo.order
       },
       {
         title: "Market",
         dataIndex: "market",
         key: "market",
         sorter: (a, b) => (a.market > b.market) - (a.market < b.market),
-        sortOrder: sortedInfo.columnKey === 'market' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === "market" && sortedInfo.order
       },
       {
         title: "Age",
         key: "created",
-        sorter: (a, b) => {  if (a.created > b.created) return 1;
+        sorter: (a, b) => {
+          if (a.created > b.created) return 1;
           if (a.created < b.created) return -1;
-          return 0; },
-        sortOrder: sortedInfo.columnKey === 'created' && sortedInfo.order,
+          return 0;
+        },
+        sortOrder: sortedInfo.columnKey === "created" && sortedInfo.order,
         render: (text, record) => {
           let elements = [];
           let age = null;
@@ -258,27 +276,27 @@ class PositionWidget extends React.Component {
         dataIndex: "amount",
         key: "amount",
         sorter: (a, b) => a.amount - b.amount,
-        sortOrder: sortedInfo.columnKey === 'amount' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === "amount" && sortedInfo.order
       },
       {
         title: "Buy Rate",
         dataIndex: "buyRate",
         key: "buyRate",
         sorter: (a, b) => a.buyRate - b.buyRate,
-        sortOrder: sortedInfo.columnKey === 'buyRate' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === "buyRate" && sortedInfo.order
       },
       {
         title: "Sell Rate",
         key: "sellRate",
         dataIndex: "sellRate",
         sorter: (a, b) => a.sellRate - b.sellRate,
-        sortOrder: sortedInfo.columnKey === 'sellRate' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === "sellRate" && sortedInfo.order
       },
       {
         title: "Min",
         key: "minResult",
         sorter: (a, b) => a.minResult - b.minResult,
-        sortOrder: sortedInfo.columnKey === 'minResult' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === "minResult" && sortedInfo.order,
         render: (text, record) => {
           return this.formtatPercent(record.minResult);
         }
@@ -287,7 +305,7 @@ class PositionWidget extends React.Component {
         title: "Max",
         key: "maxResult",
         sorter: (a, b) => a.maxResult - b.maxResult,
-        sortOrder: sortedInfo.columnKey === 'maxResult' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === "maxResult" && sortedInfo.order,
         render: (text, record) => {
           return this.formtatPercent(record.maxResult);
         }
@@ -296,7 +314,7 @@ class PositionWidget extends React.Component {
         title: "result",
         key: "result",
         sorter: (a, b) => a.result - b.result,
-        sortOrder: sortedInfo.columnKey === 'result' && sortedInfo.order,
+        sortOrder: sortedInfo.columnKey === "result" && sortedInfo.order,
         render: (text, record) => {
           return this.buildResultCell(record);
         }
@@ -311,8 +329,10 @@ class PositionWidget extends React.Component {
           if (value === "c" && record.closed) return true;
           return false;
         },
-        sorter: (a, b) => {  return (a.closed === b.closed)? 0 : a.closed? -1 : 1; },
-        sortOrder: sortedInfo.columnKey === 'closed' && sortedInfo.order,
+        sorter: (a, b) => {
+          return a.closed === b.closed ? 0 : a.closed ? -1 : 1;
+        },
+        sortOrder: sortedInfo.columnKey === "closed" && sortedInfo.order,
         render: (text, record) => {
           if (!record.closed) {
             return (
@@ -332,14 +352,22 @@ class PositionWidget extends React.Component {
       {
         title: "Hold",
         dataIndex: "holdPosition",
-        key: "holdPosition"
+        key: "holdPosition",
+        render: (text, record) => {
+          if(record.settings && record.settings.holdPosition) {
+            return <Icon size="small" type="lock" />;
+          }
+          return "";
+        }
       },
       {
         title: "Error",
         dataIndex: "error",
         key: "error",
-        sorter: (a, b) => {  return (a.error === b.error)? 0 : a.error? -1 : 1; },
-        sortOrder: sortedInfo.columnKey === 'error' && sortedInfo.order,
+        sorter: (a, b) => {
+          return a.error === b.error ? 0 : a.error ? -1 : 1;
+        },
+        sortOrder: sortedInfo.columnKey === "error" && sortedInfo.order,
         render: (text, record) => {
           if (record.error) {
             return (
@@ -361,7 +389,7 @@ class PositionWidget extends React.Component {
     ];
 
     let paginationSettings = {
-      pageSize: 30
+      pageSize: 16
     };
 
     let table = (
@@ -387,7 +415,7 @@ class PositionWidget extends React.Component {
         placeholder="Select TradeBot"
         value={this.store.selectedBot}
         onChange={newValue => {
-          this.store.onBotSelected(newValue)
+          this.store.onBotSelected(newValue);
         }}
         style={{ width: 170 }}
       >
@@ -397,83 +425,97 @@ class PositionWidget extends React.Component {
 
     return (
       <div>
-      <div style={{paddingBottom: 8+ 'px'}}>
-        {botSelect}
-        <Divider type="vertical" />
-        <Tooltip title="Reload list for selected Bot">
-          <Button
-            size="small"
-            type="primary"
-            shape="circle"
-            icon="reload"
-            onClick={this.store.load}
-          />
-        </Tooltip>
-        <Divider type="vertical" />
-        <Button size="small" onClick={this.setFilterOpen}>open</Button>
-        <Divider type="vertical" />
-        <Button size="small" onClick={this.setFilterClosed}>closed</Button>
-        <Divider type="vertical" />
-        <Button size="small" onClick={this.clearFilters}>all</Button>
-        <Divider type="vertical" />
-        <Tooltip
-          title={
-            "Bot has started with this amount of " + this.store.baseCurrency
-          }
-        >
-          <Tag color="geekblue">
-            Start Balance: {this.store.startBalance} {this.store.baseCurrency}{" "}
-            (${this.store.startBalanceDollar})
-          </Tag>
-        </Tooltip>
-        <Tooltip title="Balance left for opening new Positions">
-          <Tag color="orange">
-            Available: {this.store.currentBalance} {this.store.baseCurrency} (${
-              this.store.currentBalanceDollar
-            })
-          </Tag>
-        </Tooltip>
-        <Tooltip title="Total Balance incl. open positions">
-          <Tag color="purple">
-            Total: {this.store.totalBaseCurrencyValue} {this.store.baseCurrency}{" "}
-            (${this.store.totalBalanceDollar})
-          </Tag>
-        </Tooltip>
-        <Tooltip title="Total PnL in percent">
-          {this.formtatPercent(this.store.totalBotResult)}
-        </Tooltip>
-        <Divider type="vertical" />
-        <Tooltip title="Sync Balance with Exchange">
-          <Button
-            size="small"
-            type="primary"
-            shape="circle"
-            icon="retweet"
-            onClick={this.store.syncBalance}
-          />
-        </Tooltip>
-        <Divider type="vertical" />
-        <Tooltip title="Import open balances from Exchange">
-          <Popconfirm
-            title="Are you sure you want to import the balance from the Exchange?"
-            onConfirm={() => {
-              this.store.importFromExchange();
-            }}
-            okText="Yes, please Import from Exchange!"
-            cancelText="No"
-          >
+        <div style={{ paddingBottom: 8 + "px" }}>
+          {botSelect}
+          <Divider type="vertical" />
+          <Tooltip title="Reload list for selected Bot">
             <Button
               size="small"
               type="primary"
               shape="circle"
-              icon="cloud-download-o"
+              icon="reload"
+              onClick={this.store.load}
             />
-          </Popconfirm>
-        </Tooltip>
-       
+          </Tooltip>
+          <Divider type="vertical" />
+          <Tooltip placement="left" title="Open a new Position">
+            <Popover
+            visible={this.state.newPositionFormVisible}
+              title="Open new Position"
+              content={<NewPosition  />}
+              trigger="click">
+              <Button size="small" icon="plus" type="primary" onClick={() => { this.setState({...this.state, newPositionFormVisible: !this.state.newPositionFormVisible}) }} />
+            </Popover>
+          </Tooltip>
+          <Divider type="vertical" />
+          <Button size="small" onClick={this.setFilterOpen}>
+            open
+          </Button>
+          <Divider type="vertical" />
+          <Button size="small" onClick={this.setFilterClosed}>
+            closed
+          </Button>
+          <Divider type="vertical" />
+          <Button size="small" onClick={this.clearFilters}>
+            all
+          </Button>
+          <Divider type="vertical" />
+          <Tooltip
+            title={
+              "Bot has started with this amount of " + this.store.baseCurrency
+            }
+          >
+            <Tag color="geekblue">
+              Start Balance: {this.store.startBalance} {this.store.baseCurrency}{" "}
+              (${this.store.startBalanceDollar})
+            </Tag>
+          </Tooltip>
+          <Tooltip title="Balance left for opening new Positions">
+            <Tag color="orange">
+              Available: {this.store.currentBalance} {this.store.baseCurrency}{" "}
+              (${this.store.currentBalanceDollar})
+            </Tag>
+          </Tooltip>
+          <Tooltip title="Total Balance incl. open positions">
+            <Tag color="purple">
+              Total: {this.store.totalBaseCurrencyValue}{" "}
+              {this.store.baseCurrency} (${this.store.totalBalanceDollar})
+            </Tag>
+          </Tooltip>
+          <Tooltip title="Total PnL in percent">
+            {this.formtatPercent(this.store.totalBotResult)}
+          </Tooltip>
+          <Divider type="vertical" />
+          <Tooltip title="Sync Balance with Exchange">
+            <Button
+              size="small"
+              type="primary"
+              shape="circle"
+              icon="retweet"
+              onClick={this.store.syncBalance}
+            />
+          </Tooltip>
+          <Divider type="vertical" />
+          <Tooltip title="Import open balances from Exchange">
+            <Popconfirm
+              title="Are you sure you want to import the balance from the Exchange?"
+              onConfirm={() => {
+                this.store.importFromExchange();
+              }}
+              okText="Yes, please Import from Exchange!"
+              cancelText="No"
+            >
+              <Button
+                size="small"
+                type="primary"
+                shape="circle"
+                icon="cloud-download-o"
+              />
+            </Popconfirm>
+          </Tooltip>
+        </div>
+        {table}
       </div>
-       {table}
-       </div>
     );
   }
 }

@@ -110,5 +110,16 @@ class PositionController {
         return new RestResponse(false, "TradeBot not found!")
     }
 
+    @RequestMapping(value = "/newPosition", method = RequestMethod.POST)
+    RestResponse<Position> newPosition(@RequestParam String exchange, @RequestParam String market, @RequestBody PositionSettings settings) {
+
+        log.info(exchange)
+        log.info(market)
+        log.info(settings)
+
+
+        return new RestResponse(false, "Error while opening position!")
+    }
+
 
 }

@@ -1,8 +1,11 @@
 package tradingmaster.db.entity.json
 
+import groovy.transform.ToString
+
+@ToString
 class StopLoss {
 
-    Boolean enabled
+    Boolean enabled = false
 
-    BigDecimal value
+    BigDecimal value = -10
 }

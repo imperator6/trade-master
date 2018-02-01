@@ -211,7 +211,7 @@ class PositionUpdateHandler implements  MessageHandler {
         } */
 
         StopLoss stopLoss = config.stopLoss as StopLoss
-        if(p.settings && p.settings.stopLoss) {
+        if(p.settings && p.settings.stopLoss && p.settings.stopLoss.enabled) {
             stopLoss = p.settings.stopLoss
         }
 
@@ -223,7 +223,7 @@ class PositionUpdateHandler implements  MessageHandler {
         }
 
         TrailingStopLoss trailingStopLoss = config.trailingStopLoss as TrailingStopLoss
-        if(p.settings && p.settings.trailingStopLoss) {
+        if(p.settings && p.settings.trailingStopLoss && p.settings.trailingStopLoss.enabled) {
             trailingStopLoss = p.settings.trailingStopLoss
         }
 
@@ -254,7 +254,7 @@ class PositionUpdateHandler implements  MessageHandler {
         }
 
         TakeProfit takeProfit = config.takeProfit as TakeProfit
-        if(p.settings && p.settings.takeProfit) {
+        if(p.settings && p.settings.takeProfit && p.settings.takeProfit.enabled) {
             takeProfit = p.settings.takeProfit
         }
 

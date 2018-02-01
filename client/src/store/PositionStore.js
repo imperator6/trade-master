@@ -5,6 +5,8 @@ import logger from "../logger";
 
 import moment from "moment";
 
+import { message } from "antd";
+
 class MarketWatcherStore {
   log = logger.getLogger("MarketWatcherStore");
 
@@ -26,6 +28,15 @@ class MarketWatcherStore {
 
   @observable selectedBot;
 
+  // @observable selectedAsset;
+
+  // for a new position
+  @observable exchangeList = [];
+
+  @observable assetMap = new Map();
+
+  @observable selectedExchange;
+
   @observable selectedAsset;
 
   constructor(rootStore) {
@@ -34,8 +45,17 @@ class MarketWatcherStore {
   }
 
   init = () => {
-    this.log.debug("init MarketWatcherStore -> loading available exchanges");
 
+    let cb = () => {
+        // select the first bot :-)
+        this.selectedBot = this.botList[0].split("_")[0];
+        this.onBotSelected(this.selectedBot);
+    }
+    
+    this.loadBotList(cb);
+  };
+
+  loadBotList = (callback) => {
     let url = this.rootStore.remoteApiUrl + "/bot/";
 
     axios
@@ -57,10 +77,11 @@ class MarketWatcherStore {
 
           this.botList = newBotList;
 
-          this.selectedBot = newBotList[0].split("_")[0];
+          if(callback) {
+             callback()
+          }
 
-          this.onBotSelected(this.selectedBot);
-
+          
         } else {
           // error
           console.info(response.data.message);
@@ -71,9 +92,13 @@ class MarketWatcherStore {
       });
   };
 
+  getSelectedBot = () => {
+    return this.botMap.get(this.selectedBot);
+  };
+
   @action
-  onBotSelected = (botId) => {
-    this.selectedBot = botId
+  onBotSelected = botId => {
+    this.selectedBot = botId;
     let bot = this.botMap.get(botId);
     if (bot != null) {
       this.baseCurrency = bot.baseCurrency;
@@ -85,6 +110,8 @@ class MarketWatcherStore {
       this.currentBalanceDollar = bot.currentBalanceDollar;
       this.totalBalanceDollar = bot.totalBalanceDollar;
       this.totalBotResult = bot.result;
+
+      this.selectedExchange = bot.exchange
 
       this.load();
 
@@ -160,13 +187,15 @@ class MarketWatcherStore {
     };
 
     axios
-      .post(
-        url,
-        settings,
-        config
-      )
+      .post(url, settings, config)
       .then(response => {
-        console.log(response)
+        console.log(response);
+
+        if (response.data.success) {
+          message.success("Settings saved for position " + position.market);
+        } else {
+          message.error(response.data.message);
+        }
       })
       .catch(function(error) {
         console.log(error);
@@ -300,12 +329,12 @@ class MarketWatcherStore {
       .get(url, config)
       .then(response => {
         if (response.data.success) {
-          //reload position list
-          let bot = data.result;
-          this.botMap.set(bot.id, bot);
-          this.onBotSelected();
 
-          console.log(bot);
+            let cb = () => {
+                this.onBotSelected(this.selectedBot);
+            }
+           
+            this.loadBotList(cb);
         } else {
           // error
           console.info(response.data.message);
@@ -343,6 +372,70 @@ class MarketWatcherStore {
         console.log(error);
       });
   };
+
+  loadExchanges = () => {
+    let url = this.rootStore.remoteApiUrl + "/exchange/";
+
+    axios
+      .get(url, this.rootStore.userStore.getHeaderConfig())
+      .then(response => {
+        if (response.data.success) {
+          this.log.debug("Loaded Exchanges", { ...response.data.data });
+          // console.log( response.data.data)
+
+          let newExchangeList = [];
+          response.data.data.forEach(exchange => {
+            // console.log( exchange)
+            newExchangeList.push(exchange.name.toLowerCase());
+
+            let newAssetList = exchange.markets.map(market => {
+              return market.asset;
+            });
+
+            this.assetMap.set(exchange.name.toLowerCase(), newAssetList);
+            //     this.selectedAssetBySeries.set(exchange.name, newAssetList[0])
+          });
+
+          this.exchangeList = newExchangeList;
+        } else {
+          // error
+          console.info(response.data.message);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
+  openNewPosition = (positionSettings) => {
+    console.log(positionSettings);
+
+    let url = this.rootStore.remoteApiUrl + "/position/newPosition";
+
+    let config = {
+      params: {
+        exchange: this.selectedExchange,
+        market: this.getSelectedBot().config.baseCurrency + "-" + this.selectedAsset
+      },
+      ...this.rootStore.userStore.getHeaderConfig()
+    };
+
+    axios
+      .post(url, positionSettings, config)
+      .then(response => {
+        console.log(response);
+
+        if (response.data.success) {
+          message.success("Settings saved for position " + position.market);
+        } else {
+          message.error(response.data.message);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
 }
 
 export default MarketWatcherStore;

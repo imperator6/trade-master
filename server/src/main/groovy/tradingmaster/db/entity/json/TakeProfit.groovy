@@ -1,8 +1,11 @@
 package tradingmaster.db.entity.json
 
+import groovy.transform.ToString
+
+@ToString
 class TakeProfit {
 
-    Boolean enabled
+    Boolean enabled = false
 
-    BigDecimal value
+    BigDecimal value = 20
 }

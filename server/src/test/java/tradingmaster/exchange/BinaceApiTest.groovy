@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.test.context.junit4.SpringRunner
 import tradingmaster.exchange.binance.Binance
+import tradingmaster.exchange.binance.BinanceHelper
 import tradingmaster.model.Candle
 import tradingmaster.model.CandleInterval
 import tradingmaster.model.CryptoMarket
@@ -83,6 +84,46 @@ class BinaceApiTest extends DefaultExchangeTest {
         boolean cancel = getExchangeAdapter().cancelOrder(order.getMarket(), order.getId())
 
         assertTrue(cancel) */
+    }
+
+    @Test
+    void testBuyAndCancelOrder() {
+
+        // signal 0.00065
+
+        // 0.0001710000
+
+    /*    def quantity = 0.0025 / 0.0001710000
+
+        String orderId = getExchangeAdapter().buyLimit("BTC-TRIG", quantity, 0.0001710000).getResult()
+
+        IOrder order = getExchangeAdapter().getOrder("BTC-TRIG", orderId).getResult()
+
+        Thread.sleep(2000)
+
+        boolean cancel = getExchangeAdapter().cancelOrder(order.getMarket(), order.getId())
+ */
+    }
+
+    @Test
+    void testBinanceHelper() {
+
+        String s = BinanceHelper.convertMarketToSymbol("BTC-NEO")
+
+        assertEquals( "NEOBTC", s )
+
+        s = BinanceHelper.convertMarketToSymbol("BTC-USDT")
+
+        assertEquals( "USDTBTC", s )
+
+        String m = BinanceHelper.convertSymbolToMarket("USDTBTC")
+
+        assertEquals( "BTC-USDT", m )
+
+        m = BinanceHelper.convertSymbolToMarket("NEOBTC")
+
+        assertEquals( "BTC-NEO", m )
+
     }
 
 

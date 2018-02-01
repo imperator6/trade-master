@@ -177,7 +177,7 @@ class OrderExecutorService {
                     return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
                 }
             } else if (order.getQuantityRemaining() > 0.0) {
-                log.info("Order $market has a remaining quantity! Wair till order is fullfilled id: $orderId")
+                log.info("Order $market has a remaining quantity! Wait till order is fullfilled id: $orderId")
                 return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
 
             } else if (order.getQuantityRemaining() == 0.0) {

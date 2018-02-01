@@ -1,6 +1,7 @@
 package tradingmaster.exchange.binance.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import tradingmaster.exchange.binance.BinanceHelper
 
 class BinanceCancel {
 
@@ -17,9 +18,6 @@ class BinanceCancel {
     String symbol
 
     String getMarket() {
-        if(symbol) {
-            return symbol.substring(3) + "-" + symbol.substring(0,3)
-        }
-        null
+        return BinanceHelper.convertSymbolToMarket(symbol)
     }
 }
