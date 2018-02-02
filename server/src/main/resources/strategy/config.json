@@ -6,6 +6,9 @@
   "maxPositions": 5,
   "maxOpenPositions": 30,
 
+  "candleSize": "1m",
+  "liveTrading": true,
+
   "sellPriceLimitPercent": -1,
   "buyPriceLimitPercent": 3,
 

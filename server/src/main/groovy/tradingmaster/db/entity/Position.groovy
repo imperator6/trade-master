@@ -99,6 +99,8 @@ class Position {
 
     boolean sellInPogress = false
 
+    boolean buyInPogress = false
+
     @Column(nullable = true)
     BigDecimal trailingStopLoss // in percent
 

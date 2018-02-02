@@ -50,6 +50,10 @@ class TradeBotManager {
         return TRADE_BOT_MAP.get(botId)
     }
 
+    TradeBot findBotByExchange(String exchange) {
+        return TRADE_BOT_MAP.values().find { it.exchange.equalsIgnoreCase(exchange )}
+    }
+
     Position findPositionById(Integer botId, Integer posId) {
         return this.TRADE_BOT_MAP.get(botId).getPositions().find { it.id == posId }
     }

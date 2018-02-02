@@ -10,6 +10,7 @@ import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import tradingmaster.core.CandleAggregator;
 import tradingmaster.core.CandleBuilder;
 import tradingmaster.core.CandleWriter;
 import tradingmaster.core.TradeWriter;
@@ -95,8 +96,14 @@ public class Config {
         return MessageChannels.publishSubscribe().get();
     }
 
+    // only candles > server startTime
     @Bean
     public PublishSubscribeChannel lastRecentCandelChannel() {
+        return MessageChannels.publishSubscribe().get();
+    }
+
+    @Bean
+    public PublishSubscribeChannel mixedCandelSizesChannel() {
         return MessageChannels.publishSubscribe().get();
     }
 
@@ -110,19 +117,26 @@ public class Config {
         return MessageChannels.publishSubscribe().get();
     }
 
-   /* @Bean
-    CandleAggregator candelAggregator5Minutes() {
-        CandleAggregator ca = new CandleAggregator(5);
-        candelChannel1Minute().subscribe(ca);
+    @Bean
+    CandleAggregator candelAggregator5Minutes(PublishSubscribeChannel mixedCandelSizesChannel) {
+        CandleAggregator ca = new CandleAggregator(5, mixedCandelSizesChannel);
+        lastRecentCandelChannel().subscribe(ca);
         return ca;
     }
 
     @Bean
-    CandleAggregator candelAggregator15Minutes() {
-        CandleAggregator ca = new CandleAggregator(15);
-        candelChannel1Minute().subscribe(ca);
+    CandleAggregator candelAggregator15Minutes(PublishSubscribeChannel mixedCandelSizesChannel) {
+        CandleAggregator ca = new CandleAggregator(15, mixedCandelSizesChannel);
+        lastRecentCandelChannel().subscribe(ca);
         return ca;
-    } */
+    }
+
+    @Bean
+    CandleAggregator candelAggregator30Minutes(PublishSubscribeChannel mixedCandelSizesChannel) {
+        CandleAggregator ca = new CandleAggregator(30, mixedCandelSizesChannel);
+        lastRecentCandelChannel().subscribe(ca);
+        return ca;
+    }
 
 
     @Bean

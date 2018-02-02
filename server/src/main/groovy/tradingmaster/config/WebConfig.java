@@ -25,7 +25,10 @@ public class WebConfig extends WebMvcConfigurerAdapter{
      */
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/").setViewName("forward:/index.html");
+        registry.addViewController("/desktop").setViewName("forward:/index.html");
+        registry.addViewController("/strategy").setViewName("forward:/index.html");
+        registry.addViewController("/positions").setViewName("forward:/index.html");
+        registry.addViewController("/").setViewName("redirect:/desktop");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
         super.addViewControllers(registry);
     }

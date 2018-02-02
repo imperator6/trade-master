@@ -31,6 +31,10 @@ class CandleBuilder implements MessageHandler {
     @Autowired
     PublishSubscribeChannel lastRecentCandelChannel
 
+
+    @Autowired
+    PublishSubscribeChannel mixedCandelSizesChannel
+
     Instant serverStartMinute = Instant.now().truncatedTo( ChronoUnit.MINUTES ) // UTC Time now
 
     @Override
@@ -135,6 +139,7 @@ class CandleBuilder implements MessageHandler {
 
             if(lastRecentCandel != null) {
                 lastRecentCandelChannel.send( MessageBuilder.withPayload(lastRecentCandel).build() )
+                mixedCandelSizesChannel.send( MessageBuilder.withPayload(lastRecentCandel).build() )
             }
 
         } else {

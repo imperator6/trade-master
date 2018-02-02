@@ -28,7 +28,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
 
     @Autowired
-    PublishSubscribeChannel lastRecentCandelChannel
+    PublishSubscribeChannel mixedCandelSizesChannel
 
     @Autowired
     TradeBotManager tradeBotManager
@@ -47,7 +47,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
     @PostConstruct
     init() {
-        lastRecentCandelChannel.subscribe(this)
+        mixedCandelSizesChannel.subscribe(this)
     }
 
     @Override
@@ -55,7 +55,6 @@ class PositionUpdateHandler implements  MessageHandler {
 
         Candle c = message.getPayload()
 
-        log.info("Processing position for market: ${c.getMarket().getName()}")
 
         tradeBotManager.getActiveBots().each { TradeBot bot ->
 
@@ -70,8 +69,12 @@ class PositionUpdateHandler implements  MessageHandler {
 
     void processBotUpdate(TradeBot bot, Candle c) {
 
+        if(!isValidCandleSize(bot, c)) {
+            return
+        }
+
         // Exchange check needed?
-       // if(bot.exchange.equalsIgnoreCase(c.getMarket().getExchange())) {}
+       if(bot.exchange.equalsIgnoreCase(c.getMarket().getExchange())) {
         if(c.getMarket().getName().equalsIgnoreCase("USDT-${bot.baseCurrency}")) {
             bot.setFxDollar( c.getClose() )
             bot.startBalanceDollar = bot.startBalance * bot.fxDollar
@@ -90,10 +93,38 @@ class PositionUpdateHandler implements  MessageHandler {
 
             bot.result = NumberHelper.xPercentFromBase(bot.startBalanceDollar, bot.totalBalanceDollar)
         }
+       }
+    }
+
+    boolean isValidCandleSize(TradeBot bot, Candle c) {
+
+        def candelSize = c.getPeriod().replace("min", "m")
+
+        if(bot.config.candleSize) {
+
+            if(candelSize.equalsIgnoreCase( bot.config.candleSize)) {
+                return true
+            }
+
+        } else  {
+            log.warn("No candle size configured for bot ${bot.id} ${bot.exchange}")
+
+            if("1m".equals(candelSize)) {
+                return true
+            }
+        }
+
+        return false
     }
 
 
     void processPositions(TradeBot bot, Candle c) {
+
+        if(!isValidCandleSize(bot, c)) {
+            return
+        }
+
+        log.info("Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ")
 
         String candleMarket = c.getMarket().getName()
 
@@ -102,6 +133,11 @@ class PositionUpdateHandler implements  MessageHandler {
             bot.getPositions().findAll {
                 !it.closed &&
                         candleMarket.equalsIgnoreCase(it.market) }.each { p ->
+
+                if(checkOpenPosition(p, c, bot)) {
+                    openPosition(p, c, bot)
+                    return
+                }
 
                 updatePosition(p, c, bot)
 
@@ -183,6 +219,33 @@ class PositionUpdateHandler implements  MessageHandler {
 
     boolean checkOpenPosition(Position p, Candle c, TradeBot bot) {
 
+        if((p.buyRate == null || p.buyRate <= 0) &&
+                p.settings && p.settings.buyWhen
+                && p.settings.buyWhen.enabled) {
+
+            // check timeout
+            ZonedDateTime positionCreateDate = p.created.toInstant().atZone(ZoneOffset.UTC)
+            ZonedDateTime now = new Date().toInstant().atZone(ZoneOffset.UTC)
+            def hours = ChronoUnit.HOURS.between(positionCreateDate, now)
+
+            if(hours <= p.settings.buyWhen.timeoutHours) {
+                // valid
+                def price = c.close
+                if(price >= p.settings.buyWhen.minPrice && p.settings.buyWhen.maxPrice <= price ) {
+                    log.info("Position ${p.market} is now in the given price range! price: ${price} range: ${p.settings.buyWhen.minPrice} - ${p.settings.buyWhen.maxPrice}")
+                    return true
+                }
+            } else {
+                // timeout
+                log.info("Timout for position ${p.id} ${p.market}. ")
+                p.closed = true
+                p.setError(true)
+                p.setErrorMsg("Timeout! Position is older than ${p.settings.buyWhen.timeoutHours} hours.")
+                positionRepository.save(p)
+            }
+        }
+
+        return false
     }
 
     boolean checkClosePosition(Position p, Candle c, TradeBot bot) {
@@ -280,10 +343,41 @@ class PositionUpdateHandler implements  MessageHandler {
             return
         }
 
+        if(!positionService.isTradingActive(bot)) {
+            return
+        }
+
         p.sellInPogress = true
 
         def task = {
             positionService.closePosition(p, c, bot)
+        } as Runnable
+
+        orderTaskExecutor.execute(task)
+    }
+
+    synchronized void openPosition(Position p, Candle c, TradeBot bot) {
+
+        if(p.settings && p.settings.holdPosition) {
+            log.info("Can't close position $p.id. Flag HoldPosition is active!")
+            return
+        }
+
+        if(p.buyInPogress) {
+            log.info("Can't open position $p.id. Buy is already in pogress!")
+            return
+        }
+
+        if(!positionService.isTradingActive(bot)) {
+            return
+        }
+
+        p.buyInPogress = true
+
+        def task = {
+            // calc balance....
+            def balanceToSpend = p.settings.buyWhen.quantity * c.close
+            positionService.openPosition(bot, p, balanceToSpend , c.close)
         } as Runnable
 
         orderTaskExecutor.execute(task)

@@ -8,7 +8,7 @@ module.exports = {
   devtool: "eval",
   entry:  ["babel-polyfill", "./src/index"],
   output: {
-    path: path.join(__dirname, "../server/src/main/webapp/resources/js"),
+    path: path.join(__dirname, "../server/src/main/resources/public/js"),
     filename: "bundle.js",
     publicPath: "/static/"
   },

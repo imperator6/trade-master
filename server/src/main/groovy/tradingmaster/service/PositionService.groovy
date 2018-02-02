@@ -7,6 +7,7 @@ import tradingmaster.db.PositionRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
+import tradingmaster.db.entity.json.PositionSettings
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.*
@@ -48,71 +49,110 @@ class PositionService {
         marketWatcheService.stopMarketWatcher(bot.getExchange() ,pos.getMarket())
     }
 
+    Position newPosition(TradeBot bot, String market, PositionSettings settings) {
+
+        Position pos = new Position()
+        pos.created = new Date()
+        pos.botId = bot.getId()
+        pos.status = "wait for market"
+        pos.market = market
+
+        pos.settings = settings
+
+        positionRepository.save(pos)
+        bot.addPosition(pos)
+
+        log.debug "New buyWehn position created! $pos"
+
+        // start the watcher service to observe the market
+        marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
+
+        return pos
+    }
 
     void openPosition(TradeBot bot, Signal s) {
 
-        // TODO: calculate based on settings
+        if(!isTradingActive(bot)) {
+            return
+        }
+
+        Position pos = new Position()
+
+        pos.created = new Date()
+        pos.botId = bot.getId()
+        pos.market = "${bot.config.baseCurrency}-${s.asset}"
+        pos.status = "pending"
+        pos.buySignalId = s.getId()
+        pos.signalRate = s.price
+
         BigDecimal balanceToSpend = tradeBotManager.calcBalanceForNextTrade(bot)
 
         if(balanceToSpend > 0) {
 
-            Position pos = new Position()
-
-            pos.created = new Date()
-            pos.botId = bot.getId()
-            pos.buySignalId = s.getId()
-
-            pos.market = "${bot.config.baseCurrency}-${s.asset}"
-            pos.status = "pending"
-            pos.signalRate = s.price
-
-            // Too: call exc to place the order...
-            String currency  = bot.config.baseCurrency
-            String asset = s.asset
-
-            PriceLimit priceLimit = null
-            if(bot.config.buyPriceLimitPercent && s.getPrice()) {
-                priceLimit = new PriceLimit(s.getPrice(), bot.config.buyPriceLimitPercent)
-            }
-
             positionRepository.save(pos)
             bot.addPosition(pos)
 
-            ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset)
-
-            if(newOrderRes.success) {
-
-                IOrder newOrder = newOrderRes.getResult()
-
-                updateBuyPosition(pos, newOrder)
-                log.debug "New position created! $pos"
-
-                // start the watcher service to observe the market
-                marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, bot.baseCurrency, s.asset))
-
-            } else {
-                def msg = "Error on Buy: ${newOrderRes.getMessage()}"
-                log.error(msg)
-                pos.setError(true)
-                pos.setErrorMsg(msg)
-                pos.setClosed(true)
-            }
-
-            positionRepository.save(pos)
-
-
+            openPosition(bot, pos, balanceToSpend, s.getPrice())
         } else {
-            // balance to small
-
+            log.warn("Can't open position ${s.asset} balance is to low. ${balanceToSpend}")
         }
     }
 
-    BigDecimal extractFee(BigDecimal amount, BigDecimal fee) {
-        amount *= 1e8
-        amount *= fee
-        amount = Math.floor(amount)
-        amount /= 1e8
-        return amount
+
+    void openPosition(TradeBot bot, Position pos, BigDecimal balanceToSpend, BigDecimal signalPrice) {
+
+        if(!isTradingActive(bot)) {
+            return
+        }
+
+        PriceLimit priceLimit = null
+        if(bot.config.buyPriceLimitPercent && signalPrice) {
+            priceLimit = new PriceLimit(signalPrice,(BigDecimal) bot.config.buyPriceLimitPercent)
+        }
+
+        CryptoMarket market = new CryptoMarket(bot.exchange, pos.getMarket())
+        String currency  = market.getCurrency()
+        String asset = market.getAsset()
+
+        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset)
+
+        if(newOrderRes.success) {
+
+            IOrder newOrder = newOrderRes.getResult()
+
+            updateBuyPosition(pos, newOrder)
+            log.debug "New position created! $pos"
+
+            // start the watcher service to observe the market
+            marketWatcheService.createMarketWatcher(market)
+
+        } else {
+            def msg = "Error on Buy: ${newOrderRes.getMessage()}"
+            log.error(msg)
+            pos.buyInPogress = false
+            pos.setError(true)
+            pos.setErrorMsg(msg)
+            pos.setClosed(true)
+        }
+
+        positionRepository.save(pos)
+    }
+
+    boolean isTradingActive(TradeBot bot) {
+        if(bot && bot.config) {
+
+            if( bot.config.liveTrading != null) {
+                if(!bot.config.liveTrading) {
+                    log.warn("*** Live Trading is DISABELD for bot ${bot.id}")
+                }
+
+                return bot.config.liveTrading
+            } else {
+                log.warn("Property 'liveTrading' is not set in config! Check bot with id ${bot.id} ${bot.exchange}")
+            }
+        }
+
+        return true
     }
 
     void loadPositionsFromExchange(TradeBot bot) {
@@ -219,6 +259,10 @@ class PositionService {
     }
 
     void closePosition(Position pos, BigDecimal sellPrice, TradeBot bot) {
+
+        if(!isTradingActive(bot)) {
+            return
+        }
 
         PriceLimit priceLimit = null
         if(bot.config.sellPriceLimitPercent && sellPrice) {

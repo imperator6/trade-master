@@ -34,7 +34,9 @@ repositories {
 jar {
     baseName = 'tradingmaster'
     //version =  '1.0'
+    archiveName = 'tradingmaster.jar'
 }
+
 
 bootRepackage {
     executable = true

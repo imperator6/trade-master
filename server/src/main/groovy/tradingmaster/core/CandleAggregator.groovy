@@ -1,6 +1,8 @@
 package tradingmaster.core
 
 import groovy.util.logging.Commons
+import org.springframework.integration.channel.PublishSubscribeChannel
+import org.springframework.integration.support.MessageBuilder
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
@@ -12,8 +14,11 @@ class CandleAggregator implements MessageHandler {
 
     private int candleCount = 0
 
-    CandleAggregator(int candleCount) {
+    PublishSubscribeChannel destinationChannel
+
+    CandleAggregator(int candleCount, PublishSubscribeChannel destinationChannel) {
         this.candleCount = candleCount
+        this.destinationChannel = destinationChannel
     }
 
     List<Candle> candleList = Collections.synchronizedList(new ArrayList<Candle>())
@@ -31,9 +36,13 @@ class CandleAggregator implements MessageHandler {
             Candle next = buildCandle( candleList )
             candleList.clear()
 
-            log.info("Next  ${candleCount} minutes candel $next")
+            next.setPeriod( candleCount + "min")
 
-            log.info(next.getDurationInMinutes())
+           // log.info("Next ${candleCount} minutes candel $next")
+
+            // log.info(next.getDurationInMinutes())
+
+            destinationChannel.send( MessageBuilder.withPayload(next).build() )
         }
     }
 
