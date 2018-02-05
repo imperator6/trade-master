@@ -9,6 +9,7 @@ import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import tradingmaster.core.CandleAggregator;
 import tradingmaster.core.CandleBuilder;
@@ -22,6 +23,7 @@ import java.util.TimeZone;
 @Configuration
 @EnableIntegration
 @EnableAsync
+@EnableScheduling
 public class Config {
 
     @Autowired

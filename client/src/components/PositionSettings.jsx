@@ -32,10 +32,13 @@ const TabPane = Tabs.TabPane;
 class PositionSettings extends React.Component {
   constructor(props) {
     super(props);
+
     this.showApplySettings = props.showApplySettings
 
     this.position = this.props.position;
     this.store = this.props.rootStore.positionStore;
+
+    let bot = this.store.getSelectedBot()
 
     if(!this.position.settings)
         this.position.settings = {}
@@ -45,20 +48,39 @@ class PositionSettings extends React.Component {
     }
 
     if(!this.position.settings.buyWhen) {
+      // init if not exist
       this.position.settings.buyWhen = { enabled: false, quantity: 0, minPrice: 0, maxPrice: 0, timeoutHours: 36}
     }
     
     if(!this.position.settings.takeProfit) {
+       // init if not exist
         this.position.settings.takeProfit = {enabled: false, value: 20}
     }
 
+    if(this.position.settings.takeProfit && !this.position.settings.takeProfit.enabled) {
+       // overwrite with bot settings 
+      this.position.settings.takeProfit = {enabled: false, value: bot.config.takeProfit.value}
+  }
+
     if(!this.position.settings.stopLoss) {
+      // init if not exsist
       this.position.settings.stopLoss = {enabled: false, value: -10}
     }
 
+    if(this.position.settings.stopLoss && !this.position.settings.stopLoss.enabled) {
+       // overwrite with bot settings 
+      this.position.settings.stopLoss = {enabled: false, value: bot.config.stopLoss.value }
+    }
+
     if(!this.position.settings.trailingStopLoss) {
-      this.position.settings.trailingStopLoss = {enabled: false, value: 5, startAt: 20}
-   }
+      // init if not exsist
+      this.position.settings.trailingStopLoss = {enabled: false, value: 5, startAt: 20, keepAtLeastForHours: 0}
+    }
+
+    if(this.position.settings.trailingStopLoss && !this.position.settings.trailingStopLoss.enabled) {
+      // overwrite with bot settings 
+      this.position.settings.trailingStopLoss = {enabled: false, value: bot.config.trailingStopLoss.value, startAt: bot.config.trailingStopLoss.startAt, keepAtLeastForHours: bot.config.trailingStopLoss.keepAtLeastForHours}
+    }
 
     this.state = {
         ...this.position.settings
@@ -67,6 +89,8 @@ class PositionSettings extends React.Component {
   }
 
   render() {
+
+   
 
     let applyLink = null;
 
@@ -131,6 +155,16 @@ class PositionSettings extends React.Component {
             formatter={value => `${value}%`}
             parser={value => value.replace("%", "")}
             onChange={(newValue) =>{ this.setState({trailingStopLoss: {...this.state.trailingStopLoss, value: newValue}}) } }
+          /><br/>
+          Keep hours
+          <InputNumber
+            size="small"
+            defaultValue={0}
+            disabled={!this.state.trailingStopLoss.enabled}
+            value={this.state.trailingStopLoss.keepAtLeastForHours}
+            formatter={value => `${value}h`}
+            parser={value => value.replace("h", "")}
+            onChange={(newValue) =>{ this.setState({trailingStopLoss: {...this.state.trailingStopLoss, keepAtLeastForHours: newValue}}) } }
           />
         <br/>
         <br/>

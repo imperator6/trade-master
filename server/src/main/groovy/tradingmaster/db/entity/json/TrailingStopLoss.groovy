@@ -10,4 +10,6 @@ class TrailingStopLoss {
     BigDecimal value  = 2 // sell if it lost 2% after the 12% has reached
 
     BigDecimal startAt  = 12 // start trailing at 12% profit
+
+    Integer keepAtLeastForHours = 0
 }

@@ -62,11 +62,15 @@ class BinaceApiTest extends DefaultExchangeTest {
     @Test
     void testGetOrder() {
 
+        def order3 = getExchangeAdapter().getOrder("BTC-SUB", "" +6306225).getResult()
+
         List orders = getExchangeAdapter().getOrderHistory("ETH-BCC")
 
         IOrder order1 = orders.first()
 
         def order2 = getExchangeAdapter().getOrder(order1.getMarket(), order1.getId()).getResult()
+
+
 
         assertNotNull( order2 )
     }

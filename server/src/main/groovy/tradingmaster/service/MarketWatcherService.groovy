@@ -141,11 +141,12 @@ class MarketWatcherService {
                protected synchronized TradeBatch doReceive() {
 
                     // avoid to many requests per second from one Exchange
-                    synchronized (exchange) {
+                    //synchronized (exchange) {
 
                          // -> slow down to reduce request count
                          Thread.sleep(500)
 
+                         // TODO: timeout!
                          TradeBatch batch = exchange.getTrades(null, null, market)
 
                          if(first) {
@@ -154,7 +155,7 @@ class MarketWatcherService {
                          }
 
                          return batch
-                    }
+                    //}
 
                }
           }

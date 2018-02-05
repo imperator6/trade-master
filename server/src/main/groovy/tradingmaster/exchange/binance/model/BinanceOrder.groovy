@@ -1,9 +1,11 @@
 package tradingmaster.exchange.binance.model
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import groovy.transform.ToString
 import tradingmaster.exchange.binance.BinanceHelper
 import tradingmaster.model.IOrder
 
+@ToString
 class BinanceOrder implements IOrder {
 
     // side, timeInForce, status

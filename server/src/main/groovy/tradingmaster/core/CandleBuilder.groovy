@@ -31,7 +31,6 @@ class CandleBuilder implements MessageHandler {
     @Autowired
     PublishSubscribeChannel lastRecentCandelChannel
 
-
     @Autowired
     PublishSubscribeChannel mixedCandelSizesChannel
 

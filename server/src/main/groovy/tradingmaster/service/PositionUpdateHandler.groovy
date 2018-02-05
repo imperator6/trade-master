@@ -7,6 +7,7 @@ import org.springframework.integration.channel.PublishSubscribeChannel
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.entity.Position
@@ -50,11 +51,40 @@ class PositionUpdateHandler implements  MessageHandler {
         mixedCandelSizesChannel.subscribe(this)
     }
 
+    @Scheduled(initialDelay=120000l, fixedRate=60000l)
+    void checkPositionIsUpToDate() {
+
+        log.info("Checking if positions are up to date...")
+
+        tradeBotManager.getActiveBots().each { TradeBot bot ->
+
+            String candelSizeM = bot.config.candleSize // 1m, 15 30m....
+            def candleSize = candelSizeM.replace("m", "") as Integer
+            def timeout = candleSize * 3
+
+            bot.getPositions().findAll { !it.closed && it.lastUpdate != null }.each { Position p ->
+
+                ZonedDateTime positionCreateDate = p.lastUpdate.toInstant().atZone(ZoneOffset.UTC)
+                ZonedDateTime now = new Date().toInstant().atZone(ZoneOffset.UTC)
+                def minutes = ChronoUnit.MINUTES.between(positionCreateDate, now)
+
+                if(minutes > timeout) {
+                    log.warn("!! Position $p.id $p.market has not been updated since $minutes minutes! LastUpdate ${p.lastUpdate} !!")
+                } else {
+                    log.debug("Position $p.id $p.market is up to date. Last update < $timeout minutes!")
+                }
+
+
+            }
+        }
+    }
+
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
 
         Candle c = message.getPayload()
 
+        log.info("Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ${c.market.exchange}")
 
         tradeBotManager.getActiveBots().each { TradeBot bot ->
 
@@ -114,6 +144,8 @@ class PositionUpdateHandler implements  MessageHandler {
             }
         }
 
+        log.debug("${bot.shortName} -> Skipping candle for market ${c.market.name} candleSize: ${c.period}")
+
         return false
     }
 
@@ -124,7 +156,6 @@ class PositionUpdateHandler implements  MessageHandler {
             return
         }
 
-        log.info("Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ")
 
         String candleMarket = c.getMarket().getName()
 
@@ -133,6 +164,8 @@ class PositionUpdateHandler implements  MessageHandler {
             bot.getPositions().findAll {
                 !it.closed &&
                         candleMarket.equalsIgnoreCase(it.market) }.each { p ->
+
+                log.debug("${bot.shortName} -> Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ${c.market.exchange}")
 
                 if(checkOpenPosition(p, c, bot)) {
                     openPosition(p, c, bot)
@@ -217,6 +250,13 @@ class PositionUpdateHandler implements  MessageHandler {
         log.debug("PosId $p.id: $p.market: (range:${NumberHelper.twoDigits(p.minResult)}%  ${NumberHelper.twoDigits(p.maxResult)}%) -> ${NumberHelper.twoDigits(resultInPercent)}%")
     }
 
+    Integer getAgeInHours(Position p) {
+        ZonedDateTime positionCreateDate = p.created.toInstant().atZone(ZoneOffset.UTC)
+        ZonedDateTime now = new Date().toInstant().atZone(ZoneOffset.UTC)
+        def hours = ChronoUnit.HOURS.between(positionCreateDate, now)
+        return hours
+    }
+
     boolean checkOpenPosition(Position p, Candle c, TradeBot bot) {
 
         if((p.buyRate == null || p.buyRate <= 0) &&
@@ -224,14 +264,12 @@ class PositionUpdateHandler implements  MessageHandler {
                 && p.settings.buyWhen.enabled) {
 
             // check timeout
-            ZonedDateTime positionCreateDate = p.created.toInstant().atZone(ZoneOffset.UTC)
-            ZonedDateTime now = new Date().toInstant().atZone(ZoneOffset.UTC)
-            def hours = ChronoUnit.HOURS.between(positionCreateDate, now)
+            def hours = getAgeInHours(p)
 
             if(hours <= p.settings.buyWhen.timeoutHours) {
                 // valid
                 def price = c.close
-                if(price >= p.settings.buyWhen.minPrice && p.settings.buyWhen.maxPrice <= price ) {
+                if(price >= p.settings.buyWhen.minPrice && price <= p.settings.buyWhen.maxPrice ) {
                     log.info("Position ${p.market} is now in the given price range! price: ${price} range: ${p.settings.buyWhen.minPrice} - ${p.settings.buyWhen.maxPrice}")
                     return true
                 }
@@ -251,7 +289,7 @@ class PositionUpdateHandler implements  MessageHandler {
     boolean checkClosePosition(Position p, Candle c, TradeBot bot) {
 
         if(p.sellInPogress) {
-            log.info("Skip cehck close position $p.id. Sell is already in pogress!")
+            log.info("Skip check close position $p.id. Sell is already in pogress!")
             return false
         }
 
@@ -290,31 +328,48 @@ class PositionUpdateHandler implements  MessageHandler {
             trailingStopLoss = p.settings.trailingStopLoss
         }
 
-        if(trailingStopLoss && trailingStopLoss.enabled) {
-            // check if we need to sell
-            if(p.trailingStopLoss != null && positionValueInPercent <= p.trailingStopLoss) {
-                log.info("Trailing-Stop-Loss <= ${p.trailingStopLoss}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
-                return true
-            }
 
-            // update trailing
-            if(p.trailingStopLoss != null) {
-                BigDecimal newTrailingStopLoss = positionValueInPercent - trailingStopLoss.value
-                if(newTrailingStopLoss > p.trailingStopLoss) {
-                    log.info("Increase Trailing-Stop-Loss for Position $p.id: $p.market new: ${newTrailingStopLoss}%")
-                    p.trailingStopLoss = newTrailingStopLoss
-                    positionRepository.save(p)
+
+        if(trailingStopLoss && trailingStopLoss.enabled) {
+
+            def skipTrailingStopLoss = false
+
+            // check if keepAtLeastForHours
+            if(trailingStopLoss.keepAtLeastForHours != null && trailingStopLoss.keepAtLeastForHours > 0 ) {
+                def age = getAgeInHours(p)
+                if(age < trailingStopLoss.keepAtLeastForHours) {
+                    skipTrailingStopLoss = true
+                    log.debug("Skipping TrailingStopLoss deal is too jung (${age} hours old)")
                 }
             }
 
-            // activate trailing
-            if(p.trailingStopLoss == null && positionValueInPercent >= trailingStopLoss.startAt) {
-                BigDecimal trailingStopLossInitValue = positionValueInPercent - trailingStopLoss.value
-                log.info("Activate Trailing-Stop-Loss for Position $p.id: $p.market trailingStopLoss at: $trailingStopLossInitValue")
-                p.trailingStopLoss = trailingStopLossInitValue
-                positionRepository.save(p)
+            if(!skipTrailingStopLoss) {
+                // check if we need to sell
+                if(p.trailingStopLoss != null && positionValueInPercent <= p.trailingStopLoss) {
+                    log.info("Trailing-Stop-Loss <= ${p.trailingStopLoss}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
+                    return true
+                }
+
+                // update trailing
+                if(p.trailingStopLoss != null) {
+                    BigDecimal newTrailingStopLoss = positionValueInPercent - trailingStopLoss.value
+                    if(newTrailingStopLoss > p.trailingStopLoss) {
+                        log.info("Increase Trailing-Stop-Loss for Position $p.id: $p.market new: ${newTrailingStopLoss}%")
+                        p.trailingStopLoss = newTrailingStopLoss
+                        positionRepository.save(p)
+                    }
+                }
+
+                // activate trailing
+                if(p.trailingStopLoss == null && positionValueInPercent >= trailingStopLoss.startAt) {
+                    BigDecimal trailingStopLossInitValue = positionValueInPercent - trailingStopLoss.value
+                    log.info("Activate Trailing-Stop-Loss for Position $p.id: $p.market trailingStopLoss at: $trailingStopLossInitValue")
+                    p.trailingStopLoss = trailingStopLossInitValue
+                    positionRepository.save(p)
+                }
             }
         }
+
 
         TakeProfit takeProfit = config.takeProfit as TakeProfit
         if(p.settings && p.settings.takeProfit && p.settings.takeProfit.enabled) {
@@ -376,7 +431,14 @@ class PositionUpdateHandler implements  MessageHandler {
 
         def task = {
             // calc balance....
-            def balanceToSpend = p.settings.buyWhen.quantity * c.close
+            def balanceToSpend = 0
+
+            if(p.settings.buyWhen.quantity <= 0.0) {
+                balanceToSpend = tradeBotManager.calcBalanceForNextTrade(bot)
+            } else {
+                balanceToSpend = p.settings.buyWhen.quantity * c.close
+            }
+
             positionService.openPosition(bot, p, balanceToSpend , c.close)
         } as Runnable
 

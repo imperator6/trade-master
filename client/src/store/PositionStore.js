@@ -17,6 +17,9 @@ class MarketWatcherStore {
   @observable baseCurrency = "BTC";
   @observable startBalance = 0;
   @observable currentBalance = 0;
+  @observable totalBaseCurrencyValue = 0;
+
+
 
   @observable fxDollar = 0;
   @observable startBalanceDollar = 0;
@@ -109,6 +112,7 @@ class MarketWatcherStore {
       this.startBalanceDollar = bot.startBalanceDollar;
       this.currentBalanceDollar = bot.currentBalanceDollar;
       this.totalBalanceDollar = bot.totalBalanceDollar;
+      this.totalBaseCurrencyValue = bot.totalBaseCurrencyValue
       this.totalBotResult = bot.result;
 
       this.selectedExchange = bot.exchange

@@ -60,8 +60,6 @@ class TradeBot {
     BigDecimal result
 
 
-
-
     List<Position> getPositions() {
        return new ArrayList(positionMap.values())
     }
@@ -75,9 +73,9 @@ class TradeBot {
     }
 
 
-
-
-
+    String getShortName() {
+        return "TradeBot #$id ($exchange)"
+    }
 
     /*
 

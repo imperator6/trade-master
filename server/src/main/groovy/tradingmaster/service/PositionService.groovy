@@ -126,6 +126,8 @@ class PositionService {
             // start the watcher service to observe the market
             marketWatcheService.createMarketWatcher(market)
 
+            tradeBotManager.syncBanlance(bot)
+
         } else {
             def msg = "Error on Buy: ${newOrderRes.getMessage()}"
             log.error(msg)
