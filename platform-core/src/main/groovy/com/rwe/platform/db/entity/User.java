@@ -1,4 +1,4 @@
-package tradingmaster.db.entity;
+package com.rwe.platform.db.entity;
 
 
 import javax.persistence.*;

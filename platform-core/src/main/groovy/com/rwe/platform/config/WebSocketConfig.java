@@ -1,4 +1,4 @@
-package tradingmaster.config;
+package com.rwe.platform.config;
 
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;

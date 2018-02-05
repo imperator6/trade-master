@@ -1,10 +1,13 @@
 package tradingmaster.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.integration.channel.PublishSubscribeChannel;
 import org.springframework.integration.config.EnableIntegration;
 import org.springframework.integration.dsl.channel.MessageChannels;
@@ -24,6 +27,9 @@ import java.util.TimeZone;
 @EnableIntegration
 @EnableAsync
 @EnableScheduling
+@ComponentScan(basePackages = {"com.rwe.platform.*", "tradingmaster.*"})
+@EnableJpaRepositories(basePackages = {"com.rwe.platform.*", "tradingmaster.*"})
+@EntityScan(basePackages = {"com.rwe.platform.db.*", "tradingmaster.db.*" , "tradingmaster.exchange.mininghamster.model"})
 public class Config {
 
     @Autowired

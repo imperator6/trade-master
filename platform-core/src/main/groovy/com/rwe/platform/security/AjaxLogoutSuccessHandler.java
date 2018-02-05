@@ -1,5 +1,5 @@
 
-package tradingmaster.security;
+package com.rwe.platform.security;
 
 
 import org.springframework.beans.factory.annotation.Autowired;

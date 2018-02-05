@@ -1,4 +1,4 @@
-package tradingmaster.security;
+package com.rwe.platform.security;
 
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;

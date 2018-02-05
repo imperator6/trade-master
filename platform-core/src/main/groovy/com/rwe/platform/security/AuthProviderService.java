@@ -1,5 +1,6 @@
-package tradingmaster.security;
+package com.rwe.platform.security;
 
+import com.rwe.platform.db.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,7 +10,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
-import tradingmaster.db.entity.User;
+
 
 
 @Component

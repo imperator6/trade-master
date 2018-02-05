@@ -7,7 +7,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import tradingmaster.exchange.DefaultExchangeRestService;
+import com.rwe.platform.rest.DefaultRestService;
 
 import java.time.Instant;
 
@@ -16,7 +16,7 @@ import java.time.Instant;
  * Created by irufus on 2/25/15.
  */
 @Component
-public class GdaxExchangeImpl extends DefaultExchangeRestService {
+public class GdaxExchangeImpl extends DefaultRestService {
 
     static Logger log = Logger.getLogger(GdaxExchangeImpl.class.getName());
 

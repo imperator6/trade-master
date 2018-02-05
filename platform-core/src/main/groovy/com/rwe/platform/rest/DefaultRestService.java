@@ -1,4 +1,4 @@
-package tradingmaster.exchange;
+package com.rwe.platform.rest;
 
 import com.google.gson.Gson;
 import org.apache.log4j.Logger;
@@ -24,9 +24,9 @@ import static org.springframework.http.HttpMethod.GET;
  * Created by irufus on 2/25/15.
  */
 @Component
-public abstract class DefaultExchangeRestService implements IExchangeRestService {
+public abstract class DefaultRestService implements IRestService {
 
-    static Logger log = Logger.getLogger(DefaultExchangeRestService.class.getName());
+    static Logger log = Logger.getLogger(DefaultRestService.class.getName());
 
     protected String publicKey;
     protected String secret;
@@ -35,11 +35,11 @@ public abstract class DefaultExchangeRestService implements IExchangeRestService
 
     protected RestTemplate restTemplate;
 
-    public DefaultExchangeRestService( String publicKey,
-                                       String secret,
-                                       String passphrase,
-                                       String baseUrl,
-                                       RestTemplate restTemplate) {
+    public DefaultRestService(String publicKey,
+                              String secret,
+                              String passphrase,
+                              String baseUrl,
+                              RestTemplate restTemplate) {
         this.publicKey = publicKey;
         this.secret = secret;
         this.passphrase = passphrase;

@@ -7,7 +7,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import tradingmaster.exchange.DefaultExchangeRestService;
+import com.rwe.platform.rest.DefaultRestService;
 
 import java.util.Map;
 
@@ -16,7 +16,7 @@ import java.util.Map;
  * Created by irufus on 2/25/15.
  */
 @Component
-public class BittrexExchangeImpl extends DefaultExchangeRestService {
+public class BittrexExchangeImpl extends DefaultRestService {
 
     static Logger log = Logger.getLogger(BittrexExchangeImpl.class.getName());
 

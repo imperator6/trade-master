@@ -1,4 +1,4 @@
-package tradingmaster.security;
+package com.rwe.platform.security;
 
 
 import org.apache.commons.logging.Log;
@@ -8,7 +8,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
-import tradingmaster.db.entity.User;
+import com.rwe.platform.db.entity.User;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;

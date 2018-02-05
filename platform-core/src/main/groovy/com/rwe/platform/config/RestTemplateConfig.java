@@ -1,4 +1,4 @@
-package tradingmaster.config;
+package com.rwe.platform.config;
 
 import org.apache.http.HttpHost;
 import org.apache.http.client.HttpClient;

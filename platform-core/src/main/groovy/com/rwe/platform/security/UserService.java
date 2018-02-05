@@ -1,12 +1,12 @@
-package tradingmaster.security;
+package com.rwe.platform.security;
 
+import com.rwe.platform.db.UserRepository;
+import com.rwe.platform.db.entity.User;
 import org.apache.commons.codec.binary.Base64;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.encoding.ShaPasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
-import tradingmaster.db.UserRepository;
-import tradingmaster.db.entity.User;
 
 import javax.annotation.PostConstruct;
 

@@ -1,10 +1,10 @@
-package tradingmaster.security;
+package com.rwe.platform.security;
 
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
-import tradingmaster.db.entity.User;
+import com.rwe.platform.db.entity.User;
 
 import java.util.Arrays;
 

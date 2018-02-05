@@ -1,7 +1,7 @@
 /**
  * Created by irufus on 2/19/15.
  */
-package tradingmaster.exchange;
+package com.rwe.platform.rest;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -9,7 +9,7 @@ import org.springframework.http.HttpEntity;
 import java.util.List;
 import java.util.Map;
 
-public interface IExchangeRestService {
+public interface IRestService {
 
      String getBaseUrl();
 

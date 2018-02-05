@@ -1,12 +1,12 @@
 
-package tradingmaster.security;
+package com.rwe.platform.security;
 
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
-import tradingmaster.db.entity.User;
+import com.rwe.platform.db.entity.User;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
