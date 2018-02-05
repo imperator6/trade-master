@@ -176,14 +176,28 @@ class PositionService {
                 pos.status = "open"
                 pos.signalRate = 0
                 pos.setAmount( balance.getAvailable() )
+                pos.settings.holdPosition = true
 
                 //pos.setExtbuyOrderId(newOrder.getId())
                 // TODO: Try to find a historic order!
                 pos.setBuyFee(0)
                 pos.setBuyDate(new Date())
-                pos.setBuyRate(0)
 
-                positionRepository.save(pos)
+                ExchangeResponse<ITicker> tickerExchangeResponse = exchangeAdapter.getTicker(pos.getMarket())
+
+                if(tickerExchangeResponse.success) {
+                    ITicker ticker = tickerExchangeResponse.getResult()
+
+                    pos.setBuyRate(ticker.getAsk())
+
+                    positionRepository.save(pos)
+                    bot.addPosition(pos)
+
+                    marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
+
+                } else {
+                    log.error("Can create postion for market ${pos.getMarket()}. ${tickerExchangeResponse.getMessage()}")
+                }
             }
          }
 

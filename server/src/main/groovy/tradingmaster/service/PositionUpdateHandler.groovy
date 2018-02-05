@@ -105,8 +105,14 @@ class PositionUpdateHandler implements  MessageHandler {
 
         // Exchange check needed?
        if(bot.exchange.equalsIgnoreCase(c.getMarket().getExchange())) {
-        if(c.getMarket().getName().equalsIgnoreCase("USDT-${bot.baseCurrency}")) {
-            bot.setFxDollar( c.getClose() )
+           boolean isUSDBase = bot.getBaseCurrency().toUpperCase().indexOf("USD") >= 0
+        if(c.getMarket().getName().equalsIgnoreCase("USDT-${bot.baseCurrency}") || isUSDBase) {
+            if(isUSDBase) {
+                bot.setFxDollar( 1 )
+            } else {
+                bot.setFxDollar( c.getClose() )
+            }
+
             bot.startBalanceDollar = bot.startBalance * bot.fxDollar
             bot.currentBalanceDollar = bot.currentBalance * bot.fxDollar
             bot.totalBaseCurrencyValue = bot.currentBalance
@@ -120,7 +126,6 @@ class PositionUpdateHandler implements  MessageHandler {
                     bot.totalBaseCurrencyValue += it.lastKnowBaseCurrencyValue
                 }
             }
-
             bot.result = NumberHelper.xPercentFromBase(bot.startBalanceDollar, bot.totalBalanceDollar)
         }
        }
