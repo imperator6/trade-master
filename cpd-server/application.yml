@@ -1,0 +1,64 @@
+http:
+    proxyHost: proxy.rwe.com
+    proxyPort: 8080
+
+mininghamster:
+    api:
+       baseUrl: "https://mininghamster.com/output/getsignal.php"
+    key: 8vOjSjYeevQd1WTt24Xh6D6vDR5NnHuF
+    pollInterval: 60000
+
+bittrex:
+    api:
+        baseUrl: "https://bittrex.com/api/v1.1/"
+    key: 28925668c8cd4bac853432631f45bfb6
+    secret: 8e41008fcbff43518e1095c345797359
+
+binance:
+  api:
+      baseUrl: "https://api.binance.com/"
+  key: ug9UqFAVVTS9qRAK2abjsakL5qrK9XyKz2C3hKE8TIR0C3ZD6UM6mfDFHKn6Unnj
+  secret: r1qTJ7DBXULCwGJOT7vYxjuT5dgfwPIY7rziv3Go3MEw8pM3XfL3vIb6x0Tvt4WK
+
+gdax:
+    api:
+        baseUrl: "https://api.gdax.com/"
+    key: db6045d4f3d491baf84af7a1c8a4633c
+    secret: gVhFcZ/0ouQwBX8MhAlJUXlSHmSfpmpJV5yvrHpNolqWY4D+/euVrlY0foFrSCc7NGUdiwHKzydORV6MNfjvdg==
+    passphrase: bupa0m5sh4t
+
+# ---- database
+couchDB:
+    host: 192.168.0.167
+    port: 5984
+    user: admin
+    password: admin123
+
+mariaDB:
+     jdbc-url: jdbc:mysql://S930A3546/trading_master
+     #jdbc-url: jdbc:mysql://192.168.0.167/trading_master
+     username: root
+     password: admin123
+     pool-size: 30
+
+telegram:
+    bot:
+       token: 405554972:AAFaFKgbjCYDZWv3gJNXixrI8SvCn-iwbQo
+
+spring:
+    jpa:
+        database-platform: org.hibernate.dialect.MySQLDialect
+        generate-ddl: true
+    hibernate:
+        dll-auto: create
+    datasource:
+        url: jdbc:mysql://S930A3546/trading_master
+        driverClassName: org.mariadb.jdbc.Driver
+        username: root
+        password: admin123
+
+logging:
+  file: log/trademaster.log
+  level:
+    ROOT: INFO
+

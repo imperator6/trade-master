@@ -1,0 +1,62 @@
+
+
+jar {
+    baseName = 'cpd-server'
+    //version =  '1.0'
+    archiveName = 'cpd-server.jar'
+}
+
+apply plugin: 'org.springframework.boot'
+
+bootRepackage {
+    executable = true
+}
+
+dependencies {
+    compile project(':platform-core')
+
+
+    /*
+    compile 'org.codehaus.groovy:groovy-all:2.4.12'
+    compile "org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}"
+    compile "org.springframework.boot:spring-boot-starter-security:${springBootVersion}"
+    compile "org.springframework.boot:spring-boot-starter-data-jpa:${springBootVersion}"
+
+    compile 'org.apache.httpcomponents:httpclient:4.5.2'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.9.2'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.9.2'
+    compile 'org.springframework.integration:spring-integration-core:4.3.12.RELEASE'
+    compile 'org.springframework.integration:spring-integration-java-dsl'
+
+    compile 'io.jsonwebtoken:jjwt:0.7.0'
+    compile 'commons-codec:commons-codec'
+
+    compile 'io.projectreactor:reactor-core:2.0.7.RELEASE'
+    compile 'io.projectreactor:reactor-net:2.0.7.RELEASE'
+    compile 'io.netty:netty-all:4.1.2.Final'
+
+    //compile "org.telegram:telegrambots:3.5"
+
+    compile 'org.telegram:telegramapi:66.2'
+
+    compile 'com.vladmihalcea:hibernate-types-5:1.2.0' // Hibernate JSON Types https://github.com/vladmihalcea/hibernate-types
+
+    compile 'com.google.code.gson:gson:2.4'
+    compile 'org.mariadb.jdbc:mariadb-java-client:2.1.2'
+    compile 'com.squareup.okhttp3:okhttp:3.9.0'
+    compile 'joda-time:joda-time:2.9.9'
+    compile 'com.zaxxer:HikariCP:2.5.1'
+
+    compile 'com.tictactec:ta-lib:0.4.0'
+
+
+
+    runtime 'javax.servlet:javax.servlet-api:3.1.0'
+
+    //compile fileTree(dir: 'lib', include: ['*.jar'])
+    */
+
+
+    testCompile "org.springframework:spring-test"
+    testCompile "org.springframework.boot:spring-boot-starter-test:${springBootVersion}"
+}
