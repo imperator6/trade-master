@@ -167,7 +167,7 @@ class PositionUpdateHandler implements  MessageHandler {
         // Check exchange
         if(bot.exchange.equalsIgnoreCase(c.getMarket().getExchange())) {
             bot.getPositions().findAll {
-                !it.closed &&
+                (!it.closed && it.settings.traceClosedPosition)
                         candleMarket.equalsIgnoreCase(it.market) }.each { p ->
 
                 log.debug("${bot.shortName} -> Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ${c.market.exchange}")
@@ -220,33 +220,41 @@ class PositionUpdateHandler implements  MessageHandler {
         p.lastUpdate = new Date()
 
         // calc age...
-        ZonedDateTime positionCreateDate = p.created.toInstant().atZone(ZoneOffset.UTC)
-        ZonedDateTime now = p.lastUpdate.toInstant().atZone(ZoneOffset.UTC)
-        def minutes = ChronoUnit.MINUTES.between(positionCreateDate, now)
-        if(minutes > 59) {
-            def hours = ChronoUnit.HOURS.between(positionCreateDate, now)
+        if(!p.closed) {
+            ZonedDateTime positionCreateDate = p.created.toInstant().atZone(ZoneOffset.UTC)
+            ZonedDateTime now = p.lastUpdate.toInstant().atZone(ZoneOffset.UTC)
+            def minutes = ChronoUnit.MINUTES.between(positionCreateDate, now)
+            if(minutes > 59) {
+                def hours = ChronoUnit.HOURS.between(positionCreateDate, now)
 
-            if(hours > 24) {
-                def days = ChronoUnit.DAYS.between(positionCreateDate, now)
-                p.setAge("$days Days")
+                if(hours > 24) {
+                    def days = ChronoUnit.DAYS.between(positionCreateDate, now)
+                    p.setAge("$days Days")
+                } else {
+                    p.setAge("$hours Hours")
+                }
             } else {
-                p.setAge("$hours Hours")
+                p.setAge("$minutes Min.")
+
             }
+
+            BigDecimal resultInPercent = calculatePositionResult(p.getBuyRate(), c.close)
+            p.setResult(resultInPercent)
+
+            if(p.minResult == null || resultInPercent < p.minResult) {
+                p.minResult = resultInPercent
+            }
+
+            if(p.maxResult == null || resultInPercent > p.maxResult) {
+                p.maxResult = resultInPercent
+            }
+
         } else {
-            p.setAge("$minutes Min.")
-
-        }
-
-        BigDecimal resultInPercent = calculatePositionResult(p.getBuyRate(), c.close)
-
-        p.setResult(resultInPercent)
-
-        if(p.minResult == null || resultInPercent < p.minResult) {
-            p.minResult = resultInPercent
-        }
-
-        if(p.maxResult == null || resultInPercent > p.maxResult) {
-            p.maxResult = resultInPercent
+            // a closed position with setting traceClosed!
+            if(p.getSellRate() != null) {
+                BigDecimal traceResultInPercent = calculatePositionResult(p.getSellRate(), c.close)
+                p.traceResult = traceResultInPercent
+            }
         }
 
         positionRepository.save(p)
@@ -295,6 +303,10 @@ class PositionUpdateHandler implements  MessageHandler {
 
         if(p.sellInPogress) {
             log.info("Skip check close position $p.id. Sell is already in pogress!")
+            return false
+        }
+
+        if(p.closed) {
             return false
         }
 

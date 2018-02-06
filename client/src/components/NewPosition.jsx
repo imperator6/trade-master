@@ -87,7 +87,7 @@ class NewPosition extends React.Component {
         </Select>
       );
 
-      let position = { settings: { buyWhen: {enabled: true, quantity: 0, minPrice: 0, maxPrice: 0 ,timeoutHours: 36} } }
+      let position = { settings: { buyWhen: {enabled: true, quantity: 0, minPrice: 0, maxPrice: 0 ,timeoutHours: 36} }, closed: true }
 
       let positionSettingsRef = null
 
@@ -100,11 +100,6 @@ class NewPosition extends React.Component {
            <br/>
            {positionSettings}
         <br/>
-        <a onClick={() => {
-          console.log(positionSettingsRef)
-          this.store.openNewPosition({...this.state, ...positionSettingsRef.wrappedInstance.state})
-      
-      }}>Create new Position</a>
       </div>
     );
   }

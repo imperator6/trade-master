@@ -90,6 +90,9 @@ class Position {
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal minResult
 
+    @Column(nullable = true, precision=25, scale=10)
+    BigDecimal traceResult
+
     boolean closed = false
 
     boolean error = false

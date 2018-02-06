@@ -8,7 +8,9 @@ import tradingmaster.db.TradeBotRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.entity.json.PositionSettings
+import tradingmaster.model.CryptoMarket
 import tradingmaster.model.RestResponse
+import tradingmaster.service.MarketWatcherService
 import tradingmaster.service.PositionService
 import tradingmaster.service.TradeBotManager
 
@@ -28,6 +30,9 @@ class PositionController {
 
     @Autowired
     PositionService positionService
+
+    @Autowired
+    MarketWatcherService marketWatcherService
 
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
@@ -101,9 +106,16 @@ class PositionController {
         log.info(settings)
         Position pos = positionService.findPositionById(botId, positionId)
 
-        if(pos != null) {
+        TradeBot bot = tradeBotManager.findBotById(botId)
+
+        if(pos != null && bot != null) {
             pos.settings = settings
             positionRepository.save(pos)
+
+            if(settings.traceClosedPosition) {
+                marketWatcherService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
+            }
+
             return new RestResponse(true)
         }
 

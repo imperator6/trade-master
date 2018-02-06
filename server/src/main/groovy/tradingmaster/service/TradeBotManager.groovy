@@ -75,7 +75,7 @@ class TradeBotManager {
                 b.addPosition(it)
             }
 
-            b.getPositions().findAll { !it.closed && !it.error }.each { Position p ->
+            b.getPositions().findAll { !it.closed || it.settings.traceClosedPosition }.each { Position p ->
                 marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange, p.market) )
             }
 
