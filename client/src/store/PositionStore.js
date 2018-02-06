@@ -411,15 +411,21 @@ class MarketWatcherStore {
       });
   };
 
-  openNewPosition = (positionSettings) => {
+  getMarket = () => {
+      return this.getSelectedBot().config.baseCurrency + "-" + this.selectedAsset
+  }
+
+  openNewPosition = (exchange, market, positionSettings) => {
     console.log(positionSettings);
 
     let url = this.rootStore.remoteApiUrl + "/position/newPosition";
 
+    positionSettings.buyWhen.enabled = true
+
     let config = {
       params: {
-        exchange: this.selectedExchange,
-        market: this.getSelectedBot().config.baseCurrency + "-" + this.selectedAsset
+        exchange: exchange,
+        market: market
       },
       ...this.rootStore.userStore.getHeaderConfig()
     };
@@ -430,7 +436,8 @@ class MarketWatcherStore {
         console.log(response);
 
         if (response.data.success) {
-          message.success("Settings saved for position " + position.market);
+          message.success("Position for market " + market + " created!");
+          this.load()
         } else {
           message.error(response.data.message);
         }

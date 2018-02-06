@@ -47,9 +47,32 @@ class PositionSettings extends React.Component {
       this.position.settings.holdPosition = false
     }
 
+    if(!this.position.settings.traceClosedPosition) {
+      this.position.settings.traceClosedPosition = false
+    }
+
+    if(!this.position.settings.pingPong) {
+      this.position.settings.pingPong = false
+    }
+
     if(!this.position.settings.buyWhen) {
       // init if not exist
       this.position.settings.buyWhen = { enabled: false, quantity: 0, minPrice: 0, maxPrice: 0, timeoutHours: 36}
+    }
+
+    if(this.position.closed) {
+      if(this.position.settings.buyWhen.quantity === 0) {
+        this.position.settings.buyWhen.quantity = this.position.amount
+      }
+
+      if(this.position.settings.buyWhen.minPrice === 0) {
+        this.position.settings.buyWhen.minPrice = this.position.sellRate
+      }
+
+      if(this.position.settings.buyWhen.maxPrice === 0) {
+        this.position.settings.buyWhen.maxPrice = this.position.sellRate
+      }
+
     }
     
     if(!this.position.settings.takeProfit) {
@@ -83,36 +106,60 @@ class PositionSettings extends React.Component {
     }
 
     this.state = {
-        ...this.position.settings
+        ...this.position.settings,
+        closed: this.position.closed,
+        market: this.position.market
     }
 
   }
 
   render() {
 
-   
-
+  
     let applyLink = null;
+    let newPositionLink = null;
+    let buyWhenForm = null;
 
     if(this.showApplySettings) {
       applyLink = (<a onClick={() => {this.store.applySettings(this.position, this.state)}}>Apply</a>)
     }
+    
+    if(this.state.closed) {
+      newPositionLink = (<div><br/>
+        <a onClick={() => {
+          let exchange = this.store.selectedExchange
+          let market = this.store.getMarket()
+          if(this.state.market) {
+             market = this.state.market
+          }
+          this.store.openNewPosition( exchange, market ,{...this.state})}}>Create new Position</a>
+        <br/></div>)
+    }
+   
 
-    let buyWhenForm = null;
-
-    if(this.state.buyWhen.enabled) {
+    if(this.state.buyWhen.enabled || this.state.closed) {
       buyWhenForm = (<div> Quantity: <InputNumber size="small"  value={this.state.buyWhen.quantity} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, quantity: newValue}})}} />  <br/>
-    Min Price: <InputNumber size="small"  value={this.state.buyWhen.minPrice} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, minPrice: newValue}})}} />  <br/>
+    Min Price: <InputNumber size="small"  value={this.state.buyWhen.minPrice} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, minPrice: newValue}})}} /> 
     Max Price: <InputNumber size="small"  value={this.state.buyWhen.maxPrice} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, maxPrice: newValue}})}} />  <br/>
-    Timeout Hours: <InputNumber size="small" min={1} max={10000} defaultValue={36} value={this.state.buyWhen.timeoutHours} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, timeoutHours: newValue}})}} />  <br/><br/></div>) 
+    Timeout Hours: <InputNumber size="small" min={1} max={10000} defaultValue={36} value={this.state.buyWhen.timeoutHours} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, timeoutHours: newValue}})}} /> 
+    
+    <br/>{newPositionLink}<br/></div>) 
     }
 
+    let traceClosedPosition = null
+    
+    if(this.state.closed) {
+      traceClosedPosition = (<div>Trace Closed Position<br/><Switch checked={this.state.traceClosedPosition} onChange={(newValue) =>{ this.setState({...this.state, traceClosedPosition: newValue})}}/></div>)
+    }
+
+
     return (<div>
-            {buyWhenForm}
+            {buyWhenForm}{traceClosedPosition}
              Hold Position:<br/>
            <Switch checked={this.state.holdPosition} onChange={(newValue) =>{ this.setState({...this.state, holdPosition: newValue})}}/>
            <br/>
-     
+           Ping Pong: <Switch checked={this.state.pingPong} onChange={(newValue) =>{ this.setState({...this.state, pingPong: newValue})}}/>
+           <br/>
             TakeProfit:<br/>
            <Switch checked={this.state.takeProfit.enabled} onChange={(newValue) =>{ this.setState({takeProfit: {...this.state.takeProfit, enabled: newValue}}) } }/>
           <InputNumber

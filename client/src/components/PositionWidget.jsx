@@ -91,7 +91,7 @@ class PositionWidget extends React.Component {
     this.store.init();
   }
 
-  formtatPercent(value) {
+  formtatPercent(value, color) {
     //color 35823fde
     // bg #dfffbe
     // border: b7eb8f
@@ -103,6 +103,11 @@ class PositionWidget extends React.Component {
       sing = "-";
       tagColor = "red";
     }
+
+    if(color) {
+      tagColor = color;
+    }
+
     return <Tag color={tagColor}>{sing + v + " %"}</Tag>;
   }
 
@@ -125,9 +130,18 @@ class PositionWidget extends React.Component {
 
   buildResultCell(record) {
     let content = [];
+
     content.push(
       <span key="result">{this.formtatPercent(record.result)}</span>
     );
+
+    if(record.settings && record.settings.traceClosedPosition) {
+      content.push(
+        <Tooltip key="traceResultTip" placement="bottom" title={"Last known Rate: " + record.lastKnowRate}>
+          <span key="traceResult">T:{this.formtatPercent(record.traceResult, "purple")}</span>
+        </Tooltip>
+      );
+    }
 
     if (!record.closed && !record.sellInPogress) {
       content.push(
@@ -145,7 +159,10 @@ class PositionWidget extends React.Component {
         </Tooltip>
       );
 
-      content.push(<Divider key="div0" type="vertical" />);
+      
+    }
+
+    content.push(<Divider key="div0" type="vertical" />);
 
       content.push(
         <Tooltip key="settingsButton" placement="bottom" title="Settings">
@@ -158,7 +175,6 @@ class PositionWidget extends React.Component {
           </Popover>
         </Tooltip>
       );
-    }
     return content;
   }
 
@@ -210,7 +226,7 @@ class PositionWidget extends React.Component {
     actionButtons.push(
       <Tooltip key="delButton" placement="bottom" title="DELETE Position">
         <Popconfirm
-          title="Are you sure to DELTE this position?"
+          title="Are you sure to DELETE this position?"
           onConfirm={() => {
             this.store.deletePosition(record);
           }}
@@ -290,7 +306,15 @@ class PositionWidget extends React.Component {
         key: "sellRate",
         dataIndex: "sellRate",
         sorter: (a, b) => a.sellRate - b.sellRate,
-        sortOrder: sortedInfo.columnKey === "sellRate" && sortedInfo.order
+        sortOrder: sortedInfo.columnKey === "sellRate" && sortedInfo.order,
+        render:  (text, record) => {
+            let value = record.sellRate  
+          if(!record.closed) {
+            value = record.lastKnowRate
+          } 
+
+          return value
+        }
       },
       {
         title: "Min",

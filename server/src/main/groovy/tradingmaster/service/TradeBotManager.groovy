@@ -75,12 +75,18 @@ class TradeBotManager {
                 b.addPosition(it)
             }
 
-            b.getPositions().findAll { !it.closed && !it.error }.each { Position p ->
+            b.getPositions().findAll { !it.closed || it.settings.traceClosedPosition }.each { Position p ->
                 marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange, p.market) )
             }
 
-            // for Dollar conversion start a market watcher for USDT
-            marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-${b.baseCurrency}"))
+
+            if(b.baseCurrency.toUpperCase().indexOf("USD") >= 0) {
+               // USDT or USD...
+            } else {
+                // for Dollar conversion start a market watcher for USDT
+                marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-${b.baseCurrency}"))
+            }
+
 
             TRADE_BOT_MAP.put( b.getId(), b )
 

@@ -64,7 +64,7 @@ class BinaceApiTest extends DefaultExchangeTest {
 
         def order3 = getExchangeAdapter().getOrder("BTC-SUB", "" +6306225).getResult()
 
-        List orders = getExchangeAdapter().getOrderHistory("ETH-BCC")
+        List orders = getExchangeAdapter().getOrderHistory("USDT-BTC")
 
         IOrder order1 = orders.first()
 

@@ -8,8 +8,6 @@ import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.binance.model.*
 import tradingmaster.model.*
-import tradingmaster.util.NumberHelper
-
 /**
  *  https://github.com/binance-exchange/binance-official-api-docs/blob/master/rest-api.md
  */
@@ -218,7 +216,7 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         try {
             BinanceTicker ticker = exchange.get("api/v3/ticker/bookTicker", params, new ParameterizedTypeReference<BinanceTicker>(){})
 
-            if(res) {
+            if(ticker) {
                 res.setSuccess(true)
                 res.setResult(ticker)
             }

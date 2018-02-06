@@ -57,6 +57,7 @@ class PositionService {
         pos.status = "wait for market"
         pos.market = market
 
+        settings.traceClosedPosition = false
         pos.settings = settings
 
         positionRepository.save(pos)
@@ -176,14 +177,28 @@ class PositionService {
                 pos.status = "open"
                 pos.signalRate = 0
                 pos.setAmount( balance.getAvailable() )
+                pos.settings.holdPosition = true
 
                 //pos.setExtbuyOrderId(newOrder.getId())
                 // TODO: Try to find a historic order!
                 pos.setBuyFee(0)
                 pos.setBuyDate(new Date())
-                pos.setBuyRate(0)
 
-                positionRepository.save(pos)
+                ExchangeResponse<ITicker> tickerExchangeResponse = exchangeAdapter.getTicker(pos.getMarket())
+
+                if(tickerExchangeResponse.success) {
+                    ITicker ticker = tickerExchangeResponse.getResult()
+
+                    pos.setBuyRate(ticker.getAsk())
+
+                    positionRepository.save(pos)
+                    bot.addPosition(pos)
+
+                    marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
+
+                } else {
+                    log.error("Can create postion for market ${pos.getMarket()}. ${tickerExchangeResponse.getMessage()}")
+                }
             }
          }
 
@@ -291,6 +306,25 @@ class PositionService {
             }
 
             tradeBotManager.syncBanlance(bot)
+
+            if(pos.settings.pingPong) {
+                // open a new position
+                PositionSettings settings = pos.settings.clone()
+
+                // we have closed a postion we want to rebuy if the price has fallen...
+                settings.buyWhen.enabled = true
+                settings.buyWhen.quantity = pos.amount
+                settings.buyWhen.minPrice = pos.sellRate * 0.9
+                settings.buyWhen.maxPrice = pos.sellRate * 0.96
+
+                settings.pingPong = true
+
+                settings.trailingStopLoss.enabled = true
+                settings.trailingStopLoss.startAt = 5
+                settings.trailingStopLoss.value = 2
+
+                newPosition(bot, pos.market, settings)
+            }
 
         } else {
             log.error("Error on Sell: ${newOrderRes.getMessage()}")
