@@ -393,7 +393,8 @@ class MarketWatcherStore {
             newExchangeList.push(exchange.name.toLowerCase());
 
             let newAssetList = exchange.markets.map(market => {
-              return market.asset;
+              //return market.asset;
+              return market.currency + '-' + market.asset
             });
 
             this.assetMap.set(exchange.name.toLowerCase(), newAssetList);
@@ -411,8 +412,27 @@ class MarketWatcherStore {
       });
   };
 
+  getChartLink = (market) => {
+    if(market == null) {
+      return "#"
+    }
+    let bot = this.getSelectedBot();
+    let chartLink = bot.config.chartLink;
+
+    if (chartLink) {
+      //let baseCurrency = bot.config.baseCurrency;
+      let split = market.split("-")
+      chartLink = chartLink.replace("$market", market);
+      chartLink = chartLink.replace("$asset", split[1]);
+      chartLink = chartLink.replace("$baseCurrency", split[0]);
+    }
+    console.log(chartLink)
+    return chartLink
+  }
+
   getMarket = () => {
-      return this.getSelectedBot().config.baseCurrency + "-" + this.selectedAsset
+      //return this.getSelectedBot().config.baseCurrency + "-" + this.selectedAsset
+      return this.selectedAsset
   }
 
   openNewPosition = (exchange, market, positionSettings) => {

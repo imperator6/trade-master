@@ -85,7 +85,23 @@ class NewPosition extends React.Component {
         >
           {assetOptions}
         </Select>
+        
       );
+
+      let chartlink = null
+      if(this.store.selectedAsset != null) {
+        chartlink = (<Tooltip
+          key="exchangeChart"
+          placement="bottom"
+          title="Open Exchange Chart"
+        >
+          <a href={this.store.getChartLink(this.store.selectedAsset)} target="_blank">
+            <Icon
+              type="line-chart"
+            />
+          </a>
+        </Tooltip> )
+      }
 
       let position = { settings: { buyWhen: {enabled: true, quantity: 0, minPrice: 0, maxPrice: 0 ,timeoutHours: 36} }, closed: true }
 
@@ -95,8 +111,8 @@ class NewPosition extends React.Component {
   
     return (<div>
            Exchange: {exchangeSelect}  <br/>
-           Asset: {assetSelect}  <br/>
-          
+           Asset: {assetSelect} 
+           {chartlink}<br/>
            <br/>
            {positionSettings}
         <br/>
