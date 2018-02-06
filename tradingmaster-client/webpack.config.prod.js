@@ -11,7 +11,7 @@ module.exports = {
   devtool: 'none',
   entry:  ["babel-polyfill", "./src/index"],
   output: {
-    path: path.join(__dirname, "../server/src/main/resources/public/js"),
+    path: path.join(__dirname, "../tradingmaster-server/src/main/resources/public/js"),
     filename: "bundle.js",
     publicPath: "/static/"
   },

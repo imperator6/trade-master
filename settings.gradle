@@ -1,2 +1,3 @@
 include 'platform-core'
-include 'server'
+include 'tradingmaster-server'
+include 'cpd-server'
