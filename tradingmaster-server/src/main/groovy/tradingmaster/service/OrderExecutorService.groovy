@@ -1,6 +1,7 @@
 package tradingmaster.service
 
 import groovy.util.logging.Commons
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.exchange.IExchangeAdapter
@@ -13,6 +14,9 @@ import tradingmaster.model.PriceLimit
 @Service
 @Commons
 class OrderExecutorService {
+
+    @Autowired
+    PushoverService pushoverService
 
     ExchangeResponse<IOrder> placeLimitOrder(TradeBot bot,
                                              IExchangeAdapter exchangeAdapter,
@@ -112,7 +116,10 @@ class OrderExecutorService {
             }
 
             if(!orderIdRes.success) {
-                log.error("Attempting to trade $market was not sucsessful: $orderIdRes.message")
+
+                String msg = "Attempting to trade $market was not sucsessful: $orderIdRes.message"
+                pushoverService.send(bot, "Trade Error $market", msg)
+                log.error(msg)
                 orderResponse.success = false
                 orderResponse.message = orderIdRes.message
                 return orderResponse
@@ -135,10 +142,15 @@ class OrderExecutorService {
             orderResponse.setResult(order)
             orderResponse.setSuccess(true)
 
+            String msg = "quantity: ${order.quantity} price: ${order.pricePerUnit}"
+            pushoverService.send(bot, "$bs $market", msg)
+
         } catch (Exception e) {
             log.fatal("Error while placing order", e )
             orderResponse.success = false
-            orderResponse.message = "Exception: ${e.getMessage()}"
+            orderResponse.message = "Error while placing order ${e.getMessage()}"
+
+            pushoverService.send(bot, "Trade Error $market", orderResponse.message)
             e.printStackTrace()
         }
 

@@ -26,7 +26,7 @@ import static org.springframework.http.HttpMethod.GET;
 @Component
 public abstract class DefaultRestService implements IRestService {
 
-    static Logger log = Logger.getLogger(DefaultRestService.class.getName());
+    public static Logger log = Logger.getLogger(DefaultRestService.class.getName());
 
     protected String publicKey;
     protected String secret;
