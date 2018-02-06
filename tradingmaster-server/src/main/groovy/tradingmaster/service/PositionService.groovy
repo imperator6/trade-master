@@ -314,7 +314,7 @@ class PositionService {
                 // we have closed a postion we want to rebuy if the price has fallen...
                 settings.buyWhen.enabled = true
 
-                def earnings = pos.sellRate * pos.sellRate // - fee?
+                def earnings = pos.amount * pos.sellRate // - fee?
 
                 settings.buyWhen.minPrice = pos.sellRate * 0.9
                 settings.buyWhen.maxPrice = pos.sellRate * 0.96
