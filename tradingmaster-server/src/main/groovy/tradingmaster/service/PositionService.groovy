@@ -318,8 +318,8 @@ class PositionService {
 
                 settings.buyWhen.minPrice = pos.sellRate * 0.9
                 settings.buyWhen.maxPrice = pos.sellRate * 0.96
-
-                settings.buyWhen.quantity = earnings / settings.buyWhen.maxPrice
+                settings.buyWhen.quantity = 0
+                settings.buyWhen.spend = earnings
 
                 settings.pingPong = true
 

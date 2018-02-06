@@ -57,7 +57,7 @@ class PositionSettings extends React.Component {
 
     if(!this.position.settings.buyWhen) {
       // init if not exist
-      this.position.settings.buyWhen = { enabled: false, quantity: 0, minPrice: 0, maxPrice: 0, timeoutHours: 36}
+      this.position.settings.buyWhen = { enabled: false, quantity: 0, spend: 0, minPrice: 0, maxPrice: 0, timeoutHours: 36}
     }
 
     if(this.position.closed) {
@@ -138,7 +138,7 @@ class PositionSettings extends React.Component {
    
 
     if(this.state.buyWhen.enabled || this.state.closed) {
-      buyWhenForm = (<div> Quantity: <InputNumber size="small"  value={this.state.buyWhen.quantity} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, quantity: newValue}})}} />  <br/>
+      buyWhenForm = (<div>Spend: <InputNumber size="small"  value={this.state.buyWhen.spend} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, spend: newValue}})}} /> Quantity: <InputNumber size="small"  value={this.state.buyWhen.quantity} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, quantity: newValue}})}} />  <br/>
     Min Price: <InputNumber size="small"  value={this.state.buyWhen.minPrice} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, minPrice: newValue}})}} /> 
     Max Price: <InputNumber size="small"  value={this.state.buyWhen.maxPrice} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, maxPrice: newValue}})}} />  <br/>
     Timeout Hours: <InputNumber size="small" min={1} max={10000} defaultValue={36} value={this.state.buyWhen.timeoutHours} onChange={(newValue) => { this.setState({buyWhen: {...this.state.buyWhen, timeoutHours: newValue}})}} /> 

@@ -448,12 +448,17 @@ class PositionUpdateHandler implements  MessageHandler {
 
         def task = {
             // calc balance....
-            def balanceToSpend = 0
+            def balanceToSpend
 
-            if(p.settings.buyWhen.quantity <= 0.0) {
-                balanceToSpend = tradeBotManager.calcBalanceForNextTrade(bot)
-            } else {
+            if(p.settings.buyWhen.spend > 0) {
+                balanceToSpend = p.settings.buyWhen.spend
+                log.info("Open a new position using 'buyWhen.spend'. balanceToSpend: ${balanceToSpend}")
+            } else if (p.settings.buyWhen.quantity > 0) {
                 balanceToSpend = p.settings.buyWhen.quantity * c.close
+                log.info("Open a new position using 'buyWhen.quantity'. balanceToSpend: ${balanceToSpend}")
+            } else {
+                balanceToSpend = tradeBotManager.calcBalanceForNextTrade(bot)
+                log.info("Open a new position using 'tradeBotManager'. balanceToSpend: ${balanceToSpend}")
             }
 
             positionService.openPosition(bot, p, balanceToSpend , c.close)

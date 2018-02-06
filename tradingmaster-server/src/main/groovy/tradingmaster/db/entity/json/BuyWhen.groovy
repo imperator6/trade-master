@@ -11,6 +11,8 @@ class BuyWhen {
 
     BigDecimal quantity = 0
 
+    BigDecimal spend = 0
+
     BigDecimal minPrice = 0
 
     BigDecimal maxPrice = 0
