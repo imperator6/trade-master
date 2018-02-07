@@ -16,6 +16,8 @@ dependencies {
     compile project(':platform-core')
 
 
+    compile 'org.springframework.kafka:spring-kafka:2.1.2.RELEASE'
+
     /*
     compile 'org.codehaus.groovy:groovy-all:2.4.12'
     compile "org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}"
