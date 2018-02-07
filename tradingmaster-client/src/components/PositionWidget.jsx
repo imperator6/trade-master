@@ -181,28 +181,16 @@ class PositionWidget extends React.Component {
   buildPositionActions(record) {
     let actionButtons = [];
     let bot = this.store.getSelectedBot();
-    let chartLink = this.store.botMap.get(this.store.selectedBot).config
-      .chartLink;
-
-    if (chartLink) {
-      let baseCurrency = bot.config.baseCurrency;
-      let asset = record.market.replace("-", "").replace(baseCurrency, "");
-
-      chartLink = chartLink.replace("$market", record.market);
-      chartLink = chartLink.replace("$asset", asset);
-      chartLink = chartLink.replace("$baseCurrency", baseCurrency);
-    }
-
+   
     actionButtons.push(
       <Tooltip
         key="exchangeChart"
         placement="bottom"
         title="Open Exchange Chart"
       >
-        <a href={chartLink} target="_blank">
+        <a href={this.store.getChartLink(record.market)} target="_blank">
           <Icon
             type="line-chart"
-            onClick={() => this.store.loadToChart(record)}
           />
         </a>
       </Tooltip>
