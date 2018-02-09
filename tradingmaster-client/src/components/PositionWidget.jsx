@@ -42,6 +42,7 @@ class PositionWidget extends React.Component {
     };
 
     this.store = this.props.rootStore.positionStore;
+    this.settingsStore = this.props.rootStore.positionSettingsStore;
   }
 
   clearFilters = () => {
@@ -169,6 +170,7 @@ class PositionWidget extends React.Component {
           <Popover
             title={record.market}
             content={<PositionSettings position={record}  showApplySettings={true}/>}
+            onClick={() => {this.settingsStore.selectPosition(record)}}
             trigger="click"
           >
             <Icon type="setting" />
@@ -456,7 +458,8 @@ class PositionWidget extends React.Component {
               title="Open new Position"
               content={<NewPosition  />}
               trigger="click">
-              <Button size="small" icon="plus" type="primary" onClick={() => { this.setState({...this.state, newPositionFormVisible: !this.state.newPositionFormVisible}) }} />
+              <Button size="small" icon="plus" type="primary" onClick={() => { 
+                this.setState({...this.state, newPositionFormVisible: !this.state.newPositionFormVisible}) }} />
             </Popover>
           </Tooltip>
           <Divider type="vertical" />

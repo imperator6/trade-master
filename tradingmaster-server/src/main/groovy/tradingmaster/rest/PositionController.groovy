@@ -8,7 +8,10 @@ import tradingmaster.db.TradeBotRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.entity.json.PositionSettings
+import tradingmaster.exchange.ExchangeService
+import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.CryptoMarket
+import tradingmaster.model.ITicker
 import tradingmaster.model.RestResponse
 import tradingmaster.service.MarketWatcherService
 import tradingmaster.service.PositionService
@@ -33,6 +36,9 @@ class PositionController {
 
     @Autowired
     MarketWatcherService marketWatcherService
+
+    @Autowired
+    ExchangeService exchangeService
 
 
     @RequestMapping(value = "/list", method = RequestMethod.GET)
@@ -140,6 +146,21 @@ class PositionController {
 
         } catch(Exception e) {
             log.error(e)
+            return new RestResponse(false, e.getMessage())
+        }
+    }
+
+    @RequestMapping(value = "/ticker", method = RequestMethod.GET)
+    RestResponse<ITicker> getTicker(@RequestParam String exchangeName, @RequestParam String market) {
+
+        try
+        {
+            IExchangeAdapter exchange = exchangeService.getExchangyByName(exchangeName)
+            ITicker ticker = exchange.getTicker(market).getResult()
+
+            return new RestResponse(ticker)
+
+        } catch(Exception e) {
             return new RestResponse(false, e.getMessage())
         }
     }

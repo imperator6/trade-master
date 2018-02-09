@@ -34,11 +34,9 @@ class NewPosition extends React.Component {
   constructor(props) {
     super(props);
     this.store = this.props.rootStore.positionStore;
+    this.settingsStore = this.props.rootStore.positionSettingsStore;
 
-    this.state = {
-
-    }
-
+    this.positionSettingsRef = null
   }
 
   componentDidMount() {
@@ -80,7 +78,18 @@ class NewPosition extends React.Component {
           optionFilterProp="children"
           value={this.store.selectedAsset}
           style={{ width: 130 }}
-          onChange={(newMarket) => { this.store.selectedAsset = newMarket}}
+          onChange={(newMarket) => { 
+            this.store.selectedAsset = newMarket 
+
+            let onTicker = (ticker) => {
+              this.settingsStore.buyWhen.minPrice = ticker.bidPrice
+              this.settingsStore.buyWhen.maxPrice = ticker.askPrice
+            }
+            
+            // load ticker
+            this.store.loadTicker(this.store.selectedExchange , newMarket, onTicker)
+
+          }}
           filterOption={(input, option) => option.props.children.toLowerCase().indexOf(input.toLowerCase()) >= 0}
         >
           {assetOptions}
@@ -103,11 +112,7 @@ class NewPosition extends React.Component {
         </Tooltip> )
       }
 
-      let position = { settings: { buyWhen: {enabled: true, quantity: 0, minPrice: 0, maxPrice: 0 ,timeoutHours: 36} }, closed: true }
-
-      let positionSettingsRef = null
-
-      let positionSettings = (<PositionSettings ref={(r) => {positionSettingsRef=r }} position={position}  showApplySettings={false}/>)
+      let positionSettings = (<PositionSettings ref={(r) => {this.positionSettingsRef=r }}  showApplySettings={false}/>)
   
     return (<div>
            Exchange: {exchangeSelect}  <br/>

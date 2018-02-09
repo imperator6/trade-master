@@ -1,5 +1,12 @@
 package com.rwe.cpd.config;
 
+import org.ektorp.CouchDbConnector;
+import org.ektorp.CouchDbInstance;
+import org.ektorp.http.HttpClient;
+import org.ektorp.http.StdHttpClient;
+import org.ektorp.impl.StdCouchDbConnector;
+import org.ektorp.impl.StdCouchDbInstance;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
@@ -25,6 +32,19 @@ public class CpdConfig {
         return MessageChannels.publishSubscribe().get();
     }
 
+    @Bean
+    CouchDbConnector orderBookStorage(@Value("${couchDB.host}") String host,
+                                   @Value("${couchDB.port}") Integer port,
+                                   @Value("${couchDB.user}") String user,@Value("${couchDB.password}") String password) throws Exception {
 
 
+        HttpClient httpClient = new StdHttpClient.Builder()
+                .url("http://"+ host + ":" + port)
+                .username(user)
+                .password(password)
+                .build();
+        CouchDbInstance dbInstance = new StdCouchDbInstance(httpClient);
+        CouchDbConnector client = new StdCouchDbConnector("cpd_orderbook", dbInstance);
+        return client;
+    }
 }

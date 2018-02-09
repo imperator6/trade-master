@@ -19,8 +19,6 @@ class MarketWatcherStore {
   @observable currentBalance = 0;
   @observable totalBaseCurrencyValue = 0;
 
-
-
   @observable fxDollar = 0;
   @observable startBalanceDollar = 0;
   @observable currentBalanceDollar = 0;
@@ -42,6 +40,8 @@ class MarketWatcherStore {
 
   @observable selectedAsset;
 
+  @observable selectedPosition;
+
   constructor(rootStore) {
     this.log.debug("New MarketWatcherStore!");
     this.rootStore = rootStore;
@@ -57,6 +57,80 @@ class MarketWatcherStore {
     
     this.loadBotList(cb);
   };
+
+  selectPosition = (pos) => {
+
+    let bot = this.getSelectedBot()
+
+    if(!pos.settings)
+      pos.settings = {}
+
+    if(!pos.settings.holdPosition) {
+      pos.settings.holdPosition = false
+    }
+
+    if(!pos.settings.traceClosedPosition) {
+      pos.settings.traceClosedPosition = false
+    }
+
+    if(!pos.settings.pingPong) {
+      pos.settings.pingPong = false
+    }
+
+    if(!pos.settings.buyWhen) {
+      // init if not exist
+      pos.settings.buyWhen = { enabled: false, quantity: 0, spend: 0, minPrice: 0, maxPrice: 0, timeoutHours: 36}
+    }
+
+    if(pos.closed) {
+      if(pos.settings.buyWhen.quantity === 0) {
+        pos.settings.buyWhen.quantity = pos.amount
+      }
+
+      if(pos.settings.buyWhen.minPrice === 0) {
+        pos.settings.buyWhen.minPrice = pos.sellRate
+      }
+
+      if(pos.settings.buyWhen.maxPrice === 0) {
+        pos.settings.buyWhen.maxPrice = pos.sellRate
+      }
+
+    }
+    
+    if(!pos.settings.takeProfit) {
+       // init if not exist
+        pos.settings.takeProfit = {enabled: false, value: 20}
+    }
+
+    if(pos.settings.takeProfit && !pos.settings.takeProfit.enabled) {
+       // overwrite with bot settings 
+      pos.settings.takeProfit = {enabled: false, value: bot.config.takeProfit.value}
+  }
+
+    if(!pos.settings.stopLoss) {
+      // init if not exsist
+      pos.settings.stopLoss = {enabled: false, value: -10}
+    }
+
+    if(pos.settings.stopLoss && !pos.settings.stopLoss.enabled) {
+       // overwrite with bot settings 
+      pos.settings.stopLoss = {enabled: false, value: bot.config.stopLoss.value }
+    }
+
+    if(!pos.settings.trailingStopLoss) {
+      // init if not exsist
+      pos.settings.trailingStopLoss = {enabled: false, value: 5, startAt: 20, keepAtLeastForHours: 0}
+    }
+
+    if(pos.settings.trailingStopLoss && !pos.settings.trailingStopLoss.enabled) {
+      // overwrite with bot settings 
+      pos.settings.trailingStopLoss = {enabled: false, value: bot.config.trailingStopLoss.value, startAt: bot.config.trailingStopLoss.startAt, keepAtLeastForHours: bot.config.trailingStopLoss.keepAtLeastForHours}
+    }
+
+
+
+    this.selectedPosition = pos
+  } 
 
   loadBotList = (callback) => {
     let url = this.rootStore.remoteApiUrl + "/bot/";
@@ -426,7 +500,6 @@ class MarketWatcherStore {
       chartLink = chartLink.replace("$asset", split[1]);
       chartLink = chartLink.replace("$baseCurrency", split[0]);
     }
-    console.log(chartLink)
     return chartLink
   }
 
@@ -460,6 +533,36 @@ class MarketWatcherStore {
           this.load()
         } else {
           message.error(response.data.message);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
+  loadTicker = (exchange, market, callback) => {
+    let url = this.rootStore.remoteApiUrl + "/position/ticker";
+
+    let config = {
+      params: {
+        exchangeName: exchange,
+        market: market
+      },
+      ...this.rootStore.userStore.getHeaderConfig()
+    };
+
+    axios
+      .get(url, config)
+      .then(response => {
+        if (response.data.success) {
+        
+          if(callback) {
+             callback(response.data.data)
+          }
+  
+        } else {
+          // error
+          console.info(response.data.message);
         }
       })
       .catch(function(error) {

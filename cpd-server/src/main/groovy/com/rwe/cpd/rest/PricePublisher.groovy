@@ -1,5 +1,6 @@
 package com.rwe.cpd.rest
 
+import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationListener
 import org.springframework.integration.channel.PublishSubscribeChannel
@@ -8,12 +9,10 @@ import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
 import org.springframework.messaging.core.MessageSendingOperations
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent
-import org.springframework.stereotype.Controller
 
-import javax.annotation.PostConstruct
 import java.util.concurrent.atomic.AtomicBoolean
 
-@Controller
+@Commons
 class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, MessageHandler {
 
     AtomicBoolean brokerAvailable = new AtomicBoolean()
@@ -29,10 +28,10 @@ class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, Me
         this.messagingTemplate = messagingTemplate
     }
 
-    @PostConstruct
+   /* @PostConstruct
     init() {
         priceChannel.subscribe(this)
-    }
+    } */
 
     @Override
     void onApplicationEvent(BrokerAvailabilityEvent event) {
@@ -42,9 +41,9 @@ class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, Me
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
 
+        log.info(message.getPayload())
 
-
-        messagingTemplate.convertAndSend("/topic/price".toString() , c)
+        messagingTemplate.convertAndSend("/topic/price".toString() , "Hello")
     }
 
 }
