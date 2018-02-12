@@ -56,9 +56,10 @@ class MarketWatcherStore {
     }
     
     this.loadBotList(cb);
+    this.loadExchanges();
   };
 
-  selectPosition = (pos) => {
+  /*selectPosition = (pos) => {
 
     let bot = this.getSelectedBot()
 
@@ -130,7 +131,7 @@ class MarketWatcherStore {
 
 
     this.selectedPosition = pos
-  } 
+  } */
 
   loadBotList = (callback) => {
     let url = this.rootStore.remoteApiUrl + "/bot/";
@@ -182,12 +183,12 @@ class MarketWatcherStore {
       this.currentBalance = this.botMap.get(botId).currentBalance;
       this.startBalance = bot.startBalance;
 
-      this.fxDollar = bot.fxDollar;
-      this.startBalanceDollar = bot.startBalanceDollar;
-      this.currentBalanceDollar = bot.currentBalanceDollar;
-      this.totalBalanceDollar = bot.totalBalanceDollar;
-      this.totalBaseCurrencyValue = bot.totalBaseCurrencyValue
-      this.totalBotResult = bot.result;
+      this.fxDollar = bot.fxDollar
+      this.startBalanceDollar = bot.startBalanceDollar || 0
+      this.currentBalanceDollar = bot.currentBalanceDollar || 0
+      this.totalBalanceDollar = bot.totalBalanceDollar || 0
+      this.totalBaseCurrencyValue = bot.totalBaseCurrencyValue || 0
+      this.totalBotResult = bot.result || 0
 
       this.selectedExchange = bot.exchange
 
@@ -454,6 +455,8 @@ class MarketWatcherStore {
   loadExchanges = () => {
     let url = this.rootStore.remoteApiUrl + "/exchange/";
 
+    console.log("position store: loading exchanges")
+
     axios
       .get(url, this.rootStore.userStore.getHeaderConfig())
       .then(response => {
@@ -486,6 +489,18 @@ class MarketWatcherStore {
       });
   };
 
+  getAssetList = () => {
+    if(this.selectedExchange != null) {
+      let assetList = this.assetMap.get(this.selectedExchange.toLowerCase())
+      console.log(this.assetMap)
+      console.log(assetList)
+      return assetList
+    }
+
+    return []
+
+  }
+
   getChartLink = (market) => {
     if(market == null) {
       return "#"
@@ -517,7 +532,7 @@ class MarketWatcherStore {
 
     let config = {
       params: {
-        exchange: exchange,
+        botId: this.getSelectedBot().id,
         market: market
       },
       ...this.rootStore.userStore.getHeaderConfig()

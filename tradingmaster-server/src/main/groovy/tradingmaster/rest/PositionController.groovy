@@ -129,13 +129,13 @@ class PositionController {
     }
 
     @RequestMapping(value = "/newPosition", method = RequestMethod.POST)
-    RestResponse<Position> newPosition(@RequestParam String exchange, @RequestParam String market, @RequestBody PositionSettings settings) {
+    RestResponse<Position> newPosition(@RequestParam Integer botId, @RequestParam String market, @RequestBody PositionSettings settings) {
 
-        log.info("New position: $exchange $market $settings")
+        log.info("New position: $botId $market $settings")
         // find bot.
-        TradeBot bot = tradeBotManager.findBotByExchange( exchange )
+        TradeBot bot = tradeBotManager.findBotById(botId)
         if(bot == null) {
-            return new RestResponse(false, "No active tradebot for exchange $exchange")
+            return new RestResponse(false, "No active tradebot for id $botId")
         }
 
         try
@@ -158,7 +158,11 @@ class PositionController {
             IExchangeAdapter exchange = exchangeService.getExchangyByName(exchangeName)
             ITicker ticker = exchange.getTicker(market).getResult()
 
-            return new RestResponse(ticker)
+            Map res = [:]
+            res.put("bidPrice", ticker.getBid())
+            res.put("askPrice", ticker.getAsk())
+
+            return new RestResponse(res)
 
         } catch(Exception e) {
             return new RestResponse(false, e.getMessage())

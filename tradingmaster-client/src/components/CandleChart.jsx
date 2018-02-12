@@ -75,10 +75,12 @@ class CandleChart extends React.Component {
   }
 
   updateChart = data => {
-    let chart = this.refs.chart.getChart();
+    if(this.refs.chart) {
+      let chart = this.refs.chart.getChart();
 
-    if (this.store.loaded) {
-      chart.series[0].addPoint(data, true, true);
+      if (this.store.loaded) {
+        chart.series[0].addPoint(data, true, true);
+      }
     }
   };
 

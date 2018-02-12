@@ -10,6 +10,32 @@ import { message } from "antd";
 class PositionSettingsStore {
   log = logger.getLogger("PositionSettingsStore");
 
+  DEFAULT_NEW_POSITION = {
+      settings: {
+        holdPosition: false,
+        traceClosedPosition: false,
+        pingPong: false,
+         buyWhen: {
+          enabled: false,
+          quantity: 0,
+          spend: 0,
+          minPrice: 0,
+          maxPrice: 0,
+          timeoutHours: 36
+        },
+        takeProfit: { enabled: false, value: 50 },
+        stopLoss: { enabled: false, value: -10 },
+        trailingStopLoss:  {
+          enabled: false,
+          value: 5,
+          startAt: 20,
+          keepAtLeastForHours: 0
+        }
+      },
+      closed: true
+      
+  }
+
   @observable
   settings = {
     holdPosition: false,
@@ -53,6 +79,19 @@ class PositionSettingsStore {
       stopLoss: { ...this.stopLoss },
       trailingStopLoss: { ...this.trailingStopLoss }
     };
+  }
+ 
+  @action
+  updateSpend = (percent) => {
+    let bot = this.rootStore.positionStore.getSelectedBot()
+    this.buyWhen.spend = bot.currentBalance * percent 
+  }
+
+  @computed get spendInDollar() {
+   
+    let bot = this.rootStore.positionStore.getSelectedBot()
+
+    return (bot.fxDollar * this.buyWhen.spend).toFixed(2) 
   }
 
   selectPosition = pos => {

@@ -131,7 +131,7 @@ class OrderExecutorService {
 
             Thread.sleep(60000) // Wait a minute than check
 
-            IOrder order = checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
+            IOrder order = checkOrderIfExecuted(bot, orderId, market, exchangeAdapter, 1)
 
             if(order == null) {
                 tryCount++
@@ -158,7 +158,7 @@ class OrderExecutorService {
     }
 
 
-    IOrder checkOrderIfExecuted(TradeBot bot, String orderId, String market, IExchangeAdapter exchangeAdapter) {
+    IOrder checkOrderIfExecuted(TradeBot bot, String orderId, String market, IExchangeAdapter exchangeAdapter, Integer count) {
 
         try {
             if(orderId == null) {
@@ -166,6 +166,11 @@ class OrderExecutorService {
             }
 
             Thread.sleep(1000)
+            count++
+
+            if(count > 2) {
+                Thread.sleep(count * 10000)
+            }
 
             ExchangeResponse<IOrder> orderRes = exchangeAdapter.getOrder(market, orderId)
 
@@ -186,11 +191,20 @@ class OrderExecutorService {
                     return null
                 } else {
                     log.info("Cancel process of order $market was not sucsesfull! Let's check again!")
-                    return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
+                    return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter, count)
                 }
             } else if (order.getQuantityRemaining() > 0.0) {
+
+                if(count > 30) {
+                    // We need cancel the order ....
+                    if(exchangeAdapter.cancelOrder(market, orderId)) {
+                        log.info("Order $market has been canceld with remaining quantity ${order.getQuantityRemaining()}")
+                        return order
+                    }
+                }
+
                 log.info("Order $market has a remaining quantity! Wait till order is fullfilled id: $orderId")
-                return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
+                return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter, count)
 
             } else if (order.getQuantityRemaining() == 0.0) {
 
@@ -202,7 +216,7 @@ class OrderExecutorService {
 
         } catch(Exception e) {
             log.error("Error while checking order $market id: $orderId", e)
-            return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter)
+            return checkOrderIfExecuted(bot, orderId, market, exchangeAdapter, count)
         }
     }
 

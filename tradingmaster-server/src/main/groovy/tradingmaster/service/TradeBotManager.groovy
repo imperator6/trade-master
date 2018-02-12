@@ -75,7 +75,7 @@ class TradeBotManager {
                 b.addPosition(it)
             }
 
-            b.getPositions().findAll { !it.closed || it.settings.traceClosedPosition }.each { Position p ->
+            b.getPositions().findAll { !it.closed || (it.settings && it.settings.traceClosedPosition) }.each { Position p ->
                 marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange, p.market) )
             }
 
@@ -174,8 +174,18 @@ class TradeBotManager {
 
             if(b.getPositions().findAll { !it.closed }.size() < b.config.maxOpenPositions) {
 
-                // check forbiddenAssets
-                if( b.config.forbiddenAssets) {
+                // check allowed
+                if( b.config.allowedAssets) {
+                    List<String> allowedAssets = b.config.allowedAssets
+
+                    if(allowedAssets.find{ it.equalsIgnoreCase(s.asset) }) {
+                        log.info("Asset $s.asset is allowed for Bot ${b.getId()}")
+                        valid = true
+                    } else {
+                        log.info("Asset $s.asset is NOT allowed for Bot ${b.getId()}")
+                        valid = false
+                    }
+                } else if ( b.config.forbiddenAssets) {
 
                     List<String> forbiddenAssets = b.config.forbiddenAssets
 

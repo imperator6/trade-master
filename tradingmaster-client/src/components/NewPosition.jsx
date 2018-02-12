@@ -40,7 +40,7 @@ class NewPosition extends React.Component {
   }
 
   componentDidMount() {
-    this.store.loadExchanges();
+    //this.store.loadExchanges();
   }
 
   render() {
@@ -64,10 +64,9 @@ class NewPosition extends React.Component {
     );
 
     let assetOptions = null;
-      if (this.store.assetMap.get(this.store.selectedExchange)) {
-        assetOptions = this.store.assetMap
-          .get(this.store.selectedExchange)
-          .map(a => <Option key={a}>{a}</Option>);
+    let assetList = this.store.getAssetList()
+      if (assetList) {
+        assetOptions = assetList.map(a => <Option key={a}>{a}</Option>);
       }
 
       let assetSelect = (
@@ -115,10 +114,7 @@ class NewPosition extends React.Component {
       let positionSettings = (<PositionSettings ref={(r) => {this.positionSettingsRef=r }}  showApplySettings={false}/>)
   
     return (<div>
-           Exchange: {exchangeSelect}  <br/>
-           Asset: {assetSelect} 
-           {chartlink}<br/>
-           <br/>
+           Asset: {assetSelect} {chartlink}<br/>
            {positionSettings}
         <br/>
       </div>

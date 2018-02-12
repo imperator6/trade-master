@@ -53,6 +53,7 @@
   "dependencies": {
     "accounting": "^0.4.1",
     "antd": "^3.1.4",
+    "antd-mobile": "^2.1.6",
     "axios": "^0.17.1",
     "babel-polyfill": "^6.26.0",
     "base-64": "^0.1.0",
@@ -68,6 +69,7 @@
     "react-ace": "^5.8.0",
     "react-dom": "^16.0.0",
     "react-highcharts": "^15.0.0",
+    "react-media": "^1.8.0",
     "react-router-dom": "^4.2.2",
     "sockjs-client": "^1.1.4",
     "stompjs": "^2.3.3",

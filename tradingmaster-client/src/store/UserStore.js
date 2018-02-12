@@ -1,6 +1,7 @@
 import { observable, computed, action } from "mobx";
 import moment from "moment";
 var _ = require("lodash");
+import { browserHistory } from 'react-router'
 
 import axios from "axios";
 import base64 from "base-64";

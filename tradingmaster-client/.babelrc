@@ -5,5 +5,6 @@
     "stage-1"
   ],
   "plugins": ["transform-decorators-legacy", /* should always be the first plugin! */
-      ["import", { "libraryName": "antd", "style": "css" }]]
+      ["import", { "libraryName": "antd", "style": "css" }], 
+      ["import", { "libraryName": "antd-mobile", "style": "css" }]]
 }

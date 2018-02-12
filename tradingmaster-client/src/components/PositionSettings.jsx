@@ -26,6 +26,7 @@ import {
 } from "antd";
 const Option = Select.Option;
 const TabPane = Tabs.TabPane;
+const ButtonGroup = Button.Group;
 
 @inject("rootStore")
 @observer
@@ -64,7 +65,19 @@ class PositionSettings extends React.Component {
    
 
     if(this.settingsStore.buyWhen.enabled || this.settingsStore.selectedPosition.closed) {
-      buyWhenForm = (<div>Spend: <InputNumber size="small"  value={this.settingsStore.buyWhen.spend} onChange={(newValue) => { this.settingsStore.buyWhen.spend = newValue} } /> Quantity: <InputNumber size="small"  value={this.settingsStore.buyWhen.quantity} onChange={(newValue) => { this.settingsStore.buyWhen.quantity = newValue}} />  <br/>
+      buyWhenForm = (<div>
+        Spend:  <ButtonGroup>
+          <Button size="small" onClick={() => this.settingsStore.updateSpend(0.02)}>2%</Button>
+          <Button size="small" onClick={() => this.settingsStore.updateSpend(0.05)}>5%</Button>
+          <Button size="small" onClick={() => this.settingsStore.updateSpend(0.1)}>10%</Button>
+          <Button size="small" onClick={() => this.settingsStore.updateSpend(0.25)}>25%</Button>
+          <Button size="small" onClick={() => this.settingsStore.updateSpend(0.5)}>50%</Button>
+          <Button size="small" onClick={() => this.settingsStore.updateSpend(1)}>100%</Button>
+
+        </ButtonGroup>
+        <br/> 
+       <InputNumber size="small"  value={this.settingsStore.buyWhen.spend} onChange={(newValue) => { this.settingsStore.buyWhen.spend = newValue} } /> ${this.settingsStore.spendInDollar}
+       <span> </span> Quantity: <InputNumber size="small"  value={this.settingsStore.buyWhen.quantity} onChange={(newValue) => { this.settingsStore.buyWhen.quantity = newValue}} />  <br/>
     Min Price: <InputNumber size="small"  value={this.settingsStore.buyWhen.minPrice} onChange={(newValue) => { this.settingsStore.buyWhen.minPrice = newValue }} /> 
     Max Price: <InputNumber size="small"  value={this.settingsStore.buyWhen.maxPrice} onChange={(newValue) => { this.settingsStore.buyWhen.maxPrice = newValue }} />  <br/>
     Timeout Hours: <InputNumber size="small" min={1} max={10000} defaultValue={36} value={this.settingsStore.buyWhen.timeoutHours} onChange={(newValue) => { this.settingsStore.buyWhen.timeoutHours = newValue  }} /> 

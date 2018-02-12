@@ -24,6 +24,7 @@ import {
   Input
 } from "antd";
 const Option = Select.Option;
+const ButtonGroup = Button.Group;
 
 @inject("rootStore")
 @observer
@@ -32,7 +33,7 @@ class PositionWidget extends React.Component {
     super(props);
 
     this.state = {
-      filteredInfo: {},
+      filteredInfo: { closed: ["o"] },
       sortedInfo: {
         order: "descend",
         columnKey: "created"
@@ -117,6 +118,19 @@ class PositionWidget extends React.Component {
     return moment(value).format("DD.MM.YY HH:mm");
   }
 
+  formatValue(value, decimals, satoshis) {
+    if (value == null) return 0;
+
+    if(value >= 1) {
+      if(decimals) return value.toFixed(decimals)
+      return value.toFixed(2)
+     } else {
+      if(satoshis) return value.toFixed(satoshis)
+      return value.toFixed(6)
+     }
+    
+  }
+
   showPositionDates(record) {
     return (
       <span>
@@ -159,8 +173,6 @@ class PositionWidget extends React.Component {
           </Popconfirm>
         </Tooltip>
       );
-
-      
     }
 
     content.push(<Divider key="div0" type="vertical" />);
@@ -231,6 +243,22 @@ class PositionWidget extends React.Component {
     return <span key="buttons">{actionButtons}</span>;
   }
 
+  buildRate = (body, record, value) => {
+
+    let bot = this.store.getSelectedBot();
+    let valueBaseCurrency = value * record.amount
+    let dollarPrice = bot.fxDollar * valueBaseCurrency 
+
+    let tooltipTitle = (<div>
+          {bot.baseCurrency + ':' + valueBaseCurrency.toFixed(8) } <br/>
+          {'$' + ':' + dollarPrice.toFixed(2) }
+       </div>)
+
+    return (<Tooltip placement="bottom" title={tooltipTitle}>
+      {body}
+      </Tooltip>)
+  }
+
   render() {
     let { sortedInfo, filteredInfo } = this.state;
     sortedInfo = sortedInfo || {};
@@ -289,7 +317,10 @@ class PositionWidget extends React.Component {
         dataIndex: "buyRate",
         key: "buyRate",
         sorter: (a, b) => a.buyRate - b.buyRate,
-        sortOrder: sortedInfo.columnKey === "buyRate" && sortedInfo.order
+        sortOrder: sortedInfo.columnKey === "buyRate" && sortedInfo.order,
+        render: (text, record) => {
+            return this.buildRate(text,record, record.buyRate)
+        }
       },
       {
         title: "Sell Rate",
@@ -303,7 +334,7 @@ class PositionWidget extends React.Component {
             value = record.lastKnowRate
           } 
 
-          return value
+          return this.buildRate(value, record, value)
         }
       },
       {
@@ -452,6 +483,7 @@ class PositionWidget extends React.Component {
             />
           </Tooltip>
           <Divider type="vertical" />
+         
           <Tooltip placement="left" title="Open a new Position">
             <Popover
             visible={this.state.newPositionFormVisible}
@@ -459,42 +491,58 @@ class PositionWidget extends React.Component {
               content={<NewPosition  />}
               trigger="click">
               <Button size="small" icon="plus" type="primary" onClick={() => { 
+                this.settingsStore.selectPosition(this.settingsStore.DEFAULT_NEW_POSITION)
                 this.setState({...this.state, newPositionFormVisible: !this.state.newPositionFormVisible}) }} />
             </Popover>
           </Tooltip>
           <Divider type="vertical" />
+          <ButtonGroup>
           <Button size="small" onClick={this.setFilterOpen}>
             open
           </Button>
-          <Divider type="vertical" />
           <Button size="small" onClick={this.setFilterClosed}>
             closed
           </Button>
-          <Divider type="vertical" />
           <Button size="small" onClick={this.clearFilters}>
             all
           </Button>
+          </ButtonGroup>
           <Divider type="vertical" />
           <Tooltip
             title={
-              "Bot has started with this amount of " + this.store.baseCurrency
+              this.store.baseCurrency + "/USD"
+            }
+          >
+            <Tag color="gold">
+              {this.formatValue(this.store.fxDollar)}
+            </Tag>
+          </Tooltip>
+          <Tooltip
+            title={
+              "Start Balance: Bot has started with this amount of " + this.store.baseCurrency
             }
           >
             <Tag color="geekblue">
-              Start Balance: {this.store.startBalance} {this.store.baseCurrency}{" "}
-              (${this.store.startBalanceDollar})
+              SB: {this.formatValue(this.store.startBalance)} {this.store.baseCurrency}{" "}
+              (${this.store.startBalanceDollar.toFixed(2)})
             </Tag>
           </Tooltip>
-          <Tooltip title="Balance left for opening new Positions">
+          <Tooltip title="Available: Balance left for opening new Positions">
             <Tag color="orange">
-              Available: {this.store.currentBalance} {this.store.baseCurrency}{" "}
-              (${this.store.currentBalanceDollar})
+              A: {this.formatValue(this.store.currentBalance)} {this.store.baseCurrency}{" "}
+              (${this.store.currentBalanceDollar.toFixed(2)})
             </Tag>
           </Tooltip>
           <Tooltip title="Total Balance incl. open positions">
             <Tag color="purple">
-              Total: {this.store.totalBaseCurrencyValue}{" "}
-              {this.store.baseCurrency} (${this.store.totalBalanceDollar})
+              T: {this.formatValue(this.store.totalBaseCurrencyValue)}{" "}
+              {this.store.baseCurrency} (${this.store.totalBalanceDollar.toFixed(2)})
+            </Tag>
+          </Tooltip>
+          <Tooltip title="Total Diff incl. open positions">
+            <Tag color="purple">
+              D: {this.formatValue(this.store.totalBaseCurrencyValue - this.store.startBalance)}{" "}
+              {this.store.baseCurrency} (${(this.store.totalBalanceDollar - this.store.startBalanceDollar).toFixed(2)})
             </Tag>
           </Tooltip>
           <Tooltip title="Total PnL in percent">
