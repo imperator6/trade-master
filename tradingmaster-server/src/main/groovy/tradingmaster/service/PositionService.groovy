@@ -8,6 +8,9 @@ import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.entity.json.PositionSettings
+import tradingmaster.db.entity.json.StopLoss
+import tradingmaster.db.entity.json.TakeProfit
+import tradingmaster.db.entity.json.TrailingStopLoss
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.*
@@ -60,6 +63,8 @@ class PositionService {
         settings.traceClosedPosition = false
         pos.settings = settings
 
+        //applyBotSettings(bot, pos.settings)
+
         positionRepository.save(pos)
         bot.addPosition(pos)
 
@@ -86,6 +91,8 @@ class PositionService {
         pos.buySignalId = s.getId()
         pos.signalRate = s.price
 
+        applyBotSettings(bot, pos.settings)
+
         BigDecimal balanceToSpend = tradeBotManager.calcBalanceForNextTrade(bot)
 
         if(balanceToSpend > 0) {
@@ -97,6 +104,15 @@ class PositionService {
         } else {
             log.warn("Can't open position ${s.asset} balance is to low. ${balanceToSpend}")
         }
+    }
+
+    void applyBotSettings(TradeBot bot, PositionSettings settings) {
+
+        Map config = bot.config
+
+        settings.stopLoss = config.stopLoss as StopLoss
+        settings.trailingStopLoss = config.trailingStopLoss as TrailingStopLoss
+        settings.takeProfit = config.takeProfit as TakeProfit
     }
 
 
@@ -307,7 +323,7 @@ class PositionService {
 
             tradeBotManager.syncBanlance(bot)
 
-            if(pos.settings.pingPong) {
+            if(pos.settings.rebuy && pos.settings.rebuy.enabled) {
                 // open a new position
                 PositionSettings settings = pos.settings.clone()
 
@@ -316,16 +332,10 @@ class PositionService {
 
                 def earnings = pos.amount * pos.sellRate // - fee?
 
-                settings.buyWhen.minPrice = pos.sellRate * 0.9
-                settings.buyWhen.maxPrice = pos.sellRate * 0.96
+                settings.buyWhen.minPrice = pos.sellRate * (1+((pos.settings.rebuy.value-1)/100))
+                settings.buyWhen.maxPrice = pos.sellRate * (1+((pos.settings.rebuy.value)/100))
                 settings.buyWhen.quantity = 0
                 settings.buyWhen.spend = earnings
-
-                settings.pingPong = true
-
-                settings.trailingStopLoss.enabled = true
-                settings.trailingStopLoss.startAt = 5
-                settings.trailingStopLoss.value = 2
 
                 newPosition(bot, pos.market, settings)
             }

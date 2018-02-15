@@ -115,6 +115,12 @@ class PositionController {
         TradeBot bot = tradeBotManager.findBotById(botId)
 
         if(pos != null && bot != null) {
+
+            // reset an prev. stored trailing stop loss value
+            if(pos.settings.trailingStopLoss.enabled != settings.trailingStopLoss.enabled) {
+                pos.setTrailingStopLoss(null)
+            }
+
             pos.settings = settings
             positionRepository.save(pos)
 

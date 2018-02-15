@@ -14,7 +14,7 @@ class PositionSettingsStore {
       settings: {
         holdPosition: false,
         traceClosedPosition: false,
-        pingPong: false,
+        rebuy: { enabled: false, value: -4 },
          buyWhen: {
           enabled: false,
           quantity: 0,
@@ -33,14 +33,12 @@ class PositionSettingsStore {
         }
       },
       closed: true
-      
   }
 
   @observable
   settings = {
     holdPosition: false,
-    traceClosedPosition: false,
-    pingPong: false
+    traceClosedPosition: false
   };
 
   @observable
@@ -56,6 +54,8 @@ class PositionSettingsStore {
   @observable takeProfit = { enabled: false, value: 50 };
 
   @observable stopLoss = { enabled: false, value: -10 };
+
+  @observable rebuy = { enabled: false, value: -4 };
 
   @observable
   trailingStopLoss = {
@@ -75,6 +75,7 @@ class PositionSettingsStore {
     return {
       ...this.settings,
       buyWhen: { ...this.buyWhen },
+      rebuy: { ...this.rebuy },
       takeProfit: { ...this.takeProfit },
       stopLoss: { ...this.stopLoss },
       trailingStopLoss: { ...this.trailingStopLoss }
@@ -97,17 +98,19 @@ class PositionSettingsStore {
   selectPosition = pos => {
     let bot = this.rootStore.positionStore.getSelectedBot();
 
-    this.selectedPosition = pos;
+    this.selectedPosition = pos
 
-    this.settings = pos.settings;
+    this.settings = pos.settings
 
-    this.buyWhen = pos.settings.buyWhen;
+    this.buyWhen = pos.settings.buyWhen
 
-    this.takeProfit = pos.settings.takeProfit;
+    this.takeProfit = pos.settings.takeProfit
 
-    this.stopLoss = pos.settings.stopLoss;
+    this.stopLoss = pos.settings.stopLoss
 
-    this.trailingStopLoss = pos.settings.trailingStopLoss;
+    this.rebuy = pos.settings.rebuy
+
+    this.trailingStopLoss = pos.settings.trailingStopLoss
 
     if (pos.closed) {
       if (this.buyWhen.quantity === 0) {

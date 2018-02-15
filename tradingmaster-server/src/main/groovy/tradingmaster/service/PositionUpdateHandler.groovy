@@ -46,6 +46,9 @@ class PositionUpdateHandler implements  MessageHandler {
     @Autowired
     PositionService positionService
 
+    @Autowired
+    AlertService alertService
+
     @PostConstruct
     init() {
         mixedCandelSizesChannel.subscribe(this)
@@ -222,6 +225,10 @@ class PositionUpdateHandler implements  MessageHandler {
         // calc age...
         if(!p.closed) {
             ZonedDateTime positionCreateDate = p.created.toInstant().atZone(ZoneOffset.UTC)
+
+            // use buy date if set
+            if(p.buyDate != null) positionCreateDate = p.buyDate.toInstant().atZone(ZoneOffset.UTC)
+
             ZonedDateTime now = p.lastUpdate.toInstant().atZone(ZoneOffset.UTC)
             def minutes = ChronoUnit.MINUTES.between(positionCreateDate, now)
             if(minutes > 59) {
@@ -241,6 +248,23 @@ class PositionUpdateHandler implements  MessageHandler {
             BigDecimal resultInPercent = calculatePositionResult(p.getBuyRate(), c.close)
             p.setResult(resultInPercent)
 
+            // waiting for buy
+            if((p.buyRate == null || p.buyRate <= 0) &&
+                    p.settings && p.settings.buyWhen
+                    && p.settings.buyWhen.enabled) {
+
+                if(c.close > p.settings.buyWhen.maxPrice) {
+                    p.result = calculatePositionResult(p.settings.buyWhen.maxPrice, c.close)
+                } else if(c.close < p.settings.buyWhen.minPrice) {
+                    p.result = calculatePositionResult(p.settings.buyWhen.minPrice, c.close)
+                }
+            } else {
+                // open position
+                alertService.checkAlert(bot, p)
+                // check alert!
+
+            }
+
             if(p.minResult == null || resultInPercent < p.minResult) {
                 p.minResult = resultInPercent
             }
@@ -249,12 +273,16 @@ class PositionUpdateHandler implements  MessageHandler {
                 p.maxResult = resultInPercent
             }
 
+
+
         } else {
             // a closed position with setting traceClosed!
             if(p.getSellRate() != null) {
                 BigDecimal traceResultInPercent = calculatePositionResult(p.getSellRate(), c.close)
                 p.traceResult = traceResultInPercent
             }
+
+
         }
 
         positionRepository.save(p)
@@ -306,6 +334,10 @@ class PositionUpdateHandler implements  MessageHandler {
             return false
         }
 
+        if(p.buyRate == null || p.buyRate <= 0) {
+            return false
+        }
+
         if(p.closed) {
             return false
         }
@@ -317,21 +349,7 @@ class PositionUpdateHandler implements  MessageHandler {
         Map config = bot.config
         BigDecimal positionValueInPercent = p.result
 
-        /*if(p.fixResultTarget != null) {
-            // let's only sell if we reached the target!
-            if(positionValueInPercent >= p.fixResultTarget) {
-                log.info("Position $p.id reached the amined target of ${p.fixResultTarget}%.")
-                return true
-            } else {
-                // no other check is needed in this case, as we only sell on te target!
-                return false
-            }
-        } */
-
-        StopLoss stopLoss = config.stopLoss as StopLoss
-        if(p.settings && p.settings.stopLoss && p.settings.stopLoss.enabled) {
-            stopLoss = p.settings.stopLoss
-        }
+        StopLoss stopLoss = p.settings.stopLoss //config.stopLoss as StopLoss
 
         if(stopLoss && stopLoss.enabled) {
             if(positionValueInPercent <= stopLoss.value) {
@@ -340,11 +358,7 @@ class PositionUpdateHandler implements  MessageHandler {
             }
         }
 
-        TrailingStopLoss trailingStopLoss = config.trailingStopLoss as TrailingStopLoss
-        if(p.settings && p.settings.trailingStopLoss && p.settings.trailingStopLoss.enabled) {
-            trailingStopLoss = p.settings.trailingStopLoss
-        }
-
+        TrailingStopLoss trailingStopLoss = p.settings.trailingStopLoss //config.trailingStopLoss as TrailingStopLoss
 
 
         if(trailingStopLoss && trailingStopLoss.enabled) {
@@ -387,11 +401,7 @@ class PositionUpdateHandler implements  MessageHandler {
             }
         }
 
-
-        TakeProfit takeProfit = config.takeProfit as TakeProfit
-        if(p.settings && p.settings.takeProfit && p.settings.takeProfit.enabled) {
-            takeProfit = p.settings.takeProfit
-        }
+        TakeProfit takeProfit = p.settings.takeProfit //config.takeProfit as TakeProfit
 
         if(takeProfit && takeProfit.enabled) {
             if(positionValueInPercent >= takeProfit.value) {

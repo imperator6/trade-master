@@ -15,5 +15,8 @@ class PositionSettings extends GlobalSettings {
 
     BuyWhen buyWhen = new BuyWhen()
 
+    ReBuy rebuy = new ReBuy()
+
+    //Alert alert = new Alert()
 
 }

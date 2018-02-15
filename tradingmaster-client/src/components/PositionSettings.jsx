@@ -97,7 +97,16 @@ class PositionSettings extends React.Component {
              Hold Position:<br/>
            <Switch checked={this.settingsStore.settings.holdPosition} onChange={(newValue) =>{ this.settingsStore.settings.holdPosition = newValue }}/>
            <br/>
-           Ping Pong: <Switch checked={this.settingsStore.settings.pingPong} onChange={(newValue) =>{ this.settingsStore.settings.pingPong = newValue}}/>
+           ReBuy: <Switch checked={this.settingsStore.settings.rebuy.enabled} onChange={(newValue) =>{ this.settingsStore.settings.rebuy.enabled = newValue}}/>
+           at<InputNumber
+            size="small"
+            defaultValue={-4}
+            disabled={!this.settingsStore.rebuy.enabled}
+            value={this.settingsStore.rebuy.value}
+            formatter={value => `${value}%`}
+            parser={value => value.replace("%", "")}
+            onChange={(newValue) =>{ this.settingsStore.rebuy.value = newValue } }
+          /><br/>
            <br/>
             TakeProfit:<br/>
            <Switch checked={this.settingsStore.takeProfit.enabled} onChange={(newValue) =>{ this.settingsStore.takeProfit.enabled = newValue }}/>

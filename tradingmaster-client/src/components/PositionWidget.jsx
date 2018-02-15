@@ -158,23 +158,6 @@ class PositionWidget extends React.Component {
       );
     }
 
-    if (!record.closed && !record.sellInPogress) {
-      content.push(
-        <Tooltip key="sellButton" placement="bottom" title="Sell Position">
-          <Popconfirm
-            title="Are you sure to close this position?"
-            onConfirm={() => {
-              this.store.sellPosition(record);
-            }}
-            okText="Yes I'm sure!"
-            cancelText="No"
-          >
-            <Icon type="shopping-cart" />
-          </Popconfirm>
-        </Tooltip>
-      );
-    }
-
     content.push(<Divider key="div0" type="vertical" />);
 
       content.push(
@@ -189,8 +172,29 @@ class PositionWidget extends React.Component {
           </Popover>
         </Tooltip>
       );
+
+      content.push(<Divider key="div1" type="vertical" />);
+
+      if (!record.closed && !record.sellInPogress && record.buyDate && !record.settings.holdPosition) {
+        content.push(
+          <Tooltip key="sellButton" placement="bottom" title="Sell Position">
+            <Popconfirm
+              title="Are you sure to close this position?"
+              onConfirm={() => {
+                this.store.sellPosition(record);
+              }}
+              okText="Yes I'm sure!"
+              cancelText="No"
+            >
+              <Icon type="logout" />
+            </Popconfirm>
+          </Tooltip>
+        );
+      }
     return content;
   }
+
+  
 
   buildPositionActions(record) {
     let actionButtons = [];
@@ -243,13 +247,15 @@ class PositionWidget extends React.Component {
     return <span key="buttons">{actionButtons}</span>;
   }
 
-  buildRate = (body, record, value) => {
+  buildRate = (body, record, value, title) => {
 
     let bot = this.store.getSelectedBot();
     let valueBaseCurrency = value * record.amount
     let dollarPrice = bot.fxDollar * valueBaseCurrency 
+   if(title) title =  [<span>{title}</span>,<br/>]
 
-    let tooltipTitle = (<div>
+
+    let tooltipTitle = (<div> {title}
           {bot.baseCurrency + ':' + valueBaseCurrency.toFixed(8) } <br/>
           {'$' + ':' + dollarPrice.toFixed(2) }
        </div>)
@@ -310,7 +316,10 @@ class PositionWidget extends React.Component {
         dataIndex: "amount",
         key: "amount",
         sorter: (a, b) => a.amount - b.amount,
-        sortOrder: sortedInfo.columnKey === "amount" && sortedInfo.order
+        sortOrder: sortedInfo.columnKey === "amount" && sortedInfo.order,
+        render: (text, record) => {
+          return this.formatValue(record.amount)
+      }
       },
       {
         title: "Buy Rate",
@@ -329,12 +338,17 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.sellRate - b.sellRate,
         sortOrder: sortedInfo.columnKey === "sellRate" && sortedInfo.order,
         render:  (text, record) => {
-            let value = record.sellRate  
+            let value = record.sellRate 
+            let body = value
+            let title = 'Sell Value'
+          
           if(!record.closed) {
+            title = 'Last Known Value'
             value = record.lastKnowRate
+            body = <Tag>LKV: {value}</Tag>
           } 
 
-          return this.buildRate(value, record, value)
+          return this.buildRate(body, record, value, title)
         }
       },
       {
@@ -343,6 +357,7 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.minResult - b.minResult,
         sortOrder: sortedInfo.columnKey === "minResult" && sortedInfo.order,
         render: (text, record) => {
+          if(record.buyDate == null) return null
           return this.formtatPercent(record.minResult);
         }
       },
@@ -352,6 +367,7 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.maxResult - b.maxResult,
         sortOrder: sortedInfo.columnKey === "maxResult" && sortedInfo.order,
         render: (text, record) => {
+          if(record.buyDate == null) return null
           return this.formtatPercent(record.maxResult);
         }
       },
@@ -380,11 +396,32 @@ class PositionWidget extends React.Component {
         sortOrder: sortedInfo.columnKey === "closed" && sortedInfo.order,
         render: (text, record) => {
           if (!record.closed) {
-            return (
+
+            let icon = (
               <Tooltip title="Position is open!">
                 <Icon type="loading" />
               </Tooltip>
-            );
+            )
+
+            if(record.sellInPogress) {
+                icon = ( <span>Selling <Spin /></span> )
+            } else if( record.buyInPogress && record.buyDate == null) {
+              icon = ( <span>Buying <Spin /></span> )
+            }
+
+            if(record.buyDate == null) {
+              icon = (
+                <Tooltip title="Want to buy, but price is not in the target range.">
+                  <Icon type="ellipsis" />
+                </Tooltip>
+              )
+            }
+
+            if(record.settings && record.settings.holdPosition) {
+              icon = <Icon size="small" type="lock" />
+            }
+
+            return icon;
           } else {
             return (
               <Tooltip title="Position is closed!">
@@ -392,17 +429,6 @@ class PositionWidget extends React.Component {
               </Tooltip>
             );
           }
-        }
-      },
-      {
-        title: "Hold",
-        dataIndex: "holdPosition",
-        key: "holdPosition",
-        render: (text, record) => {
-          if(record.settings && record.settings.holdPosition) {
-            return <Icon size="small" type="lock" />;
-          }
-          return "";
         }
       },
       {
