@@ -1,16 +1,10 @@
-package com.rwe.platform.config;
+package com.rwe.cpd.config;
 
-import com.rwe.platform.security.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.encoding.ShaPasswordEncoder;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
 
 @Configuration
@@ -19,17 +13,18 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter
 
     {
 
-//        @Override
-//        protected void configure(HttpSecurity http) throws Exception {
-//            http
-//                    .csrf().disable()  // Refactor login form
-//
-//                    // See https://jira.springsource.org/browse/SPR-11496
-//                    .headers().addHeaderWriter(
-//                    new XFrameOptionsHeaderWriter(
-//                            XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN)).and();
-//        }
+        @Override
+        protected void configure(HttpSecurity http) throws Exception {
+            http
+                    .csrf().disable()  // Refactor login form
 
+                    // See https://jira.springsource.org/browse/SPR-11496
+                    .headers().addHeaderWriter(
+                    new XFrameOptionsHeaderWriter(
+                            XFrameOptionsHeaderWriter.XFrameOptionsMode.SAMEORIGIN)).and();
+        }
+
+        /*
     @Autowired
     SecurityProperties security;
 
@@ -94,11 +89,13 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.authenticationProvider(authProvider);
     }
-
+ */
     @Bean
     public ShaPasswordEncoder sha() {
         ShaPasswordEncoder shaPasswordEncoder = new ShaPasswordEncoder(256);
         return shaPasswordEncoder;
     }
+
+
 
 }

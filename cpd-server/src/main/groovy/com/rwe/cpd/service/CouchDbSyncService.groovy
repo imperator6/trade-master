@@ -3,6 +3,7 @@ package com.rwe.cpd.service
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.MapperFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.rwe.cpd.couchdb.model.Config
 import com.rwe.cpd.couchdb.model.Orderbook
 import groovy.util.logging.Commons
 import org.ektorp.CouchDbConnector
@@ -20,6 +21,12 @@ class CouchDbSyncService {
     @Autowired
     CouchDbConnector orderBookStorage
 
+    @Autowired
+    CouchDbConnector configStorage
+
+    @Autowired
+    ConfigService configService
+
     ObjectMapper objectMapper
 
     CouchDbSyncService() {
@@ -28,7 +35,7 @@ class CouchDbSyncService {
         this.objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
     }
 
-    @Scheduled(initialDelay=5000l, fixedRate=5000l)
+    @Scheduled(initialDelay=5000l, fixedRate=1000l)
     void syncDirtyOrderbooks() {
 
         def dirtyBooks = new ArrayList<Orderbook>(orderbookService.orderBookCache.values()).findAll { it.hasChanged }
@@ -39,7 +46,7 @@ class CouchDbSyncService {
 
             synchronized (orderbook) {
 
-                log.info(orderbook.id)
+               // log.info(orderbook.id)
 
                 Map bidMap = orderbookService.bidCache.get(orderbook.id)
 
@@ -80,6 +87,19 @@ class CouchDbSyncService {
 
         }
     }
+
+    @Scheduled(initialDelay=5000l, fixedRate=60000l)
+    void syncConfig() {
+        Config c = configService.getConfig()
+
+        if(c.hasChanged) {
+            log.info("Updating config.")
+            configStorage.update( c )
+        }
+
+    }
+
+
 
 
 }

@@ -9,9 +9,12 @@ import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
 import org.springframework.messaging.core.MessageSendingOperations
 import org.springframework.messaging.simp.broker.BrokerAvailabilityEvent
+import org.springframework.stereotype.Service
 
+import javax.annotation.PostConstruct
 import java.util.concurrent.atomic.AtomicBoolean
 
+@Service
 @Commons
 class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, MessageHandler {
 
@@ -28,10 +31,10 @@ class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, Me
         this.messagingTemplate = messagingTemplate
     }
 
-   /* @PostConstruct
+    @PostConstruct
     init() {
         priceChannel.subscribe(this)
-    } */
+    }
 
     @Override
     void onApplicationEvent(BrokerAvailabilityEvent event) {
@@ -41,9 +44,9 @@ class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, Me
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
 
-        log.info(message.getPayload())
+        Map priceMap = message.getPayload()
 
-        messagingTemplate.convertAndSend("/topic/price".toString() , "Hello")
+        messagingTemplate.convertAndSend("/topic/price".toString() , priceMap)
     }
 
 }

@@ -2,7 +2,6 @@ package com.rwe.cpd.config;
 
 import com.rwe.cpd.kafka.MapDeserializer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -12,7 +11,6 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.KafkaListenerContainerFactory;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.listener.ConcurrentMessageListenerContainer;
-import org.springframework.kafka.listener.adapter.RecordFilterStrategy;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -56,14 +54,14 @@ class KafkaConfig {
         ConcurrentKafkaListenerContainerFactory<String, Map> factory = new ConcurrentKafkaListenerContainerFactory<>();
 
         factory.setConcurrency(1); // only ONE Thread
-
+/*
         factory.setRecordFilterStrategy(new RecordFilterStrategy<String, Map>() {
             @Override
             public boolean filter(ConsumerRecord<String, Map> consumerRecord) {
                 return !"POWER".equalsIgnoreCase((String) consumerRecord.value().get("S_Commodity"));
             }
         });
-
+*/
         //factory.setBatchListener(true); // receive all objects from a poll --> List<KafkaPrice>
 
         factory.setConsumerFactory(consumerFactory());

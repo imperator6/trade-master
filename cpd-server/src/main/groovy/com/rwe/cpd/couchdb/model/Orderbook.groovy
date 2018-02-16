@@ -17,7 +17,7 @@ class Orderbook {
     String type
 
     @Transient
-    Boolean hasChanged = false
+    Boolean hasChanged = true // forte to persist after a fresh restart!
 
     @JsonProperty("orderbook")
     OrderbookEntry entries = new OrderbookEntry()

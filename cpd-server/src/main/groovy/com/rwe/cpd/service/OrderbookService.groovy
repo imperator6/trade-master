@@ -4,6 +4,7 @@ import com.rwe.cpd.couchdb.model.Ask
 import com.rwe.cpd.couchdb.model.Bid
 import com.rwe.cpd.couchdb.model.Orderbook
 import groovy.util.logging.Commons
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 
 import java.util.concurrent.ConcurrentHashMap
@@ -16,13 +17,16 @@ class OrderbookService {
     static Map<String, Map<Integer, Bid>> bidCache = new ConcurrentHashMap()
     static Map<String, Map<Integer, Ask>> askCache = new ConcurrentHashMap()
 
-    static Set periods = new HashSet()
-
+    @Autowired
+    ConfigService configService
 
     void updateOrderBook(Map data) {
 
-        String _id = buildId(data)
+        String product = buildProduct(data)
+        String _id = buildId(data, product)
         Orderbook orderbook = getOrCreateOrderBook(_id, data)
+
+        configService.addProductIfNotExsists(product)
 
         synchronized (orderbook)  {
             executeAction( data, orderbook )
@@ -95,7 +99,14 @@ class OrderbookService {
     }
 
 
-    String buildId(Map data) {
+    String buildId(Map data, product) {
+
+        // id ->  S_Country, Type  S_Commodity
+        String _id =  "${product}_${data.Expiry}"
+        return _id
+    }
+
+    String buildProduct(Map data) {
 
         String type = data.Product ? data.Product : "base"
         if(type.toLowerCase().indexOf("peak") > -1) {
@@ -106,14 +117,9 @@ class OrderbookService {
             type = "BASE"
         }
 
-        if(periods.add(data.Expiry)) {
-            log.info(data.Expiry)
-        }
-
         // id ->  S_Country, Type  S_Commodity
-        String _id =  "${data.S_Country},$type,${data.S_Commodity}_${data.Expiry}"
+        String _id =  "${data.S_Country},$type,${data.S_Commodity}"
         return _id
-
     }
 
     Orderbook getOrCreateOrderBook(String _id, Map data) {

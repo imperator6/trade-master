@@ -63,6 +63,10 @@ class PositionService {
         settings.traceClosedPosition = false
         pos.settings = settings
 
+        if(settings.buyWhen.spend &&  settings.buyWhen.spend > 0) {
+            settings.buyWhen.quantity = 0
+        }
+
         //applyBotSettings(bot, pos.settings)
 
         positionRepository.save(pos)

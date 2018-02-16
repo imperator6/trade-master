@@ -32,8 +32,9 @@ public class CpdConfig {
         return MessageChannels.publishSubscribe().get();
     }
 
+
     @Bean
-    CouchDbConnector orderBookStorage(@Value("${couchDB.host}") String host,
+    CouchDbInstance couchDbInstance(@Value("${couchDB.host}") String host,
                                    @Value("${couchDB.port}") Integer port,
                                    @Value("${couchDB.user}") String user,@Value("${couchDB.password}") String password) throws Exception {
 
@@ -44,7 +45,20 @@ public class CpdConfig {
                 .password(password)
                 .build();
         CouchDbInstance dbInstance = new StdCouchDbInstance(httpClient);
-        CouchDbConnector client = new StdCouchDbConnector("cpd_orderbook", dbInstance);
+
+        return dbInstance;
+    }
+
+
+    @Bean
+    CouchDbConnector orderBookStorage(CouchDbInstance couchDbInstance) throws Exception {
+        CouchDbConnector client = new StdCouchDbConnector("cpd_orderbook", couchDbInstance);
+        return client;
+    }
+
+    @Bean
+    CouchDbConnector configStorage(CouchDbInstance couchDbInstance) throws Exception {
+        CouchDbConnector client = new StdCouchDbConnector("cpd_config", couchDbInstance);
         return client;
     }
 }
