@@ -80,7 +80,10 @@ class BinanceOrder implements IOrder {
         return new Date(time)
     }
 
-
+    @Override
+    String getBuySell() {
+        return this.side.toLowerCase()
+    }
 /*
     *
     *

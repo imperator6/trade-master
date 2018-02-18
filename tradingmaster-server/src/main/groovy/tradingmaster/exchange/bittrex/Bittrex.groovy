@@ -113,6 +113,13 @@ class Bittrex extends DefaultExchageAdapter {
         return []
     }
 
+    List<IOrder> getOrderHistory(String market) {
+
+        List<IOrder> orderList = getOrderHistory()
+
+        return orderList.find { it.market == market }
+    }
+
     List<CryptoMarket> getMakets() {
 
         ExchangeMarketResponse info = exchange.get("public/getmarkets", new ParameterizedTypeReference<ExchangeMarketResponse>(){})

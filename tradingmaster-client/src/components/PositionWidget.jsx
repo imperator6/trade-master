@@ -6,6 +6,7 @@ import PositionSettings from "./PositionSettings";
 import NewPosition from "./NewPosition";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
+import CryptoCell from "./CryptoCell";
 
 import {
   Table,
@@ -25,6 +26,7 @@ import {
 } from "antd";
 const Option = Select.Option;
 const ButtonGroup = Button.Group;
+
 
 @inject("rootStore")
 @observer
@@ -106,7 +108,7 @@ class PositionWidget extends React.Component {
       tagColor = "red";
     }
 
-    if(color) {
+    if (color) {
       tagColor = color;
     }
 
@@ -119,16 +121,15 @@ class PositionWidget extends React.Component {
   }
 
   formatValue(value, decimals, satoshis) {
-    if (value == null) return 0;
+    if (value == null || value === 0.0) return 0;
 
-    if(value >= 1) {
-      if(decimals) return value.toFixed(decimals)
-      return value.toFixed(2)
-     } else {
-      if(satoshis) return value.toFixed(satoshis)
-      return value.toFixed(6)
-     }
-    
+    if (value >= 1) {
+      if (decimals) return value.toFixed(decimals);
+      return value.toFixed(2);
+    } else {
+      if (satoshis) return value.toFixed(satoshis);
+      return value.toFixed(6);
+    }
   }
 
   showPositionDates(record) {
@@ -145,61 +146,93 @@ class PositionWidget extends React.Component {
 
   buildResultCell(record) {
     let content = [];
+    
+    let percentValue = record.result
+    let sellRate = record.sellRate;
+    if (!record.closed) {
+      sellRate = record.lastKnowRate;
+    }
+
+    let resultRate = (sellRate - record.buyRate) 
+    let fxIncluded = false
+
+    if(this.store.dollarMode == 'dollarOnBuy') {
+      let buyDollarRate = record.buyRate * record.buyFx
+      let sellDollarRate = sellRate * this.store.fxDollar
+      resultRate = sellDollarRate - buyDollarRate
+
+      percentValue = (sellDollarRate / buyDollarRate * 100 ) -100
+      fxIncluded = true
+    }
 
     content.push(
-      <span key="result">{this.formtatPercent(record.result)}</span>
+      <CryptoCell key='result' position={record} value={resultRate} amount={record.amount} formatter='percent' percentValue={percentValue} allowDollarOnBuy fxAlreadyIncluded={fxIncluded}/>
+     // <span key="result">{this.formtatPercent(record.result)}</span>
     );
 
-    if(record.settings && record.settings.traceClosedPosition) {
+    if (record.settings && record.settings.traceClosedPosition) {
       content.push(
-        <Tooltip key="traceResultTip" placement="bottom" title={"Last known Rate: " + record.lastKnowRate}>
-          <span key="traceResult">T:{this.formtatPercent(record.traceResult, "purple")}</span>
+        <Tooltip
+          key="traceResultTip"
+          placement="bottom"
+          title={"Last known Rate: " + record.lastKnowRate}
+        >
+          <span key="traceResult">
+            T:{this.formtatPercent(record.traceResult, "purple")}
+          </span>
         </Tooltip>
       );
     }
 
     content.push(<Divider key="div0" type="vertical" />);
 
+    content.push(
+      <Tooltip key="settingsButton" placement="bottom" title="Settings">
+        <Popover
+          title={record.market}
+          content={
+            <PositionSettings position={record} showApplySettings={true} />
+          }
+          onClick={() => {
+            this.settingsStore.selectPosition(record);
+          }}
+          trigger="click"
+        >
+          <Icon type="setting" />
+        </Popover>
+      </Tooltip>
+    );
+
+    content.push(<Divider key="div1" type="vertical" />);
+
+    if (
+      !record.closed &&
+      !record.sellInPogress &&
+      record.buyDate &&
+      !record.settings.holdPosition
+    ) {
       content.push(
-        <Tooltip key="settingsButton" placement="bottom" title="Settings">
-          <Popover
-            title={record.market}
-            content={<PositionSettings position={record}  showApplySettings={true}/>}
-            onClick={() => {this.settingsStore.selectPosition(record)}}
-            trigger="click"
+        <Tooltip key="sellButton" placement="bottom" title="Sell Position">
+          <Popconfirm
+            title="Are you sure to close this position?"
+            onConfirm={() => {
+              this.store.sellPosition(record);
+            }}
+            okText="Yes I'm sure!"
+            cancelText="No"
           >
-            <Icon type="setting" />
-          </Popover>
+            <Icon type="logout" />
+          </Popconfirm>
         </Tooltip>
       );
-
-      content.push(<Divider key="div1" type="vertical" />);
-
-      if (!record.closed && !record.sellInPogress && record.buyDate && !record.settings.holdPosition) {
-        content.push(
-          <Tooltip key="sellButton" placement="bottom" title="Sell Position">
-            <Popconfirm
-              title="Are you sure to close this position?"
-              onConfirm={() => {
-                this.store.sellPosition(record);
-              }}
-              okText="Yes I'm sure!"
-              cancelText="No"
-            >
-              <Icon type="logout" />
-            </Popconfirm>
-          </Tooltip>
-        );
-      }
+    }
     return content;
   }
-
-  
 
   buildPositionActions(record) {
     let actionButtons = [];
     let bot = this.store.getSelectedBot();
-   
+
     actionButtons.push(
       <Tooltip
         key="exchangeChart"
@@ -207,9 +240,7 @@ class PositionWidget extends React.Component {
         title="Open Exchange Chart"
       >
         <a href={this.store.getChartLink(record.market)} target="_blank">
-          <Icon
-            type="line-chart"
-          />
+          <Icon type="line-chart" />
         </a>
       </Tooltip>
     );
@@ -248,22 +279,34 @@ class PositionWidget extends React.Component {
   }
 
   buildRate = (body, record, value, title) => {
-
     let bot = this.store.getSelectedBot();
-    let valueBaseCurrency = value * record.amount
-    let dollarPrice = bot.fxDollar * valueBaseCurrency 
-   if(title) title =  [<span>{title}</span>,<br/>]
+    let valueBaseCurrency = value * record.amount;
+    let dollarPrice = bot.fxDollar * valueBaseCurrency;
+    if (title) title = [<span>{title}</span>, <br />];
 
+    let tooltipTitle = (
+      <div>
+        {" "}
+        {title}
+        {bot.baseCurrency + ":" + valueBaseCurrency.toFixed(8)} <br />
+        {"$" + ":" + dollarPrice.toFixed(2)}
+      </div>
+    );
 
-    let tooltipTitle = (<div> {title}
-          {bot.baseCurrency + ':' + valueBaseCurrency.toFixed(8) } <br/>
-          {'$' + ':' + dollarPrice.toFixed(2) }
-       </div>)
+    return (
+      <Tooltip placement="bottom" title={tooltipTitle}>
+        {body}
+      </Tooltip>
+    );
+  };
 
-    return (<Tooltip placement="bottom" title={tooltipTitle}>
-      {body}
-      </Tooltip>)
-  }
+  calcDollar = (value, amount) => {
+    let bot = this.store.getSelectedBot();
+    let valueBaseCurrency = value * amount;
+    let dollarPrice = bot.fxDollar * valueBaseCurrency;
+
+    return dollarPrice;
+  };
 
   render() {
     let { sortedInfo, filteredInfo } = this.state;
@@ -318,8 +361,14 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.amount - b.amount,
         sortOrder: sortedInfo.columnKey === "amount" && sortedInfo.order,
         render: (text, record) => {
-          return this.formatValue(record.amount)
-      }
+          let value = record.sellRate;
+
+          if (!record.closed) {
+            value = record.lastKnowRate;
+          }
+
+          return <CryptoCell position={record} value={record.amount} amount={value} allowDollarOnBuy/>;
+        }
       },
       {
         title: "Buy Rate",
@@ -328,7 +377,7 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.buyRate - b.buyRate,
         sortOrder: sortedInfo.columnKey === "buyRate" && sortedInfo.order,
         render: (text, record) => {
-            return this.buildRate(text,record, record.buyRate)
+          return <CryptoCell position={record} value={record.buyRate} amount={1} allowDollarOnBuy/>;
         }
       },
       {
@@ -337,18 +386,14 @@ class PositionWidget extends React.Component {
         dataIndex: "sellRate",
         sorter: (a, b) => a.sellRate - b.sellRate,
         sortOrder: sortedInfo.columnKey === "sellRate" && sortedInfo.order,
-        render:  (text, record) => {
-            let value = record.sellRate 
-            let body = value
-            let title = 'Sell Value'
-          
-          if(!record.closed) {
-            title = 'Last Known Value'
-            value = record.lastKnowRate
-            body = <Tag>LKV: {value}</Tag>
-          } 
+        render: (text, record) => {
+          let value = record.sellRate;
 
-          return this.buildRate(body, record, value, title)
+          if (!record.closed) {
+            value = record.lastKnowRate;
+          }
+
+          return <CryptoCell position={record} value={value} amount={1} />;
         }
       },
       {
@@ -357,7 +402,7 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.minResult - b.minResult,
         sortOrder: sortedInfo.columnKey === "minResult" && sortedInfo.order,
         render: (text, record) => {
-          if(record.buyDate == null) return null
+          if (record.buyDate == null) return null;
           return this.formtatPercent(record.minResult);
         }
       },
@@ -367,7 +412,7 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.maxResult - b.maxResult,
         sortOrder: sortedInfo.columnKey === "maxResult" && sortedInfo.order,
         render: (text, record) => {
-          if(record.buyDate == null) return null
+          if (record.buyDate == null) return null;
           return this.formtatPercent(record.maxResult);
         }
       },
@@ -396,29 +441,36 @@ class PositionWidget extends React.Component {
         sortOrder: sortedInfo.columnKey === "closed" && sortedInfo.order,
         render: (text, record) => {
           if (!record.closed) {
-
             let icon = (
               <Tooltip title="Position is open!">
                 <Icon type="loading" />
               </Tooltip>
-            )
+            );
 
-            if(record.sellInPogress) {
-                icon = ( <span>Selling <Spin /></span> )
-            } else if( record.buyInPogress && record.buyDate == null) {
-              icon = ( <span>Buying <Spin /></span> )
+            if (record.sellInPogress) {
+              icon = (
+                <span>
+                  Selling <Spin />
+                </span>
+              );
+            } else if (record.buyInPogress && record.buyDate == null) {
+              icon = (
+                <span>
+                  Buying <Spin />
+                </span>
+              );
             }
 
-            if(record.buyDate == null) {
+            if (record.buyDate == null) {
               icon = (
                 <Tooltip title="Want to buy, but price is not in the target range.">
                   <Icon type="ellipsis" />
                 </Tooltip>
-              )
+              );
             }
 
-            if(record.settings && record.settings.holdPosition) {
-              icon = <Icon size="small" type="lock" />
+            if (record.settings && record.settings.holdPosition) {
+              icon = <Icon size="small" type="lock" />;
             }
 
             return icon;
@@ -509,66 +561,99 @@ class PositionWidget extends React.Component {
             />
           </Tooltip>
           <Divider type="vertical" />
-         
+
           <Tooltip placement="left" title="Open a new Position">
             <Popover
-            visible={this.state.newPositionFormVisible}
+              visible={this.state.newPositionFormVisible}
               title="Open new Position"
-              content={<NewPosition  />}
-              trigger="click">
-              <Button size="small" icon="plus" type="primary" onClick={() => { 
-                this.settingsStore.selectPosition(this.settingsStore.DEFAULT_NEW_POSITION)
-                this.setState({...this.state, newPositionFormVisible: !this.state.newPositionFormVisible}) }} />
+              content={<NewPosition />}
+              trigger="click"
+            >
+              <Button
+                size="small"
+                icon="plus"
+                type="primary"
+                onClick={() => {
+                  this.settingsStore.selectPosition(
+                    this.settingsStore.DEFAULT_NEW_POSITION
+                  );
+                  this.setState({
+                    ...this.state,
+                    newPositionFormVisible: !this.state.newPositionFormVisible
+                  });
+                }}
+              />
             </Popover>
           </Tooltip>
           <Divider type="vertical" />
           <ButtonGroup>
-          <Button size="small" onClick={this.setFilterOpen}>
-            open
-          </Button>
-          <Button size="small" onClick={this.setFilterClosed}>
-            closed
-          </Button>
-          <Button size="small" onClick={this.clearFilters}>
-            all
-          </Button>
+            <Button size="small" onClick={this.setFilterOpen}>
+              open
+            </Button>
+            <Button size="small" onClick={this.setFilterClosed}>
+              closed
+            </Button>
+            <Button size="small" onClick={this.clearFilters}>
+              all
+            </Button>
           </ButtonGroup>
+
+          <Select
+        size="small"
+        placeholder="Select TradeBot"
+        value={this.store.dollarMode}
+        onChange={newValue => {
+          this.store.switchDollarMode(newValue);
+        }}
+        style={{ width: 75 }}
+      >
+      <Option key='baseCurrency'>{this.store.baseCurrency}</Option>
+      <Option key='dollar'>$</Option>
+      <Option key='dollarOnBuy'>$ Buy</Option>
+        
+      </Select>
           <Divider type="vertical" />
-          <Tooltip
-            title={
-              this.store.baseCurrency + "/USD"
-            }
-          >
-            <Tag color="gold">
-              {this.formatValue(this.store.fxDollar)}
-            </Tag>
+          <Tooltip title={this.store.baseCurrency + "/USD"}>
+            <Tag color="gold">{this.formatValue(this.store.fxDollar)}</Tag>
           </Tooltip>
           <Tooltip
             title={
-              "Start Balance: Bot has started with this amount of " + this.store.baseCurrency
+              "Start Balance: Bot has started with this amount of " +
+              this.store.baseCurrency
             }
           >
             <Tag color="geekblue">
-              SB: {this.formatValue(this.store.startBalance)} {this.store.baseCurrency}{" "}
-              (${this.store.startBalanceDollar.toFixed(2)})
+              SB: {this.formatValue(this.store.startBalance)}{" "}
+              {this.store.baseCurrency} (${this.store.startBalanceDollar.toFixed(
+                2
+              )})
             </Tag>
           </Tooltip>
           <Tooltip title="Available: Balance left for opening new Positions">
             <Tag color="orange">
-              A: {this.formatValue(this.store.currentBalance)} {this.store.baseCurrency}{" "}
-              (${this.store.currentBalanceDollar.toFixed(2)})
+              A: {this.formatValue(this.store.currentBalance)}{" "}
+              {this.store.baseCurrency} (${this.store.currentBalanceDollar.toFixed(
+                2
+              )})
             </Tag>
           </Tooltip>
           <Tooltip title="Total Balance incl. open positions">
             <Tag color="purple">
               T: {this.formatValue(this.store.totalBaseCurrencyValue)}{" "}
-              {this.store.baseCurrency} (${this.store.totalBalanceDollar.toFixed(2)})
+              {this.store.baseCurrency} (${this.store.totalBalanceDollar.toFixed(
+                2
+              )})
             </Tag>
           </Tooltip>
           <Tooltip title="Total Diff incl. open positions">
             <Tag color="purple">
-              D: {this.formatValue(this.store.totalBaseCurrencyValue - this.store.startBalance)}{" "}
-              {this.store.baseCurrency} (${(this.store.totalBalanceDollar - this.store.startBalanceDollar).toFixed(2)})
+              D:{" "}
+              {this.formatValue(
+                this.store.totalBaseCurrencyValue - this.store.startBalance
+              )}{" "}
+              {this.store.baseCurrency} (${(
+                this.store.totalBalanceDollar - this.store.startBalanceDollar
+              ).toFixed(2)})
             </Tag>
           </Tooltip>
           <Tooltip title="Total PnL in percent">

@@ -5,17 +5,17 @@ import groovy.transform.ToString
 import tradingmaster.model.ITrade
 
 @ToString
-class BinanceTrade implements ITrade {
+class BinanceAggTrade implements ITrade {
 
-    @JsonProperty("id")
+    @JsonProperty("a")
     String extId
 
-    @JsonProperty("qty")
+    @JsonProperty("q")
     BigDecimal quantity
 
-    @JsonProperty("price")
+    @JsonProperty("p")
     BigDecimal price
 
-    @JsonProperty("time")
+    @JsonProperty("T")
     Date date
 }

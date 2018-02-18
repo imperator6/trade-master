@@ -20,6 +20,8 @@ class MarketWatcherStore {
   @observable totalBaseCurrencyValue = 0;
 
   @observable fxDollar = 0;
+  @observable dollarMode = 'dollar'; // otherwise BTC
+
   @observable startBalanceDollar = 0;
   @observable currentBalanceDollar = 0;
   @observable totalBalanceDollar = 0;
@@ -58,6 +60,11 @@ class MarketWatcherStore {
     this.loadBotList(cb);
     this.loadExchanges();
   };
+
+  switchDollarMode = (newMode) => {
+    this.dollarMode = newMode
+    console.info(newMode)
+  }
 
   /*selectPosition = (pos) => {
 
@@ -181,7 +188,7 @@ class MarketWatcherStore {
     if (bot != null) {
       this.baseCurrency = bot.baseCurrency;
       this.currentBalance = this.botMap.get(botId).currentBalance;
-      this.startBalance = bot.startBalance;
+      this.startBalance = bot.startBalance
 
       this.fxDollar = bot.fxDollar
       this.startBalanceDollar = bot.startBalanceDollar || 0
@@ -583,7 +590,22 @@ class MarketWatcherStore {
       .catch(function(error) {
         console.log(error);
       });
-  };
+  }
+
+  formatNumber(value, decimals, satoshis) {
+    if (value == null || value === 0.0) return 0;
+
+    if(Math.abs(value) >= 1) {
+      if(decimals) return value.toFixed(decimals)
+
+      if(Math.abs(value) > 1000) return value.toFixed(0)
+
+      return value.toFixed(2)
+     } else {
+      if(satoshis) return value.toFixed(satoshis)
+      return value.toFixed(8)
+     }
+  }
 
 }
 

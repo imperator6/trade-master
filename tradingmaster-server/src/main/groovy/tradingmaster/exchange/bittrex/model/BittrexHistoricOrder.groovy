@@ -69,4 +69,12 @@ class BittrexHistoricOrder implements IOrder {
     BigDecimal getCommissionPaid() {
         return commission
     }
+
+    @Override
+    String getBuySell() {
+        if(this.orderType != null && this.orderType.toLowerCase().indexOf("sell") > -1) {
+            return "sell"
+        }
+        return "buy"
+    }
 }

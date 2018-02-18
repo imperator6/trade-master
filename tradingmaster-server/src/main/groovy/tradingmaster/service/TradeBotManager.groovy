@@ -58,6 +58,8 @@ class TradeBotManager {
         return this.TRADE_BOT_MAP.get(botId).getPositions().find { it.id == posId }
     }
 
+
+
     void startBots() {
 
         tradeBotRepository.findByActive(true).each { TradeBot b ->

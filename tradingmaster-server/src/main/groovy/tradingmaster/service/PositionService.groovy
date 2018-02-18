@@ -3,7 +3,9 @@ package tradingmaster.service
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import tradingmaster.db.OrderRepository
 import tradingmaster.db.PositionRepository
+import tradingmaster.db.entity.Order
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
@@ -11,10 +13,18 @@ import tradingmaster.db.entity.json.PositionSettings
 import tradingmaster.db.entity.json.StopLoss
 import tradingmaster.db.entity.json.TakeProfit
 import tradingmaster.db.entity.json.TrailingStopLoss
+import tradingmaster.db.mariadb.MariaCandleStore
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.*
+import tradingmaster.util.DateHelper
 import tradingmaster.util.NumberHelper
+
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 @Service
 @Commons
@@ -33,11 +43,25 @@ class PositionService {
     @Autowired
     PositionUpdateHandler positionUpdateHandler
 
-    @Autowired TradeBotManager tradeBotManager
+    @Autowired
+    TradeBotManager tradeBotManager
+
+    @Autowired
+    OrderRepository orderRepository
+
+    @Autowired
+    OrderService orderService
+
+    @Autowired
+    MariaCandleStore candleStore
 
 
     Position findPositionById(Integer botId, Integer posId) {
         return tradeBotManager.TRADE_BOT_MAP.get(botId).getPositions().find { it.id == posId }
+    }
+
+    List<Position> findOpenPositions(TradeBot bot) {
+        return new ArrayList<Position>(bot.getPositions().findAll{ !it.closed && it.buyDate != null })
     }
 
     void deletePosition(Position pos) {
@@ -184,32 +208,51 @@ class PositionService {
 
         List<IBalance> balances = exchangeAdapter.getBalances()
 
+        log.info("Importing position from exchange: ${exchangeAdapter.getExchangeName()}" )
+
         //List<IOrder> orderHistory =  exchangeAdapter.get
         balances.findAll { it.getCurrency() != bot.getBaseCurrency() } .each { IBalance balance ->
 
-            if(balance.value > 0.0001) {
-                Position pos = new Position()
+            def market = "${bot.config.baseCurrency}-${balance.getCurrency()}"
 
-                pos.created = new Date()
-                pos.botId = bot.getId()
-                pos.buySignalId = -1
-                pos.market = "${bot.config.baseCurrency}-${balance.getCurrency()}"
-                pos.status = "open"
-                pos.signalRate = 0
-                pos.setAmount( balance.getAvailable() )
-                pos.settings.holdPosition = true
+            // check if balance already exists
+            def alreadyOpenQuantity = 0
+            def openPositions = findOpenPositions(bot).findAll { it.market == market }
+            if(openPositions) {
+                alreadyOpenQuantity = openPositions.sum { it.amount  }
+            }
 
-                //pos.setExtbuyOrderId(newOrder.getId())
-                // TODO: Try to find a historic order!
-                pos.setBuyFee(0)
-                pos.setBuyDate(new Date())
+            def quantity = balance.getValue() - alreadyOpenQuantity
 
-                ExchangeResponse<ITicker> tickerExchangeResponse = exchangeAdapter.getTicker(pos.getMarket())
+            if(quantity > 0.0001) {
 
-                if(tickerExchangeResponse.success) {
-                    ITicker ticker = tickerExchangeResponse.getResult()
+                List<IOrder> orders = orderRepository.findByExchangeAndMarketAndBuySellOrderByDateDesc(exchangeAdapter.getExchangeName(), market, "buy")
 
-                    pos.setBuyRate(ticker.getAsk())
+                //def quantityLeft = balance.getAvailable()
+
+                Order matchingOrder = orders.find { it.quantity == quantity }
+
+                if(matchingOrder) {
+
+                    def order = matchingOrder
+
+                    Position pos = new Position()
+
+                    pos.created = new Date()
+                    pos.botId = bot.getId()
+                    pos.buySignalId = -1
+                    pos.market = market
+                    pos.status = "open"
+                    pos.signalRate = 0
+                    pos.setAmount( order.getQuantity() )
+                    pos.settings.holdPosition = true
+
+                    pos.setExtbuyOrderId(order.getExtOrderId())
+                    pos.setBuyFee(order.getCommission())
+                    pos.setBuyDate(order.getDate())
+                    pos.setBuyRate(order.getPricePerUnit())
+
+                    setStartFx(bot, pos)
 
                     positionRepository.save(pos)
                     bot.addPosition(pos)
@@ -217,11 +260,76 @@ class PositionService {
                     marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
 
                 } else {
-                    log.error("Can create postion for market ${pos.getMarket()}. ${tickerExchangeResponse.getMessage()}")
+
+                    log.warn("No historic order found for market ${market} on exchange ${exchangeAdapter.getExchangeName()} and quantity: ${quantity}")
+
+                    Position pos = new Position()
+
+                    pos.created = new Date()
+                    pos.botId = bot.getId()
+                    pos.buySignalId = -1
+                    pos.market = market
+                    pos.status = "open"
+                    pos.signalRate = 0
+                    pos.setAmount( quantity )
+                    pos.settings.holdPosition = true
+
+                    CryptoMarket cm = new CryptoMarket(exchangeAdapter.getExchangeName(), market)
+
+                    Order lastOrder = orderService.findLastBuyOrderForAsset(cm)
+                    if(lastOrder) {
+                        pos.setBuyDate(lastOrder.getDate())
+                        setStartFx(bot, pos)
+
+                    } else {
+                        pos.setBuyDate(new Date())
+                    }
+
+                    pos.setBuyFee(0)
+
+                    if(orders) {
+                        // use the buy rate from the last order
+                        pos.setBuyRate( orders.first().getPricePerUnit() )
+
+                        positionRepository.save(pos)
+                        bot.addPosition(pos)
+                        marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
+                    } else {
+                        // use the ticker
+                        ExchangeResponse<ITicker> tickerExchangeResponse = exchangeAdapter.getTicker(pos.getMarket())
+
+                        if(tickerExchangeResponse.success) {
+                            ITicker ticker = tickerExchangeResponse.getResult()
+
+
+                            pos.setBuyRate(ticker.getAsk())
+
+                            positionRepository.save(pos)
+                            bot.addPosition(pos)
+                            marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
+
+                        } else {
+                            log.error("Can create postion for market ${pos.getMarket()}. ${tickerExchangeResponse.getMessage()}")
+                        }
+                    }
                 }
             }
          }
+    }
 
+    void setStartFx(TradeBot bot, Position pos) {
+
+        if(bot.config.baseCurrency == 'BTC' && pos.getBuyDate() != null) {
+
+            Instant startI = pos.getBuyDate().toInstant().truncatedTo( ChronoUnit.MINUTES )
+            Instant endI = startI.plus(2, ChronoUnit.MINUTES)
+
+            List<Candle> candles = candleStore.find("1min", "Binance", "USDT-BTC",LocalDateTime.ofInstant(startI, ZoneOffset.UTC), LocalDateTime.ofInstant(endI, ZoneOffset.UTC))
+
+            if(candles) {
+                pos.setBuyFx( candles.first().close )
+            }
+        }
     }
 
     void syncPosition(Position pos, TradeBot bot) {

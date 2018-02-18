@@ -260,7 +260,7 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         Map params = [:]
         params.put("symbol", convertMarketToSymbol(market.getName()))
 
-        List<BinanceTrade> trades = exchange.getAsList("api/v1/aggTrades", params, new ParameterizedTypeReference<BinanceTrade[]>(){})
+        List<BinanceTrade> trades = exchange.getAsList("api/v1/trades", params, new ParameterizedTypeReference<BinanceTrade[]>(){})
 
         return new TradeBatch(market, trades)
     }

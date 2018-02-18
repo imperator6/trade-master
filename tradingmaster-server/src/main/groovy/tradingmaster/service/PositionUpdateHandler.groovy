@@ -57,7 +57,7 @@ class PositionUpdateHandler implements  MessageHandler {
     @Scheduled(initialDelay=120000l, fixedRate=60000l)
     void checkPositionIsUpToDate() {
 
-        log.info("Checking if positions are up to date...")
+        log.debug("Checking if positions are up to date...")
 
         tradeBotManager.getActiveBots().each { TradeBot bot ->
 
@@ -87,7 +87,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
         Candle c = message.getPayload()
 
-        log.info("Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ${c.market.exchange}")
+        log.debug("Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ${c.market.exchange}")
 
         tradeBotManager.getActiveBots().each { TradeBot bot ->
 
@@ -114,6 +114,12 @@ class PositionUpdateHandler implements  MessageHandler {
                 bot.setFxDollar( 1 )
             } else {
                 bot.setFxDollar( c.getClose() )
+            }
+
+            // update start fx for position if not set
+            bot.positions.findAll { p -> (p.buyFx == null || p.buyFx <= 0) && p.buyDate != null }.each {
+                log.info("Setting buyFx for pos $it.id $it.market to ${bot.fxDollar}")
+                it.setBuyFx(bot.fxDollar)
             }
 
             bot.startBalanceDollar = bot.startBalance * bot.fxDollar
@@ -281,8 +287,6 @@ class PositionUpdateHandler implements  MessageHandler {
                 BigDecimal traceResultInPercent = calculatePositionResult(p.getSellRate(), c.close)
                 p.traceResult = traceResultInPercent
             }
-
-
         }
 
         positionRepository.save(p)

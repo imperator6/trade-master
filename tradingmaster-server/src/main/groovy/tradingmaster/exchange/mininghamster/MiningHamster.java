@@ -81,7 +81,7 @@ class MiningHamster extends DefaultRestService {
         }
 
         if(signals != null)
-            LOG.info("Fetched Hamster Signals! -> " + signals.size());
+            LOG.debug("Fetched Hamster Signals! -> " + signals.size());
 
         return signals;
     }

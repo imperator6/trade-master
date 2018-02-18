@@ -27,6 +27,9 @@ class Order {
 
     Date date
 
+    @Column(nullable = false)
+    String buySell
+
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal quantity
 

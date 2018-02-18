@@ -93,6 +93,9 @@ class Position {
     @Column(nullable = true, precision=25, scale=10)
     BigDecimal traceResult
 
+    @Column(nullable = true, precision=25, scale=10)
+    BigDecimal buyFx
+
     boolean closed = false
 
     boolean error = false
@@ -120,7 +123,8 @@ class Position {
     Date lastUpdate = new Date()
 
     @Type(type = "json")
-    @Column(columnDefinition = "json")
+    //@Column(columnDefinition = "json")
+    @Column(columnDefinition = "TEXT")
     PositionSettings settings = new PositionSettings()
 
     //boolean deleted = false

@@ -64,7 +64,7 @@ class PositionSettings extends React.Component {
     }
    
 
-    if(this.settingsStore.buyWhen.enabled || this.settingsStore.selectedPosition.closed) {
+    if((this.settingsStore.buyWhen.enabled && !position.buyDate)|| position.closed) {
       buyWhenForm = (<div>
         Spend:  <ButtonGroup>
           <Button size="small" onClick={() => this.settingsStore.updateSpend(0.02)}>2%</Button>

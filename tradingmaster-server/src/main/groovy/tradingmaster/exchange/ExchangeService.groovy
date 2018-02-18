@@ -18,4 +18,17 @@ class ExchangeService {
 
         return  ctx.getBean(upperCase, IExchangeAdapter.class)
     }
+
+    List<String> getAvailableExchanges() {
+
+
+        Set beanNames = ctx.getBeansOfType(IExchangeAdapter.class).keySet()
+
+        List exchangeNames = beanNames.collect {
+            IExchangeAdapter a = (IExchangeAdapter) ctx.getBean(it)
+            return a.getExchangeName()
+        }
+
+        return  exchangeNames
+    }
 }

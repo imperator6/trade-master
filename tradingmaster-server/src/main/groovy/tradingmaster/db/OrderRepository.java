@@ -13,6 +13,9 @@ public interface OrderRepository extends PagingAndSortingRepository<Order, Integ
 
      List<Order> findByExchange(String exchange);
 
+     List<Order> findByExchangeAndMarketAndBuySellOrderByDateDesc(String exchange, String market, String buySell);
+
+     List<Order> findByExchangeAndBuySellOrderByDateDesc(String exchange, String buySell);
 
 
 

@@ -22,5 +22,7 @@ interface IOrder {
 
     BigDecimal getQuantityRemaining()
 
+    String getBuySell()
+
 
 }

@@ -20,7 +20,7 @@
   "forbiddenAssets": [],
 
   "takeProfit": {
-    "enabled": true,
+    "enabled": false,
     "value": 20
   },
 
@@ -30,7 +30,7 @@
   },
 
   "trailingStopLoss": {
-    "enabled": true,
+    "enabled": false,
     "value": 2,
     "startAt": 4
   }
