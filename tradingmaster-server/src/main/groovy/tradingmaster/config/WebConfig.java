@@ -28,7 +28,7 @@ public class WebConfig extends WebMvcConfigurerAdapter{
         registry.addViewController("/desktop").setViewName("forward:/index.html");
         registry.addViewController("/strategy").setViewName("forward:/index.html");
         registry.addViewController("/positions").setViewName("forward:/index.html");
-        registry.addViewController("/").setViewName("redirect:/desktop");
+        registry.addViewController("/").setViewName("redirect:/positions");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
         super.addViewControllers(registry);
     }

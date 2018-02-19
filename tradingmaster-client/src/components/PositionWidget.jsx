@@ -6,7 +6,14 @@ import PositionSettings from "./PositionSettings";
 import NewPosition from "./NewPosition";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
-import CryptoCell from "./CryptoCell";
+import CryptoCell from "./tablecell/CryptoCell";
+import ResultCell from "./tablecell/ResultCell";
+import SellRateCell from "./tablecell/SellRateCell";
+import BuyRateCell from "./tablecell/BuyRateCell";
+import QuantityCell from "./tablecell/QuantityCell";
+import MaxCell from "./tablecell/MaxCell";
+
+import BotResult from "./BotResult";
 
 import {
   Table,
@@ -120,18 +127,6 @@ class PositionWidget extends React.Component {
     return moment(value).format("DD.MM.YY HH:mm");
   }
 
-  formatValue(value, decimals, satoshis) {
-    if (value == null || value === 0.0) return 0;
-
-    if (value >= 1) {
-      if (decimals) return value.toFixed(decimals);
-      return value.toFixed(2);
-    } else {
-      if (satoshis) return value.toFixed(satoshis);
-      return value.toFixed(6);
-    }
-  }
-
   showPositionDates(record) {
     return (
       <span>
@@ -146,28 +141,9 @@ class PositionWidget extends React.Component {
 
   buildResultCell(record) {
     let content = [];
-    
-    let percentValue = record.result
-    let sellRate = record.sellRate;
-    if (!record.closed) {
-      sellRate = record.lastKnowRate;
-    }
-
-    let resultRate = (sellRate - record.buyRate) 
-    let fxIncluded = false
-
-    if(this.store.dollarMode == 'dollarOnBuy') {
-      let buyDollarRate = record.buyRate * record.buyFx
-      let sellDollarRate = sellRate * this.store.fxDollar
-      resultRate = sellDollarRate - buyDollarRate
-
-      percentValue = (sellDollarRate / buyDollarRate * 100 ) -100
-      fxIncluded = true
-    }
 
     content.push(
-      <CryptoCell key='result' position={record} value={resultRate} amount={record.amount} formatter='percent' percentValue={percentValue} allowDollarOnBuy fxAlreadyIncluded={fxIncluded}/>
-     // <span key="result">{this.formtatPercent(record.result)}</span>
+      <ResultCell key='result' position={record} />
     );
 
     if (record.settings && record.settings.traceClosedPosition) {
@@ -278,35 +254,6 @@ class PositionWidget extends React.Component {
     return <span key="buttons">{actionButtons}</span>;
   }
 
-  buildRate = (body, record, value, title) => {
-    let bot = this.store.getSelectedBot();
-    let valueBaseCurrency = value * record.amount;
-    let dollarPrice = bot.fxDollar * valueBaseCurrency;
-    if (title) title = [<span>{title}</span>, <br />];
-
-    let tooltipTitle = (
-      <div>
-        {" "}
-        {title}
-        {bot.baseCurrency + ":" + valueBaseCurrency.toFixed(8)} <br />
-        {"$" + ":" + dollarPrice.toFixed(2)}
-      </div>
-    );
-
-    return (
-      <Tooltip placement="bottom" title={tooltipTitle}>
-        {body}
-      </Tooltip>
-    );
-  };
-
-  calcDollar = (value, amount) => {
-    let bot = this.store.getSelectedBot();
-    let valueBaseCurrency = value * amount;
-    let dollarPrice = bot.fxDollar * valueBaseCurrency;
-
-    return dollarPrice;
-  };
 
   render() {
     let { sortedInfo, filteredInfo } = this.state;
@@ -361,13 +308,7 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.amount - b.amount,
         sortOrder: sortedInfo.columnKey === "amount" && sortedInfo.order,
         render: (text, record) => {
-          let value = record.sellRate;
-
-          if (!record.closed) {
-            value = record.lastKnowRate;
-          }
-
-          return <CryptoCell position={record} value={record.amount} amount={value} allowDollarOnBuy/>;
+          return <QuantityCell position={record} />;
         }
       },
       {
@@ -377,7 +318,7 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.buyRate - b.buyRate,
         sortOrder: sortedInfo.columnKey === "buyRate" && sortedInfo.order,
         render: (text, record) => {
-          return <CryptoCell position={record} value={record.buyRate} amount={1} allowDollarOnBuy/>;
+          return <BuyRateCell position={record} />;
         }
       },
       {
@@ -387,13 +328,7 @@ class PositionWidget extends React.Component {
         sorter: (a, b) => a.sellRate - b.sellRate,
         sortOrder: sortedInfo.columnKey === "sellRate" && sortedInfo.order,
         render: (text, record) => {
-          let value = record.sellRate;
-
-          if (!record.closed) {
-            value = record.lastKnowRate;
-          }
-
-          return <CryptoCell position={record} value={value} amount={1} />;
+          return <SellRateCell position={record} />;
         }
       },
       {
@@ -403,7 +338,7 @@ class PositionWidget extends React.Component {
         sortOrder: sortedInfo.columnKey === "minResult" && sortedInfo.order,
         render: (text, record) => {
           if (record.buyDate == null) return null;
-          return this.formtatPercent(record.minResult);
+          return <MaxCell position={record} min/>
         }
       },
       {
@@ -413,11 +348,11 @@ class PositionWidget extends React.Component {
         sortOrder: sortedInfo.columnKey === "maxResult" && sortedInfo.order,
         render: (text, record) => {
           if (record.buyDate == null) return null;
-          return this.formtatPercent(record.maxResult);
+          return <MaxCell position={record} />
         }
       },
       {
-        title: "result",
+        title: "Result",
         key: "result",
         sorter: (a, b) => a.result - b.result,
         sortOrder: sortedInfo.columnKey === "result" && sortedInfo.order,
@@ -612,63 +547,10 @@ class PositionWidget extends React.Component {
       <Option key='dollarOnBuy'>$ Buy</Option>
         
       </Select>
-          <Divider type="vertical" />
-          <Tooltip title={this.store.baseCurrency + "/USD"}>
-            <Tag color="gold">{this.formatValue(this.store.fxDollar)}</Tag>
-          </Tooltip>
-          <Tooltip
-            title={
-              "Start Balance: Bot has started with this amount of " +
-              this.store.baseCurrency
-            }
-          >
-            <Tag color="geekblue">
-              SB: {this.formatValue(this.store.startBalance)}{" "}
-              {this.store.baseCurrency} (${this.store.startBalanceDollar.toFixed(
-                2
-              )})
-            </Tag>
-          </Tooltip>
-          <Tooltip title="Available: Balance left for opening new Positions">
-            <Tag color="orange">
-              A: {this.formatValue(this.store.currentBalance)}{" "}
-              {this.store.baseCurrency} (${this.store.currentBalanceDollar.toFixed(
-                2
-              )})
-            </Tag>
-          </Tooltip>
-          <Tooltip title="Total Balance incl. open positions">
-            <Tag color="purple">
-              T: {this.formatValue(this.store.totalBaseCurrencyValue)}{" "}
-              {this.store.baseCurrency} (${this.store.totalBalanceDollar.toFixed(
-                2
-              )})
-            </Tag>
-          </Tooltip>
-          <Tooltip title="Total Diff incl. open positions">
-            <Tag color="purple">
-              D:{" "}
-              {this.formatValue(
-                this.store.totalBaseCurrencyValue - this.store.startBalance
-              )}{" "}
-              {this.store.baseCurrency} (${(
-                this.store.totalBalanceDollar - this.store.startBalanceDollar
-              ).toFixed(2)})
-            </Tag>
-          </Tooltip>
-          <Tooltip title="Total PnL in percent">
-            {this.formtatPercent(this.store.totalBotResult)}
-          </Tooltip>
-          <Divider type="vertical" />
-          <Tooltip title="Sync Balance with Exchange">
-            <Button
-              size="small"
-              type="primary"
-              shape="circle"
-              icon="retweet"
-              onClick={this.store.syncBalance}
-            />
-          </Tooltip>
+      <Divider type="vertical" />
+      <BotResult />
+      
+
           <Divider type="vertical" />
           <Tooltip title="Import open balances from Exchange">
             <Popconfirm

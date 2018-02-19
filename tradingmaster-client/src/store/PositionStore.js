@@ -38,6 +38,8 @@ class MarketWatcherStore {
 
   @observable assetMap = new Map();
 
+  @observable positionMap = new Map();
+
   @observable selectedExchange;
 
   @observable selectedAsset;
@@ -431,6 +433,7 @@ class MarketWatcherStore {
       });
   };
 
+  @action
   load = () => {
     this.log.debug("loading position list");
     let url = this.rootStore.remoteApiUrl + "/position/list";
@@ -444,20 +447,32 @@ class MarketWatcherStore {
 
     axios
       .get(url, config)
-      .then(response => {
-        if (response.data.success) {
-          //this.log.debug("Loaded positions", {...response.data.data})
-
-          this.positions = response.data.data;
-        } else {
-          // error
-          console.info(response.data.message);
-        }
-      })
+      .then(this.positionReceived)
       .catch(function(error) {
         console.log(error);
       });
   };
+
+  @action.bound
+  positionReceived(response) {
+    
+      if (response.data.success) {
+        this.log.debug("Loaded positions", {...response.data.data})
+        this.positionMap.clear()
+
+        response.data.data.forEach( (p) => {
+          this.positionMap.set(p.id, p)
+        })
+        this.positions = response.data.data;
+        this.log.debug("Loaded map", this.positionMap)
+
+      } else {
+        // error
+        console.info(response.data.message);
+      }
+    
+
+  }
 
   loadExchanges = () => {
     let url = this.rootStore.remoteApiUrl + "/exchange/";
@@ -548,8 +563,7 @@ class MarketWatcherStore {
     axios
       .post(url, positionSettings, config)
       .then(response => {
-        console.log(response);
-
+      
         if (response.data.success) {
           message.success("Position for market " + market + " created!");
           this.load()
@@ -593,14 +607,11 @@ class MarketWatcherStore {
   }
 
   updateDollarFx = (newFxDollarCandle) => {
-      console.log("new fx dollar " + newFxDollarCandle.close)
       this.fxDollar = newFxDollarCandle.close
   }
 
   updatePosition = (newPosition) => {
-    console.log("position update " + JSON.stringify(newPosition))
-    
-    
+    this.positionMap.set(newPosition.id, newPosition)
 }
 
   formatNumber(value, decimals, satoshis) {

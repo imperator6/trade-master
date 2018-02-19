@@ -2,8 +2,6 @@ import React from "react";
 import styled from "styled-components";
 import PropTypes from "prop-types";
 import moment from "moment";
-import PositionSettings from "./PositionSettings";
-import NewPosition from "./NewPosition";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 
@@ -68,10 +66,6 @@ class CryptoCell extends React.Component {
   constructor(props) {
     super(props);
 
-    this.state = {
-        position: this.props.position
-    }
-
     this.store = this.props.rootStore.positionStore;
     this.settingsStore = this.props.rootStore.positionSettingsStore;
   }
@@ -85,14 +79,18 @@ class CryptoCell extends React.Component {
     let amount = this.props.amount || 1
     let formatter = this.props.formatter || 'number'
     let color = 'none'
+    let fxAlreadyIncluded = this.props.fxAlreadyIncluded
+    let allowDollarOnBuy = this.props.allowDollarOnBuy
+
+    let position = this.store.positionMap.get(this.props.position.id)
     
-    if(!this.props.fxAlreadyIncluded) {
+    if(!fxAlreadyIncluded) {
         if(this.store.dollarMode == 'dollar' || this.store.dollarMode == 'dollarOnBuy') {
             fxRate = this.store.fxDollar
         } 
         
-        if (this.store.dollarMode == 'dollarOnBuy' && this.props.allowDollarOnBuy ) {
-            fxRate = this.props.position.buyFx
+        if (this.store.dollarMode == 'dollarOnBuy' && allowDollarOnBuy ) {
+            fxRate = position.buyFx
         } 
     }
 
