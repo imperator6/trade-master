@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import PropTypes from "prop-types";
-import { observable, computed, action } from "mobx";
+import { observable, computed, action, toJS } from "mobx";
 import { observer } from "mobx-react";
 //import ThemeProvider from 'styled-components';
 import accounting from "accounting";
@@ -93,7 +93,7 @@ class OrderbookTable extends React.Component {
   @action
   toggleHeader = event => {
     event.preventDefault();
-    this.showHeader = !this.showHeader;
+    this.showHeader = !this.showHeader
   };
 
   render() {
@@ -102,15 +102,30 @@ class OrderbookTable extends React.Component {
     let rows = [];
 
     if (orderbook != null) {
-      let rowCount = Math.max(orderbook.ask.length, orderbook.bid.length);
-      rowCount = Math.min(rowCount, this.maxEntries);
+      let askMap = orderbook.ask
+      let bidMap = orderbook.bid
+
+      let sortedBidValues = Array.from( toJS(bidMap.values()) ).sort( (a,b) => { a.price - b.price })
+      let sortedAskValues = Array.from( toJS(askMap.values()) ).sort( (a,b) => { b.price - a.price })
+
+      //console.log(sortedBidValues)
+
+      let rowCount = Math.max(askMap.size, bidMap.size)
+      rowCount = Math.min(rowCount, this.maxEntries)
+      rowCount = Math.max(rowCount, 1) // at least one rows 
 
       for (let i = 0; i < rowCount; i++) {
-        let bidDataKey = key + "_bid_" + i;
-        let askDataKey = key + "_ask_" + i;
+      
+        let bidData = sortedBidValues[i] 
+        let askData = sortedAskValues[i] 
 
-        let bidData = this.props.store.dataMap.get(bidDataKey);
-        let askData = this.props.store.dataMap.get(askDataKey);
+        if(bidData && !bidData.price) {
+          bidData === this.props.store.EMPTY_DATA
+        }
+
+        if(askData && !askData.price) {
+          askData === this.props.store.EMPTY_DATA
+        }
 
         let noData = false;
         if (

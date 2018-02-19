@@ -23,6 +23,25 @@ class StompStore {
         this.subscriptions = new Map()
     }
 
+    startDefaultSubscriptions() {
+        console.info("Connectiong to websocket...")
+        setTimeout(() => {
+            let channel = "/topic/fxDollar"
+      
+            this.subscribe(channel, (data) => {
+                let candle = JSON.parse(data.body);
+
+                this.rootStore.positionStore.updateDollarFx(candle)
+            })
+
+            this.subscribe("/topic/position", (data) => {
+                let position = JSON.parse(data.body);
+                this.rootStore.positionStore.updatePosition(position)
+            })
+      
+          } , 5000)
+    }
+
 
     @action
     onConnect = () => {

@@ -26,5 +26,7 @@ export default class RootStore {
     this.positionSettingsStore = new PositionSettingsStore(this)
 
     this.stompStore = new StompStore(this, this.websocketUrl);
+
+    
   }
 }

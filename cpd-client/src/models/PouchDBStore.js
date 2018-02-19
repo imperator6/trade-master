@@ -19,10 +19,10 @@ export default class PouchDbStore {
         this.orderbookStore = rootStore.orderbookStore
         // check couch db revisions -> http://s930a3549:5984/cpd_orderbook/_revs_limit 
         this.configDB = new PouchDB( rootStore.db_url + '/cpd_config', {revs_limit: 10});
-        this.orderbookDB = new PouchDB( rootStore.db_url + '/cpd_orderbook', {revs_limit: 2});
+       // this.orderbookDB = new PouchDB( rootStore.db_url + '/cpd_orderbook', {revs_limit: 2});
 
         this.init()
-        this.fillAll()
+        //this.fillAll()
     }
 
     init() {
@@ -55,9 +55,9 @@ export default class PouchDbStore {
             if(doc._id === "config_" + this.rootStore.config_id ) {
                 this.orderbookStore.setConfig({products: doc.products, periodGroups: doc.periodGroups })
                 this.orderbookStore.calculateOrderbook();
-                this.fillAll();
-
-                this.startOrderbookFeed();
+                
+                //this.fillAll();
+                //this.startOrderbookFeed();
             }
           });
     }

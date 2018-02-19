@@ -29,6 +29,8 @@ export default class UserStore {
         .then(response => {
           this.user = response.data
           this.loggedIn = true;
+
+          
         })
         .catch(err => {
             // IS_NOT_AUTHENTICATED
@@ -50,6 +52,8 @@ export default class UserStore {
         .then(response => {
           this.userToken = response.data.token;
           this.loadUser()
+
+          this.rootStore.stompStore.startDefaultSubscriptions()
           
         })
         .catch(err => {

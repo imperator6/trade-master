@@ -73,14 +73,16 @@ export default class OrderbookModel {
   }
 
   createPlaceholder() {
-    let bid = [];
-    let ask = [];
-    for (let i = 0; i < this.config.maxOrderbookEntries; i++) {
-      bid.push(EMPTY_DATA);
-      ask.push(EMPTY_DATA);
-    }
+    let bid = observable(new Map());
+    let ask = observable(new Map());
+   
+    /*for (let i = 0; i < this.config.maxOrderbookEntries; i++) {
+      bid.set(i, EMPTY_DATA);
+      ask.set(i, EMPTY_DATA);
+    }*/
 
-    let ph = observable({ bid: bid, ask: ask });
+    //let ph = observable({ bid: bid, ask: ask });
+    let ph = { bid: bid, ask: ask }
     return ph;
   }
 
@@ -145,7 +147,10 @@ export default class OrderbookModel {
 
   @action
   updateOrderbookWithPrice(key, price) {
-    if (!this.orderbookMap.get(key)) {
+
+    let orderbook = this.orderbookMap.get(key)
+
+    if (!orderbook) {
       // not configured... skip it
       return;
     }
@@ -154,10 +159,12 @@ export default class OrderbookModel {
     let action = price.Action;
     let bidOrAsk = price.BuySell;
 
+    let bidOrAskMap = null
+
     if (bidOrAsk === "Bid") {
-      bidAskKey = key + "_bid_";
+      bidOrAskMap = orderbook.bid
     } else if (bidOrAsk === "Offer") {
-      bidAskKey = key + "_ask_";
+      bidOrAskMap = orderbook.ask
     } else {
       this.log.error(
         `Skipping ${key} Action ${action} -> Unknown 'BuySell' flag '${
@@ -167,20 +174,37 @@ export default class OrderbookModel {
       return;
     }
 
+    let priceId = price.PriceID
+    let activeBidArAsk = null
+
     // We are in the game...
     if ("Remove" === action) {
+
+     bidOrAskMap.delete(priceId)
+     activeBidArAsk = bidOrAskMap.values().next() // first element
+
       //bidOrAsk.remove(priceId)
     } else if ("Insert" === action) {
-      //bidOrAsk.put(priceId, extractBidOrAsk(data))
+      activeBidArAsk = { broker: price.Broker, quantity: price.Volume, price: price.Price, active: true }      
+      bidOrAskMap.set(priceId, activeBidArAsk)
     } else if ("Update" === action) {
       //Integer oldPriceId = data.OrigPriceID as Integer
       //bidOrAsk.remove(oldPriceId)
-      //bidOrAsk.put(priceId, extractBidOrAsk(data))
+      activeBidArAsk = { broker: price.Broker, quantity: price.Volume, price: price.Price, active: true }  
+      let oldPriceId = price.OrigPriceID
+      bidOrAskMap.delete(oldPriceId)
+      bidOrAskMap.set(priceId, activeBidArAsk)
     } else {
       this.log.error(
         `Skipping ${key} Action ${action} -> Unknown 'Action'  ${action}.`
       );
       return;
+    }
+
+    if(activeBidArAsk) {
+      setTimeout(() => {
+        bidOrAskMap.set(priceId, {...activeBidArAsk, active: false})
+      }, 4000);
     }
   }
 

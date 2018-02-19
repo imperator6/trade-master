@@ -4,6 +4,7 @@ import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.task.TaskExecutor
 import org.springframework.integration.channel.PublishSubscribeChannel
+import org.springframework.integration.support.MessageBuilder
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
@@ -32,6 +33,9 @@ class PositionUpdateHandler implements  MessageHandler {
     PublishSubscribeChannel mixedCandelSizesChannel
 
     @Autowired
+    PublishSubscribeChannel fxDollarChannel
+
+    @Autowired
     TradeBotManager tradeBotManager
 
     @Autowired
@@ -48,6 +52,9 @@ class PositionUpdateHandler implements  MessageHandler {
 
     @Autowired
     AlertService alertService
+
+    @Autowired
+    PublishSubscribeChannel positionUpdateChannel
 
     @PostConstruct
     init() {
@@ -114,6 +121,8 @@ class PositionUpdateHandler implements  MessageHandler {
                 bot.setFxDollar( 1 )
             } else {
                 bot.setFxDollar( c.getClose() )
+
+                fxDollarChannel.send( MessageBuilder.withPayload( c ).build() )
             }
 
             // update start fx for position if not set
@@ -290,6 +299,8 @@ class PositionUpdateHandler implements  MessageHandler {
         }
 
         positionRepository.save(p)
+
+        positionUpdateChannel.send(  MessageBuilder.withPayload( p ).build() )
 
         // buyRate: $p.buyRate curentRate: $c.close
         log.debug("PosId $p.id: $p.market: (range:${NumberHelper.twoDigits(p.minResult)}%  ${NumberHelper.twoDigits(p.maxResult)}%) -> ${NumberHelper.twoDigits(resultInPercent)}%")

@@ -592,6 +592,17 @@ class MarketWatcherStore {
       });
   }
 
+  updateDollarFx = (newFxDollarCandle) => {
+      console.log("new fx dollar " + newFxDollarCandle.close)
+      this.fxDollar = newFxDollarCandle.close
+  }
+
+  updatePosition = (newPosition) => {
+    console.log("position update " + JSON.stringify(newPosition))
+    
+    
+}
+
   formatNumber(value, decimals, satoshis) {
     if (value == null || value === 0.0) return 0;
 

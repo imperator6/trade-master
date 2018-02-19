@@ -121,6 +121,16 @@ public class Config {
     }
 
     @Bean
+    public PublishSubscribeChannel positionUpdateChannel() {
+        return MessageChannels.publishSubscribe().get();
+    }
+
+    @Bean
+    public PublishSubscribeChannel fxDollarChannel() {
+        return MessageChannels.publishSubscribe().get();
+    }
+
+    @Bean
     public PublishSubscribeChannel hamsterSignalChannel() {
         return MessageChannels.publishSubscribe().get();
     }
