@@ -45,7 +45,7 @@ class Position {
     @Column(nullable = false)
     String status
 
-    @Column(nullable = false, precision=25, scale=10)
+    @Column(nullable = true, precision=25, scale=10)
     BigDecimal signalRate
 
    // String currencyName

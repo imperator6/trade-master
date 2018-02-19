@@ -15,7 +15,7 @@ class StompStore {
 
     constructor(rootStore, url) {
 
-        this.log.debug("New StompClient!", {id: 0});
+        this.log.debug("New StompClient!");
         this.rootStore = rootStore
         this.url = url 
 
@@ -52,7 +52,7 @@ class StompStore {
 
         let header = {}
 
-        let url = this.url + '?token=' + encodeURIComponent(this.rootStore.userStore.userToken)
+        let url = this.url //  + '?token=' + encodeURIComponent('test123')
         
         this.sockjs = new SockJS(url)
         this.client = Stomp.over(this.sockjs)
@@ -65,7 +65,7 @@ class StompStore {
     @action
     subscribe(channel, cb) {
         if(this.conected) {
-            this.log.debug("StompClient: Adding new subscription for channel" + channel)
+            this.log.debug("StompClient: Adding new subscription for channel: " + channel)
             let subscription = this.client.subscribe(channel, cb)
             this.addSubscription(channel, subscription)
         } else {

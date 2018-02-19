@@ -14,7 +14,7 @@ module.exports = {
   },
   plugins: [new webpack.HotModuleReplacementPlugin(),
       new webpack.DefinePlugin({
-      SERVICE_URL: JSON.stringify("http://127.0.0.1:8080") 
+      SERVICE_URL: JSON.stringify("http://127.0.0.1:8090") 
     })],
   resolve: {
     extensions: [".js", ".jsx"],

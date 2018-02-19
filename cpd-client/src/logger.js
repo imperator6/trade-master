@@ -10,7 +10,7 @@ if (!prod) {
   loglevel.setLevel('error')
 }
 
-loglevel.getLogger('StompStore').setLevel("info")
+loglevel.getLogger('StompStore').setLevel("debug")
 
 loglevel.getLogger('MarketSelectionStore').setLevel("debug")
 

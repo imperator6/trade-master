@@ -9,22 +9,18 @@ Supports ES6 and JSX compilation through babel.
 * To use MobX with create-react-app and decorators, [react-app-rewired](https://github.com/timarney/react-app-rewired/tree/master/packages/react-app-rewire-mobx) or this example using [custom-react-scripts](https://github.com/codylindley/mobx-react)
 
 
-### Start the ui
-
+### Run the example
 
 ```
+npm install (as Administrator)
 npm start
 ```
 
-open http://localhost:8080/
+Browser should open automatically. Otherwise, navigate to the URL reported in the terminal
 
-### Start the storybook
+### Credits
 
-```
-npm run storybook
-```
-
-open http://localhost:9001
+* [Mendix](http://github.com/mendix) for providing the opportunity to battle test this approach (we're hiring!).
 
 
 

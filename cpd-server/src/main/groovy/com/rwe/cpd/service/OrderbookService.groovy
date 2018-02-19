@@ -98,6 +98,13 @@ class OrderbookService {
         }
     }
 
+    String buildId(Map data) {
+
+        def product = buildProduct(data)
+
+        return buildId(data, product)
+    }
+
 
     String buildId(Map data, product) {
 

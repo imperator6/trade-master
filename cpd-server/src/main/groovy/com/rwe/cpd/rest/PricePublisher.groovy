@@ -1,5 +1,6 @@
 package com.rwe.cpd.rest
 
+import com.rwe.cpd.service.OrderbookService
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationListener
@@ -25,6 +26,9 @@ class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, Me
     @Autowired
     PublishSubscribeChannel priceChannel
 
+    @Autowired
+    OrderbookService orderbookService
+
 
     @Autowired
     PricePublisher(MessageSendingOperations<String> messagingTemplate) {
@@ -45,6 +49,9 @@ class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, Me
     void handleMessage(Message<?> message) throws MessagingException {
 
         Map priceMap = message.getPayload()
+
+        // build the id
+        priceMap._id = orderbookService.buildId(priceMap)
 
         messagingTemplate.convertAndSend("/topic/price".toString() , priceMap)
     }
