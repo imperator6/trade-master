@@ -12,7 +12,7 @@ import tradingmaster.db.entity.MarketWatcher
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.Exchange
 import tradingmaster.exchange.IExchangeAdapter
-import tradingmaster.model.RestResponse
+import com.rwe.platform.rest.RestResponse
 
 @RestController
 @RequestMapping("/api/exchange")

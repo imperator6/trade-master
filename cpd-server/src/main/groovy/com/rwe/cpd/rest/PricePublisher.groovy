@@ -53,6 +53,7 @@ class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, Me
         // build the id
         priceMap._id = orderbookService.buildId(priceMap)
 
+
         messagingTemplate.convertAndSend("/topic/price".toString() , priceMap)
     }
 

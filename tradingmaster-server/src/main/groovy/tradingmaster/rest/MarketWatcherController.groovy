@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RestController
 import tradingmaster.db.MarketWatcherRepository
 import tradingmaster.db.entity.MarketWatcher
 import tradingmaster.model.CryptoMarket
-import tradingmaster.model.RestResponse
+import com.rwe.platform.rest.RestResponse
 import tradingmaster.service.MarketWatcherService
 
 @RestController

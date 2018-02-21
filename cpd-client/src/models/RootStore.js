@@ -13,6 +13,7 @@ export default class RootStore {
         this.db_url = 'http://s930a3549:5984'
         this.config_id = "kafka"
 
+        this.remoteApiUrl = 'http://127.0.0.1:8090/api'
         this.websocketUrl = 'http://127.0.0.1:8090/socket'
 
         moment.locale('de')

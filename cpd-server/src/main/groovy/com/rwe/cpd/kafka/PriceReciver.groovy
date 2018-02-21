@@ -9,6 +9,8 @@ import org.springframework.kafka.annotation.KafkaListener
 import org.springframework.kafka.listener.ConsumerSeekAware
 import org.springframework.stereotype.Component
 
+import java.util.concurrent.atomic.AtomicInteger
+
 @Component
 @Commons
 class PriceReciver  /* implements ConsumerSeekAware */ {
@@ -18,6 +20,8 @@ class PriceReciver  /* implements ConsumerSeekAware */ {
 
     @Autowired
     PublishSubscribeChannel priceChannel
+
+    AtomicInteger priceSequenze = new AtomicInteger()
 
 
     private final ThreadLocal<ConsumerSeekAware.ConsumerSeekCallback> seekCallBack = new ThreadLocal<>()
@@ -30,7 +34,11 @@ class PriceReciver  /* implements ConsumerSeekAware */ {
     @KafkaListener(topics = "Sit.smart.prices")
     void receive(Map data) {
 
-        orderbookService.updateOrderBook(data)
+        Integer nextSeq = priceSequenze.incrementAndGet()
+
+        data.priceSeqNum = nextSeq
+
+        orderbookService.updateOrderBook(nextSeq, data)
 
         priceChannel.send( MessageBuilder.withPayload(data).build() )
     }

@@ -1,4 +1,4 @@
-package tradingmaster.model;
+package com.rwe.platform.rest;
 
 public class RestResponse<T> {
 

@@ -5,7 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.bind.annotation.*
 import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.model.BacktestResult
-import tradingmaster.model.RestResponse
+import com.rwe.platform.rest.RestResponse
 import tradingmaster.model.ScriptStrategy
 import tradingmaster.model.StrategyRunConfig
 import tradingmaster.service.StrategyRunnerService

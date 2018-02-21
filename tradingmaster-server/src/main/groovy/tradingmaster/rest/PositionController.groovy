@@ -12,7 +12,7 @@ import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.ITicker
-import tradingmaster.model.RestResponse
+import com.rwe.platform.rest.RestResponse
 import tradingmaster.service.MarketWatcherService
 import tradingmaster.service.PositionService
 import tradingmaster.service.TradeBotManager

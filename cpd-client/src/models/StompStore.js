@@ -21,6 +21,7 @@ class StompStore {
 
         this.channles = new Map()
         this.subscriptions = new Map()
+        this.subscriptionDoneCallbacks = new Map()
     }
 
 
@@ -35,7 +36,8 @@ class StompStore {
         this.channles.forEach(function(callbackfn, channel) {
             this.log.debug("StompClient: Adding new subscription for channel" + channel)
             let subscription = this.client.subscribe(channel, callbackfn)
-            this.addSubscription(channel, subscription)
+            let subscriptionDoneCb = this.subscriptionDoneCallbacks.get(channel)
+            this.addSubscription(channel, subscription, subscriptionDoneCb)
           }.bind(this), this.channles)
     }
 
@@ -56,33 +58,34 @@ class StompStore {
         
         this.sockjs = new SockJS(url)
         this.client = Stomp.over(this.sockjs)
-        
         this.client.debug = null // disable underlying  logging
-
         this.client.connect(header, this.onConnect, this.onError);
     }
 
     @action
-    subscribe(channel, cb) {
+    subscribe(channel, cb, subscriptionDoneCallback) {
         if(this.conected) {
             this.log.debug("StompClient: Adding new subscription for channel: " + channel)
             let subscription = this.client.subscribe(channel, cb)
-            this.addSubscription(channel, subscription)
+            this.addSubscription(channel, subscription, subscriptionDoneCallback)
         } else {
             this.log.debug("StompClient: New Subscription but is not connected. -> Let's connect!. ")
-
             this.channles.set(channel, cb)
-
+            this.subscriptionDoneCallbacks.set(channel, subscriptionDoneCallback)
             this.connect()
         }
     }
 
-    addSubscription = (channel, subscription) => {
+    addSubscription = (channel, subscription, subscriptionDoneCallback) => {
         let old = this.subscriptions.get(channel)
         if(old) {
             this.unsubscribe(channel)
         }
         this.subscriptions.set(channel, subscription)
+        this.subscriptionDoneCallbacks.set(channel, subscriptionDoneCallback)
+
+        if(subscriptionDoneCallback)
+                subscriptionDoneCallback(subscription)
     }
 
     @action
@@ -95,6 +98,7 @@ class StompStore {
 
         this.subscriptions.delete(channel)
         this.channles.delete(channel)
+        this.subscriptionDoneCallbacks.set(channel)
     }
 }
 

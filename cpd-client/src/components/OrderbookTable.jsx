@@ -93,7 +93,7 @@ class OrderbookTable extends React.Component {
   @action
   toggleHeader = event => {
     event.preventDefault();
-    this.showHeader = !this.showHeader
+    this.showHeader = !this.showHeader;
   };
 
   render() {
@@ -102,29 +102,34 @@ class OrderbookTable extends React.Component {
     let rows = [];
 
     if (orderbook != null) {
-      let askMap = orderbook.ask
-      let bidMap = orderbook.bid
+      let askMap = orderbook.ask;
+      let bidMap = orderbook.bid;
 
-      let sortedBidValues = Array.from( toJS(bidMap.values()) ).sort( (a,b) => { a.price - b.price })
-      let sortedAskValues = Array.from( toJS(askMap.values()) ).sort( (a,b) => { b.price - a.price })
+      let sortedBidValues = Array.from(bidMap.values())
+        .map(o => toJS(o))
+        .sort((a, b) => {
+          a.price - b.price;
+        }).filter( (b) => b.price ) // only valid objects with a price --> MobX injects a temp object { done: false, ... }
+      let sortedAskValues = Array.from(askMap.values())
+        .map(o => toJS(o))
+        .sort((a, b) => {
+          b.price - a.price;
+        }).filter( (b) => b.price )
 
-      //console.log(sortedBidValues)
-
-      let rowCount = Math.max(askMap.size, bidMap.size)
-      rowCount = Math.min(rowCount, this.maxEntries)
-      rowCount = Math.max(rowCount, 1) // at least one rows 
+      let rowCount = Math.max(askMap.size, bidMap.size);
+      rowCount = Math.min(rowCount, this.maxEntries);
+      rowCount = Math.max(rowCount, 1); // at least one rows
 
       for (let i = 0; i < rowCount; i++) {
-      
-        let bidData = sortedBidValues[i] 
-        let askData = sortedAskValues[i] 
+        let bidData = sortedBidValues[i];
+        let askData = sortedAskValues[i];
 
-        if(bidData && !bidData.price) {
-          bidData === this.props.store.EMPTY_DATA
+        if (bidData && !bidData.price) {
+          bidData === this.props.store.EMPTY_DATA;
         }
 
-        if(askData && !askData.price) {
-          askData === this.props.store.EMPTY_DATA
+        if (askData && !askData.price) {
+          askData === this.props.store.EMPTY_DATA;
         }
 
         let noData = false;

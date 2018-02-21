@@ -19,6 +19,8 @@ class Orderbook {
     @Transient
     Boolean hasChanged = true // forte to persist after a fresh restart!
 
+    Integer priceSeqNum
+
     @JsonProperty("orderbook")
     OrderbookEntry entries = new OrderbookEntry()
 

@@ -29,7 +29,7 @@ export default class PouchDbStore {
 
         this.configDB.get('config_' + this.rootStore.config_id).then((doc) => {
             this.orderbookStore.setConfig({products: doc.products, periodGroups: doc.periodGroups })
-            this.orderbookStore.calculateOrderbook()
+            
     
            //this.startOrderbookFeed(this.orderbookStore.keyList)
 
@@ -54,7 +54,7 @@ export default class PouchDbStore {
     
             if(doc._id === "config_" + this.rootStore.config_id ) {
                 this.orderbookStore.setConfig({products: doc.products, periodGroups: doc.periodGroups })
-                this.orderbookStore.calculateOrderbook();
+                
                 
                 //this.fillAll();
                 //this.startOrderbookFeed();

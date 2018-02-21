@@ -12,7 +12,7 @@ if (!prod) {
 
 loglevel.getLogger('StompStore').setLevel("debug")
 
-loglevel.getLogger('MarketSelectionStore').setLevel("debug")
+loglevel.getLogger('OrderbookModel').setLevel("info")
 
 
 

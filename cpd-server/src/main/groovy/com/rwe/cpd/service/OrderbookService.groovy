@@ -20,7 +20,7 @@ class OrderbookService {
     @Autowired
     ConfigService configService
 
-    void updateOrderBook(Map data) {
+    void updateOrderBook(Integer priceSeqNum, Map data) {
 
         String product = buildProduct(data)
         String _id = buildId(data, product)
@@ -30,6 +30,7 @@ class OrderbookService {
 
         synchronized (orderbook)  {
             executeAction( data, orderbook )
+            orderbook.priceSeqNum = priceSeqNum
             orderbook.hasChanged = true
         }
     }
@@ -84,6 +85,7 @@ class OrderbookService {
             b.quantity =  data.Volume as BigDecimal
             b.price = data.Price as BigDecimal
             b.broker = data.Broker
+            b.id = data.PriceID
 
             return b
 
@@ -93,6 +95,7 @@ class OrderbookService {
             a.quantity =  data.Volume as BigDecimal
             a.price = data.Price as BigDecimal
             a.broker = data.Broker
+            a.id = data.PriceID
 
             return a
         }
@@ -130,16 +133,19 @@ class OrderbookService {
     }
 
     Orderbook getOrCreateOrderBook(String _id, Map data) {
-        Orderbook orderbook = orderBookCache.get(_id)
 
-        if(!orderbook) {
-            orderbook = new Orderbook()
-            orderbook.id = _id
-            orderbook.type = data.S_Commodity
-            orderBookCache.put(_id, orderbook)
+        synchronized (orderBookCache) {
+            Orderbook orderbook = orderBookCache.get(_id)
+
+            if(!orderbook) {
+                orderbook = new Orderbook()
+                orderbook.id = _id
+                orderbook.type = data.S_Commodity
+                orderBookCache.put(_id, orderbook)
+            }
+
+            return orderbook
         }
-
-        return orderbook
     }
 
 

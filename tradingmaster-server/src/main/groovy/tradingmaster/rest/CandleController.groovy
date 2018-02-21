@@ -1,5 +1,6 @@
 package tradingmaster.rest
 
+import com.rwe.platform.rest.RestResponse
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.format.annotation.DateTimeFormat
