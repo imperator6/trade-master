@@ -12,7 +12,6 @@ export default class PouchDbStore {
 
     orderbookChangesFeed
 
-
     constructor(rootStore) {
         this.log.debug("PouchDbStore");
         this.rootStore = rootStore;
@@ -28,12 +27,18 @@ export default class PouchDbStore {
     init() {
 
         this.configDB.get('config_' + this.rootStore.config_id).then((doc) => {
-            this.orderbookStore.setConfig({products: doc.products, periodGroups: doc.periodGroups })
+            this.rootStore.cpdConfigStore.setConfig({products: doc.products, periodGroups: doc.periodGroups })
             
     
            //this.startOrderbookFeed(this.orderbookStore.keyList)
 
            
+        }).catch(function (err) {
+            console.log(err);
+        });
+
+        this.configDB.get('config_all').then((doc) => {
+            this.rootStore.cpdConfigStore.setConfigAll({products: doc.products, periodGroups: doc.periodGroups }) 
         }).catch(function (err) {
             console.log(err);
         });

@@ -149,4 +149,29 @@ class OrderbookService {
     }
 
 
+    Orderbook updateOrderbook(Orderbook orderbook, Integer maxOrderbookEntries) {
+
+        if(!orderbook)
+            return null
+
+        synchronized (orderbook) {
+            Map bidMap = bidCache.get(orderbook.id)
+
+            Map askMap = askCache.get(orderbook.id)
+
+            if(bidMap) {
+                orderbook.entries.bids = bidMap.values().sort{  it.price }.reverse()
+                orderbook.entries.bids =  orderbook.entries.bids.subList(0, Math.min( maxOrderbookEntries, orderbook.entries.bids.size()-1 ))
+            }
+
+            if(askMap) {
+                orderbook.entries.asks = askMap.values().sort{  it.price }
+                orderbook.entries.asks =  orderbook.entries.asks.subList(0, Math.min( maxOrderbookEntries, orderbook.entries.asks.size()-1 ))
+            }
+        }
+
+        return orderbook
+    }
+
+
 }

@@ -38,7 +38,7 @@ class CouchDbSyncService {
     //@Scheduled(initialDelay=5000l, fixedRate=1000l)
     void syncDirtyOrderbooks() {
 
-        synchronized (orderbookService.orderBookCache) {
+       // synchronized (orderbookService.orderBookCache) {
             def dirtyBooks = new ArrayList<Orderbook>(orderbookService.orderBookCache.values()).findAll { it.hasChanged }
 
             log.info("Updating ${dirtyBooks.size()} orderbooks!")
@@ -85,9 +85,8 @@ class CouchDbSyncService {
 
                     orderbook.hasChanged = false
                 }
-
             }
-        }
+        //}
     }
 
     @Scheduled(initialDelay=5000l, fixedRate=60000l)

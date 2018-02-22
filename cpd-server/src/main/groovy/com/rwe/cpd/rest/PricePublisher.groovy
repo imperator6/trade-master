@@ -37,7 +37,7 @@ class PricePublisher implements ApplicationListener<BrokerAvailabilityEvent>, Me
 
     @PostConstruct
     init() {
-        priceChannel.subscribe(this)
+        //priceChannel.subscribe(this)
     }
 
     @Override

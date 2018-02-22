@@ -6,14 +6,18 @@ import { observer } from "mobx-react";
 //import ThemeProvider from 'styled-components';
 import accounting from "accounting";
 import DataColumns from "./DataColumns";
-
 import { Popover, Button } from "antd";
+
+import IE from "ie-version"
 
 const Table = styled.table`
   border: 1px solid #424242;
   border-collapse: collapse;
   font-family: Verdana, Geneva, sans-serif;
+  color: black;
+  display: ${props => IE.version ? 'inline' : ''};
 `;
+
 
 export const TD = styled.td`
   font-size: 11px;
@@ -21,7 +25,7 @@ export const TD = styled.td`
   background-color: #f5f5f5;
   white-space: nowrap;
   text-align: center;
-  width: 40px;
+  width: 47px;
   height: 20px;
   padding: 2px;
 `;
@@ -31,6 +35,7 @@ const TH = styled.th`
   color: #ffffff;
   background-color: #212121;
   padding: 2px;
+  text-align: center;
 `;
 
 const TD_HEADER = styled.td`
@@ -86,7 +91,7 @@ class OrderbookTable extends React.Component {
     if (this.maxEntries > 1) {
       this.maxEntries = 1;
     } else {
-      this.maxEntries = this.props.store.config.maxOrderbookEntries;
+      this.maxEntries = this.props.store.rootStore.cpdConfigStore.config.maxOrderbookEntries;
     }
   };
 
@@ -102,35 +107,15 @@ class OrderbookTable extends React.Component {
     let rows = [];
 
     if (orderbook != null) {
-      let askMap = orderbook.ask;
-      let bidMap = orderbook.bid;
-
-      let sortedBidValues = Array.from(bidMap.values())
-        .map(o => toJS(o))
-        .sort((a, b) => {
-          a.price - b.price;
-        }).filter( (b) => b.price ) // only valid objects with a price --> MobX injects a temp object { done: false, ... }
-      let sortedAskValues = Array.from(askMap.values())
-        .map(o => toJS(o))
-        .sort((a, b) => {
-          b.price - a.price;
-        }).filter( (b) => b.price )
-
-      let rowCount = Math.max(askMap.size, bidMap.size);
+      let rowCount = Math.max(orderbook.ask.length, orderbook.bid.length);
       rowCount = Math.min(rowCount, this.maxEntries);
-      rowCount = Math.max(rowCount, 1); // at least one rows
 
       for (let i = 0; i < rowCount; i++) {
-        let bidData = sortedBidValues[i];
-        let askData = sortedAskValues[i];
+        let bidDataKey = key + "_bid_" + i;
+        let askDataKey = key + "_ask_" + i;
 
-        if (bidData && !bidData.price) {
-          bidData === this.props.store.EMPTY_DATA;
-        }
-
-        if (askData && !askData.price) {
-          askData === this.props.store.EMPTY_DATA;
-        }
+        let bidData = this.props.store.dataMap.get(bidDataKey);
+        let askData = this.props.store.dataMap.get(askDataKey);
 
         let noData = false;
         if (

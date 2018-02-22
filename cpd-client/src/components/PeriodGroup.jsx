@@ -5,15 +5,22 @@ import moment from "moment";
 import Period from "./Period";
 import { observer } from "mobx-react";
 //import ThemeProvider from 'styled-components';
+import IE from "ie-version"
 
 const Outer = styled.div`
   display: flex;
   flex-direction: column;
 `;
 
-const Row = styled.div`
-  display: flex;
-  flex-direction: row;
+const Row= styled.div`
+  display: ${props => IE.version ? '' : 'flex'};
+  flex-direction: ${props => IE.version ? '' : 'row'};
+  white-space : nowrap;
+`;
+
+const RowIE = styled.div`
+white-space : nowrap;
+overflow : hidden; 
 `;
 
 const PeriodGroup = styled.div`

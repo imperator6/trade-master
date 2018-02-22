@@ -30,38 +30,22 @@ class OrderbookController {
 
         RestResponse<List<Orderbook>> result = new RestResponse<>()
 
-        synchronized (orderbookService.orderBookCache) {
+        //synchronized (orderbookService.orderBookCache) {
 
             def orderbooks  = orderbookIds.collect {
 
                 Orderbook orderbook = orderbookService.orderBookCache.get(it)
-                if(orderbook) {
 
-                    synchronized (orderbook) {
-                        Map bidMap = orderbookService.bidCache.get(orderbook.id)
+                return orderbookService.updateOrderbook(orderbook, maxOrderbookEntries)
 
-                        Map askMap = orderbookService.askCache.get(orderbook.id)
-
-                        if(bidMap) {
-                            orderbook.entries.bids = bidMap.values().sort{  it.price }.reverse()
-                            orderbook.entries.bids =  orderbook.entries.bids.subList(0, Math.min( maxOrderbookEntries, orderbook.entries.bids.size()-1 ))
-                        }
-
-                        if(askMap) {
-                            orderbook.entries.asks = askMap.values().sort{  it.price }
-                            orderbook.entries.asks =  orderbook.entries.asks.subList(0, Math.min( maxOrderbookEntries, orderbook.entries.asks.size()-1 ))
-                        }
-                    }
-                }
-
-                return orderbook
             }.findAll { it != null }
 
             result.setData(orderbooks)
-        }
+        //}
 
         return result
-
     }
+
+
 
 }

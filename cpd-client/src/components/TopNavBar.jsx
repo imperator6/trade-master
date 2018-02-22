@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import { observer, inject } from "mobx-react";
 
+
+
 // material-ui
 import { MuiThemeProvider, createMuiTheme, withStyles, withTheme  } from 'material-ui/styles';
 import AppBar from 'material-ui/AppBar';
@@ -9,6 +11,11 @@ import Typography from 'material-ui/Typography';
 import Button from 'material-ui/Button';
 import IconButton from 'material-ui/IconButton';
 import MenuIcon from 'material-ui-icons/Menu';
+
+import { Menu, Icon } from 'antd';
+
+const SubMenu = Menu.SubMenu;
+const MenuItemGroup = Menu.ItemGroup;
 
 const styles = {
   root: {
@@ -32,23 +39,20 @@ class TopNavBar extends Component {
     super(props);
     let { classes } = props
     this.classes = classes
-    this.store = this.props.rootStore
+    this.store = this.props.rootStore.cpdConfigStore
   }
 
   render() {
-    console.log(this.classes)
-    return (   
-    <AppBar position="static">
-        <Toolbar>
-        <IconButton className={this.classes.menuButton} color="inherit" aria-label="Menu" onClick={() => this.store.toggeleMainMenu()}>
-            <MenuIcon  />
-        </IconButton>
-        <Typography variant="title" color="inherit" className={this.classes.flex}>
-            Web CPD
-        </Typography>
-            <Button color="inherit">Login</Button>
-        </Toolbar>
-    </AppBar>
+    return ( <Menu style={{lineHeight: '24px'}}
+      
+      mode="horizontal"
+    >
+    <Menu.Item key="mail" >
+          <a onClick={() => {this.store.showDialog()}}><Icon type="setting" /> Web CPD </a>
+    </Menu.Item>
+      
+    </Menu>  
+   
     );
   }
 }

@@ -3,6 +3,7 @@ import moment from "moment"
 import PouchDBStore from "./PouchDBStore"
 import OrderbookModel from "./OrderbookModel"
 import StompStore from "./StompStore"
+import CpdConfigStore from "./CpdConfigStore"
 import { observable, computed, action } from "mobx";
 
 export default class RootStore {
@@ -20,8 +21,9 @@ export default class RootStore {
 
         this.orderbookStore = new OrderbookModel(this)
         this.pouchDBStore = new PouchDBStore(this)
+        this.cpdConfigStore = new CpdConfigStore(this)
         
-        this.stompStore = new StompStore(this, this.websocketUrl);
+        this.stompStore = new StompStore(this, this.websocketUrl)
     }
 
     @action
