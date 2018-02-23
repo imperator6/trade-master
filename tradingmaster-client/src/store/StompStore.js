@@ -47,7 +47,10 @@ class StompStore {
     onConnect = () => {
         this.log.debug("StompClient sucsessfully connected to " + this.url);
         this.conected = true
-        this.rebuildChannels()
+        setTimeout(() => {
+            this.rebuildChannels()
+        }, 2000)
+        
     }
 
     rebuildChannels = () => {

@@ -11,6 +11,7 @@ import ResultCell from "./tablecell/ResultCell";
 import SellRateCell from "./tablecell/SellRateCell";
 import BuyRateCell from "./tablecell/BuyRateCell";
 import QuantityCell from "./tablecell/QuantityCell";
+import CommentCell from "./tablecell/CommentCell";
 import MaxCell from "./tablecell/MaxCell";
 
 import BotResult from "./BotResult";
@@ -31,6 +32,7 @@ import {
   Popover,
   Input
 } from "antd";
+
 const Option = Select.Option;
 const ButtonGroup = Button.Group;
 
@@ -419,6 +421,18 @@ class PositionWidget extends React.Component {
         }
       },
       {
+        title: "Comment",
+        dataIndex: "comment",
+        key: "comment",
+        sorter: (a, b) => {
+          return a.comment === b.comment ? 0 : a.comment ? -1 : 1;
+        },
+        sortOrder: sortedInfo.columnKey === "comment" && sortedInfo.order,
+        render: (text, record) => {
+          return <CommentCell  position={record} />
+        }
+      },
+      {
         title: "Error",
         dataIndex: "error",
         key: "error",
@@ -436,6 +450,7 @@ class PositionWidget extends React.Component {
           }
         }
       },
+
 
       {
         title: "",

@@ -127,6 +127,9 @@ class Position {
     @Column(columnDefinition = "TEXT")
     PositionSettings settings = new PositionSettings()
 
+    @Column(columnDefinition = "TEXT")
+    String comment
+
     //boolean deleted = false
 
 }

@@ -134,6 +134,25 @@ class PositionController {
         return new RestResponse(false, "TradeBot not found!")
     }
 
+    @RequestMapping(value = "/save", method = RequestMethod.POST)
+    RestResponse<Position> save(@RequestBody Position position) {
+
+        log.info("Saving positio ${position.id}")
+        Position posToUpdate = positionService.findPositionById(position.getBotId(), position.getId())
+
+        if(posToUpdate != null) {
+
+            // Update only allowed fields
+            posToUpdate.amount = position.amount
+            posToUpdate.comment = position.comment
+
+            positionRepository.save(posToUpdate)
+            return new RestResponse(true)
+        }
+
+        return new RestResponse(false, "Position not found!")
+    }
+
     @RequestMapping(value = "/newPosition", method = RequestMethod.POST)
     RestResponse<Position> newPosition(@RequestParam Integer botId, @RequestParam String market, @RequestBody PositionSettings settings) {
 

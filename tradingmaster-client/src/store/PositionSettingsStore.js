@@ -1,5 +1,5 @@
 import axios from "axios";
-import { observable, computed, action } from "mobx";
+import { observable, computed, action, toJS } from "mobx";
 
 import logger from "../logger";
 
@@ -67,6 +67,8 @@ class PositionSettingsStore {
 
   @observable selectedPosition = { closed: true };
 
+  @observable alerts = [{ enabled: false, value: -10, once: true }];
+
   constructor(rootStore) {
     this.rootStore = rootStore;
   }
@@ -78,7 +80,8 @@ class PositionSettingsStore {
       rebuy: { ...this.rebuy },
       takeProfit: { ...this.takeProfit },
       stopLoss: { ...this.stopLoss },
-      trailingStopLoss: { ...this.trailingStopLoss }
+      trailingStopLoss: { ...this.trailingStopLoss }, 
+      alerts: toJS(this.alerts)
     };
   }
  
@@ -112,6 +115,8 @@ class PositionSettingsStore {
 
     this.trailingStopLoss = pos.settings.trailingStopLoss
 
+    this.alerts = pos.settings.alerts
+
     if (pos.closed) {
       if (this.buyWhen.quantity === 0) {
         this.buyWhen.quantity = pos.amount;
@@ -141,6 +146,11 @@ class PositionSettingsStore {
       this.stopLoss = { enabled: false, value: -10 };
     }
 
+    if (!this.alerts) {
+      // init if not exsist
+      this.alerts = [{ enabled: false, value: -10, once: true }]
+    }
+
     if (this.stopLoss && !this.stopLoss.enabled) {
       // overwrite with bot settings
       this.stopLoss = { enabled: false, value: bot.config.stopLoss.value };
@@ -165,7 +175,14 @@ class PositionSettingsStore {
         keepAtLeastForHours: bot.config.trailingStopLoss.keepAtLeastForHours
       };
     }
+
+    if (this.alerts && !this.stopLoss.enabled) {
+      // overwrite with bot settings
+      this.stopLoss = { enabled: false, value: bot.config.stopLoss.value };
+    }
   };
+
+ 
 }
 
 export default PositionSettingsStore;

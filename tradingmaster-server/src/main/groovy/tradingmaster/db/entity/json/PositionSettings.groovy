@@ -17,6 +17,8 @@ class PositionSettings extends GlobalSettings {
 
     ReBuy rebuy = new ReBuy()
 
+    List alerts = [new Alert(-10), new Alert(2), new Alert(10), new Alert(25)]
+
     //Alert alert = new Alert()
 
 }

@@ -290,6 +290,32 @@ class MarketWatcherStore {
       });
   };
 
+  savePosition = (position) => {
+    console.log(position);
+
+    let url = this.rootStore.remoteApiUrl + "/position/save";
+
+    let config = {
+      params: {
+       // botId: this.selectedBot
+      },
+      ...this.rootStore.userStore.getHeaderConfig()
+    }
+
+    axios
+      .post(url, position, config)
+      .then(response => {
+        if (response.data.success) {
+          message.success("Position Comment saved! " + position.market);
+        } else {
+          message.error(response.data.message);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
   deletePosition = position => {
     this.log.debug("deleteing position ", position);
 
