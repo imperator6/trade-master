@@ -10,4 +10,7 @@ class TakeProfit {
     Boolean enabled = false
 
     BigDecimal value = 20
+
+    Integer activeAfterHours = 0
+
 }

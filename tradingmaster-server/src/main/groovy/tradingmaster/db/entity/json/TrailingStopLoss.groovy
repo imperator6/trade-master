@@ -13,5 +13,11 @@ class TrailingStopLoss {
 
     BigDecimal startAt  = 12 // start trailing at 12% profit
 
-    Integer keepAtLeastForHours = 0
+    @Deprecated
+    Integer keepAtLeastForHours = 0 // replaced with activeAfterHours
+
+    Integer activeAfterHours = 0
+
+    Integer checkInterval = 1
+
 }

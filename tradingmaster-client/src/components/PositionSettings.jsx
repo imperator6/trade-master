@@ -56,7 +56,7 @@ class PositionSettings extends React.Component {
           onClick={() => {
             this.store.applySettings(
               this.settingsStore.selectedPosition,
-              this.settingsStore.builsSettings()
+              this.settingsStore.buildSettings()
             );
           }}
         >
@@ -79,7 +79,7 @@ class PositionSettings extends React.Component {
               this.store.openNewPosition(
                 exchange,
                 market,
-                this.settingsStore.builsSettings()
+                this.settingsStore.buildSettings()
               );
             }}
           >
@@ -254,6 +254,18 @@ class PositionSettings extends React.Component {
             this.settingsStore.takeProfit.value = newValue;
           }}
         />
+         <br />
+        Active after:
+        <InputNumber style={{width: "75px"}}
+          size="small" 
+          defaultValue={0}
+          disabled={!this.settingsStore.takeProfit.enabled}
+          value={this.settingsStore.takeProfit.activeAfterHours}
+          formatter={value => `${value} h`}
+          parser={value => value.replace(" h", "")}
+          onChange={newValue => {
+            this.settingsStore.takeProfit.activeAfterHours = newValue;
+          }} />
         <br />
         StopLoss:<br />
         <Switch
@@ -274,6 +286,18 @@ class PositionSettings extends React.Component {
           }}
         />
         <br />
+        Active after:
+        <InputNumber style={{width: "75px"}}
+          size="small" 
+          defaultValue={0}
+          disabled={!this.settingsStore.stopLoss.enabled}
+          value={this.settingsStore.stopLoss.activeAfterHours}
+          formatter={value => `${value} h`}
+          parser={value => value.replace(" h", "")}
+          onChange={newValue => {
+            this.settingsStore.stopLoss.activeAfterHours = newValue;
+          }} />
+        <br />
         Trailing StopLoss:<br />
         <Switch
           checked={this.settingsStore.trailingStopLoss.enabled}
@@ -282,7 +306,7 @@ class PositionSettings extends React.Component {
           }}
         />
         <br />Start at
-        <InputNumber
+        <InputNumber style={{width: "75px"}}
           size="small"
           defaultValue={12}
           disabled={!this.settingsStore.trailingStopLoss.enabled}
@@ -294,7 +318,7 @@ class PositionSettings extends React.Component {
           }}
         />
         <br />
-        Stop at<InputNumber
+        Stop at<InputNumber style={{width: "75px"}}
           size="small"
           defaultValue={2}
           disabled={!this.settingsStore.trailingStopLoss.enabled}
@@ -306,16 +330,27 @@ class PositionSettings extends React.Component {
           }}
         />
         <br />
-        Keep hours
-        <InputNumber
+        Active after:
+        <InputNumber style={{width: "75px"}}
+          size="small" 
+          defaultValue={0}
+          disabled={!this.settingsStore.trailingStopLoss.enabled}
+          value={this.settingsStore.trailingStopLoss.activeAfterHours}
+          formatter={value => `${value} h`}
+          parser={value => value.replace(" h", "")}
+          onChange={newValue => {
+            this.settingsStore.trailingStopLoss.activeAfterHours = newValue;
+          }}
+        /><br />
+        Check Interval<InputNumber style={{width: "78px"}}
           size="small"
           defaultValue={0}
           disabled={!this.settingsStore.trailingStopLoss.enabled}
-          value={this.settingsStore.trailingStopLoss.keepAtLeastForHours}
-          formatter={value => `${value}h`}
-          parser={value => value.replace("h", "")}
+          value={this.settingsStore.trailingStopLoss.checkInterval}
+          formatter={value => `${value} min`}
+          parser={value => value.replace(" min", "")}
           onChange={newValue => {
-            this.settingsStore.trailingStopLoss.keepAtLeastForHours = newValue;
+            this.settingsStore.trailingStopLoss.checkInterval = newValue;
           }}
         />
         <br />

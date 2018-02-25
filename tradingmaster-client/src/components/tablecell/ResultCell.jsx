@@ -5,6 +5,7 @@ import moment from "moment";
 //import ThemeProvider from 'styled-components';
 import { observer, inject } from "mobx-react";
 import CryptoCell from "./CryptoCell"
+import {Tooltip, Icon, Popover, Divider, Popconfirm} from "antd"
 
 
 @inject("rootStore")
@@ -43,6 +44,7 @@ class ResultCell extends React.Component {
       percentValue = (sellDollarRate / buyDollarRate * 100 ) -100
       fxIncluded = true
     }
+
 
     return <CryptoCell key='result' position={record} value={resultRate} amount={record.amount} formatter='percent' percentValue={percentValue} allowDollarOnBuy fxAlreadyIncluded={fxIncluded}/>
   }

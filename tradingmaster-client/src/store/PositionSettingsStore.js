@@ -23,13 +23,14 @@ class PositionSettingsStore {
           maxPrice: 0,
           timeoutHours: 36
         },
-        takeProfit: { enabled: false, value: 50 },
-        stopLoss: { enabled: false, value: -10 },
+        takeProfit: { enabled: false, value: 50, activeAfterHours: 0},
+        stopLoss: { enabled: false, value: -10, activeAfterHours: 0},
         trailingStopLoss:  {
           enabled: false,
           value: 5,
           startAt: 20,
-          keepAtLeastForHours: 0
+          activeAfterHours: 0,
+          checkInterval: 1
         }
       },
       closed: true
@@ -73,7 +74,7 @@ class PositionSettingsStore {
     this.rootStore = rootStore;
   }
 
-  builsSettings() {
+  buildSettings() {
     return {
       ...this.settings,
       buyWhen: { ...this.buyWhen },
@@ -162,7 +163,8 @@ class PositionSettingsStore {
         enabled: false,
         value: 5,
         startAt: 20,
-        keepAtLeastForHours: 0
+        activeAfterHours: 0,
+        checkInterval: 1
       };
     }
 
@@ -172,7 +174,8 @@ class PositionSettingsStore {
         enabled: false,
         value: bot.config.trailingStopLoss.value,
         startAt: bot.config.trailingStopLoss.startAt,
-        keepAtLeastForHours: bot.config.trailingStopLoss.keepAtLeastForHours
+        activeAfterHours: bot.config.trailingStopLoss.activeAfterHours,
+        checkInterval: bot.config.trailingStopLoss.checkInterval
       };
     }
 

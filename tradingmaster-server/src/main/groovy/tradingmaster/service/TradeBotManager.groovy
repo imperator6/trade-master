@@ -176,23 +176,31 @@ class TradeBotManager {
 
             if(b.getPositions().findAll { !it.closed }.size() < b.config.maxOpenPositions) {
 
-                // check allowed
-                if( b.config.allowedAssets) {
-                    List<String> allowedAssets = b.config.allowedAssets
+                if(b.config.assetFilter.enabled) {
 
-                    if(allowedAssets.find{ it.equalsIgnoreCase(s.asset) }) {
-                        log.info("Asset $s.asset is allowed for Bot ${b.getId()}")
-                        valid = true
-                    } else {
-                        log.info("Asset $s.asset is NOT allowed for Bot ${b.getId()}")
-                        valid = false
-                    }
-                } else if ( b.config.forbiddenAssets) {
+                    Map filter = b.config.assetFilter
 
-                    List<String> forbiddenAssets = b.config.forbiddenAssets
+                    // check allowed
+                    if(filter.allowed) {
+                        List<String> allowedAssets = filter.allowed
 
-                    if(forbiddenAssets.find{ it.equalsIgnoreCase(s.asset) }) {
-                        log.info("Asset $s.asset is forbidden for Bot ${b.getId()}")
+                        if(allowedAssets.find{ it.equalsIgnoreCase(s.asset) }) {
+                            log.info("Asset $s.asset is allowed for Bot ${b.getId()}")
+                            valid = true
+                        } else {
+                            log.info("Asset $s.asset is NOT allowed for Bot ${b.getId()}")
+                            valid = false
+                        }
+
+                    } else if (filter.forbidden) {
+
+                        List<String> forbiddenAssets = filter.forbidden
+
+                        if(forbiddenAssets.find{ it.equalsIgnoreCase(s.asset) }) {
+                            log.info("Asset $s.asset is forbidden for Bot ${b.getId()}")
+                        } else {
+                            valid = true
+                        }
                     } else {
                         valid = true
                     }

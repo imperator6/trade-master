@@ -16,6 +16,34 @@ class AlertService {
 
     void checkAlert(TradeBot bot, Position pos) {
 
+
+        if(pos.settings.alerts) {
+
+            pos.settings.alerts.each {
+
+                if(it.enabled) {
+
+                    if(it.value > 0 && pos.result >= it.value) {
+
+                        pushoverService.send(bot,
+                                "${pos.market} >= ${it.value}%",
+                                 pos)
+
+                        it.enabled = false // deactivate the alert
+                    } else if(it.value < 0 && pos.result <= it.value) {
+
+                        pushoverService.send(bot,
+                                "${pos.market} <= ${it.value}%",
+                                pos)
+
+
+                        it.enabled = false // deactivate the alert
+                    }
+                }
+            }
+
+        }
+
     }
 
 }

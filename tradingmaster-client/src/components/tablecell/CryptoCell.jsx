@@ -33,14 +33,13 @@ const NumberDivBorder = NumberDiv.extend`
   box-sizing: border-box;
   margin: 0;
   padding: 0 7px;
-  display: inline-block;
   line-height: 20px;
   height: 22px;
   border-radius: 4px;
   border: 1px solid;
   opacity: 1;
-  margin-right: 8px;
   white-space: nowrap;
+  text-align: right;
 `;
 
 const NumberDivRed = NumberDivBorder.extend`

@@ -22,6 +22,7 @@ import tradingmaster.util.NumberHelper
 import javax.annotation.PostConstruct
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -257,7 +258,6 @@ class PositionUpdateHandler implements  MessageHandler {
                 }
             } else {
                 p.setAge("$minutes Min.")
-
             }
 
             BigDecimal resultInPercent = calculatePositionResult(p.getBuyRate(), c.close)
@@ -287,8 +287,6 @@ class PositionUpdateHandler implements  MessageHandler {
             if(p.maxResult == null || resultInPercent > p.maxResult) {
                 p.maxResult = resultInPercent
             }
-
-
 
         } else {
             // a closed position with setting traceClosed!
@@ -362,12 +360,24 @@ class PositionUpdateHandler implements  MessageHandler {
         }
 
         Map config = bot.config
+        def age = getAgeInHours(p)
         BigDecimal positionValueInPercent = p.result
 
         StopLoss stopLoss = p.settings.stopLoss //config.stopLoss as StopLoss
 
         if(stopLoss && stopLoss.enabled) {
-            if(positionValueInPercent <= stopLoss.value) {
+
+            def skipStopLoss = false
+
+            // check if activeAfterHours
+            if(stopLoss.activeAfterHours != null && stopLoss.activeAfterHours > 0 ) {
+                if(age < stopLoss.activeAfterHours) {
+                    skipStopLoss = true
+                    log.debug("Skipping StopLoss deal is too jung (${age} hours old)")
+                }
+            }
+
+            if(!skipStopLoss && positionValueInPercent <= stopLoss.value) {
                 log.info("Stop Loss <= ${stopLoss.value}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
                 return true
             }
@@ -375,21 +385,33 @@ class PositionUpdateHandler implements  MessageHandler {
 
         TrailingStopLoss trailingStopLoss = p.settings.trailingStopLoss //config.trailingStopLoss as TrailingStopLoss
 
-
         if(trailingStopLoss && trailingStopLoss.enabled) {
 
             def skipTrailingStopLoss = false
 
-            // check if keepAtLeastForHours
-            if(trailingStopLoss.keepAtLeastForHours != null && trailingStopLoss.keepAtLeastForHours > 0 ) {
-                def age = getAgeInHours(p)
-                if(age < trailingStopLoss.keepAtLeastForHours) {
+            // check if activeAfterHours
+            if(trailingStopLoss.activeAfterHours != null && trailingStopLoss.activeAfterHours > 0 ) {
+                if(age < trailingStopLoss.activeAfterHours) {
                     skipTrailingStopLoss = true
                     log.debug("Skipping TrailingStopLoss deal is too jung (${age} hours old)")
                 }
             }
 
+            // check interval
+            if(/*p.trailingStopLoss != null && */ trailingStopLoss.checkInterval > 1) {
+                def minute = c.getEnd().getMinutes()
+                def modulo = minute % trailingStopLoss.checkInterval
+                if(modulo != 0) {
+                    log.info("Skipping TrailingStopLoss checkInterval does not match! Minute is $minute Interval: ${trailingStopLoss.checkInterval})")
+                    skipTrailingStopLoss = true
+                } else {
+                    log.info("TrailingStopLoss checkInterval does match: Minute is $minute Interval: ${trailingStopLoss.checkInterval}")
+                }
+
+            }
+
             if(!skipTrailingStopLoss) {
+
                 // check if we need to sell
                 if(p.trailingStopLoss != null && positionValueInPercent <= p.trailingStopLoss) {
                     log.info("Trailing-Stop-Loss <= ${p.trailingStopLoss}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
@@ -419,7 +441,19 @@ class PositionUpdateHandler implements  MessageHandler {
         TakeProfit takeProfit = p.settings.takeProfit //config.takeProfit as TakeProfit
 
         if(takeProfit && takeProfit.enabled) {
-            if(positionValueInPercent >= takeProfit.value) {
+
+            def skipTakeProfit = false
+
+            // check if activeAfterHours
+            if(takeProfit.activeAfterHours != null && takeProfit.activeAfterHours > 0 ) {
+                if(age < takeProfit.activeAfterHours) {
+                    skipTakeProfit = true
+                    log.debug("Skipping TakeProfit deal is too jung (${age} hours old)")
+                }
+            }
+
+
+            if(!skipTakeProfit && positionValueInPercent >= takeProfit.value) {
                 log.info("Take-Profit for Position $p.id: $p.market profit: ${positionValueInPercent}%")
                 return true
             }

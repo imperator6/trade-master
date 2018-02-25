@@ -65,7 +65,9 @@ class CommentCell extends React.Component {
           </table> 
       );
     } else {
-      result = <span onClick={this.switchEditMode}>{position.comment}</span>;
+      let comment = position.comment
+     
+      result =<div> <span style={{whiteSpace: 'break', fontSize: '10px'}} onClick={this.switchEditMode}>{position.comment}</span> <Icon size="small" type="form" onClick={this.switchEditMode} /></div>;
     }
 
     return result;

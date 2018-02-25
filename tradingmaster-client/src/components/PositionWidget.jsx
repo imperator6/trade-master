@@ -12,6 +12,7 @@ import SellRateCell from "./tablecell/SellRateCell";
 import BuyRateCell from "./tablecell/BuyRateCell";
 import QuantityCell from "./tablecell/QuantityCell";
 import CommentCell from "./tablecell/CommentCell";
+import SettingsCell from "./tablecell/SettingsCell";
 import MaxCell from "./tablecell/MaxCell";
 
 import BotResult from "./BotResult";
@@ -162,7 +163,11 @@ class PositionWidget extends React.Component {
       );
     }
 
-    content.push(<Divider key="div0" type="vertical" />);
+    return content;
+  }
+
+  buildSettingsCell(record) {
+    let content = [];
 
     content.push(
       <Tooltip key="settingsButton" placement="bottom" title="Settings">
@@ -360,6 +365,15 @@ class PositionWidget extends React.Component {
         sortOrder: sortedInfo.columnKey === "result" && sortedInfo.order,
         render: (text, record) => {
           return this.buildResultCell(record);
+        }
+      },
+      {
+        title: "Settings",
+        key: "settings",
+        //sorter: (a, b) => a.result - b.result,
+        //sortOrder: sortedInfo.columnKey === "result" && sortedInfo.order,
+        render: (text, record) => {
+          return <SettingsCell position={record} />
         }
       },
       {

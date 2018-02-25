@@ -10,4 +10,6 @@ class StopLoss {
     Boolean enabled = false
 
     BigDecimal value = -10
+
+    Integer activeAfterHours = 0
 }
