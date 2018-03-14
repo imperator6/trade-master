@@ -94,7 +94,11 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
 
         List<BinanceOrder> orderList = []
         getMakets().each {
-            orderList.addAll( getOrderHistory( it.getName()))
+            List<IOrder> orders = getOrderHistory( it.getName())
+            if(orders != null){
+                orderList.addAll( orders )
+            }
+
             Thread.sleep(200)
         }
         return orderList

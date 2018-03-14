@@ -403,6 +403,35 @@ class MarketWatcherStore {
       });
   };
 
+  clonePosition = position => {
+    this.log.debug("cloning position ", position);
+
+    let url = this.rootStore.remoteApiUrl + "/position/clone";
+
+    let config = {
+      params: {
+        botId: this.selectedBot,
+        positionId: position.id
+      },
+      ...this.rootStore.userStore.getHeaderConfig()
+    };
+
+    axios
+      .get(url, config)
+      .then(response => {
+        if (response.data.success) {
+          //reload position list
+          this.load();
+        } else {
+          // error
+          console.info(response.data.message);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
   importFromExchange = () => {
     let url = this.rootStore.remoteApiUrl + "/position/importFromExchange";
 

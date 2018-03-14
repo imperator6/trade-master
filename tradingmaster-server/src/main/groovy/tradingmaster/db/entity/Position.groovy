@@ -1,6 +1,7 @@
 package tradingmaster.db.entity
 
 import com.fasterxml.jackson.annotation.JsonFormat
+import groovy.transform.AutoClone
 import groovy.transform.ToString
 import groovy.util.logging.Commons
 import org.hibernate.annotations.Type
@@ -13,6 +14,7 @@ import javax.persistence.*
 @Commons
 @ToString
 @Component
+@AutoClone
 class Position {
 
     @Id

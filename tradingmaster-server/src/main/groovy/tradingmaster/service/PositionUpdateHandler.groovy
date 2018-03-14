@@ -402,10 +402,10 @@ class PositionUpdateHandler implements  MessageHandler {
                 def minute = c.getEnd().getMinutes()
                 def modulo = minute % trailingStopLoss.checkInterval
                 if(modulo != 0) {
-                    log.info("Skipping TrailingStopLoss checkInterval does not match! Minute is $minute Interval: ${trailingStopLoss.checkInterval})")
+                    log.debug("Skipping TrailingStopLoss checkInterval does not match! Minute is $minute Interval: ${trailingStopLoss.checkInterval})")
                     skipTrailingStopLoss = true
                 } else {
-                    log.info("TrailingStopLoss checkInterval does match: Minute is $minute Interval: ${trailingStopLoss.checkInterval}")
+                    log.debug("TrailingStopLoss checkInterval does match: Minute is $minute Interval: ${trailingStopLoss.checkInterval}")
                 }
 
             }

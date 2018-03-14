@@ -149,7 +149,7 @@ class PositionSettingsStore {
 
     if (!this.alerts) {
       // init if not exsist
-      this.alerts = [{ enabled: false, value: -10, once: true }]
+      this.alerts = [{ enabled: false, value: -10, once: true }, { enabled: false, value: 5, once: true }, { enabled: false, value: 10, once: true }, { enabled: false, value: 25, once: true }]
     }
 
     if (this.stopLoss && !this.stopLoss.enabled) {

@@ -230,6 +230,23 @@ class PositionWidget extends React.Component {
     actionButtons.push(<Divider key="div0" type="vertical" />);
 
     actionButtons.push(
+      <Tooltip key="cloneButton" placement="bottom" title="Clone Position">
+        <Popconfirm
+          title="Are you sure to Clone this position?"
+          onConfirm={() => {
+            this.store.clonePosition(record);
+          }}
+          okText="Yes, please CLONE!"
+          cancelText="No"
+        >
+          <Icon type="copy" />
+        </Popconfirm>
+      </Tooltip>
+    );
+
+    actionButtons.push(<Divider key="div4" type="vertical" />);
+
+    actionButtons.push(
       <Tooltip key="loadToChart" placement="bottom" title="Load in chart">
         <Icon type="to-top" onClick={() => this.store.loadToChart(record)} />
       </Tooltip>

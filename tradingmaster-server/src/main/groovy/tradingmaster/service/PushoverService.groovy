@@ -44,6 +44,39 @@ class PushoverService {
         }
     }
 
+    String posToStringForBuy(TradeBot bot, Position pos) {
+
+        String msg = """
+buy: ${NumberHelper.formatNumber(pos.buyRate)}
+quantity: ${NumberHelper.formatNumber(pos.amount)}
+<i>${bot.exchange}</i>
+"""
+
+        return msg.toString()
+
+    }
+
+    String posToStringForSell(TradeBot bot, Position pos) {
+
+        String color = "green"
+        if(pos.result && pos.result < 0) {
+            color = "red"
+        }
+
+        def lastRate = pos.sellRate
+        if(lastRate == null) lastRate = pos.lastKnowRate
+
+        String msg = """<b><font color="$color">${NumberHelper.formatNumber(pos.result)}%</font></b>
+age: ${pos.age}
+buy: ${NumberHelper.formatNumber(pos.buyRate)}
+sell: ${NumberHelper.formatNumber(lastRate)}
+diff: ${NumberHelper.formatNumber(pos.sellRate - pos.buyRate)}
+<i>${bot.exchange}</i>
+"""
+
+        return msg.toString()
+    }
+
     String posToString(TradeBot bot, Position pos) {
 
         String color = "green"
@@ -55,10 +88,10 @@ class PushoverService {
         if(lastRate == null) lastRate = pos.lastKnowRate
 
         String msg = """<b><font color="$color">${NumberHelper.formatNumber(pos.result)}%</font></b>
-<i>${bot.exchange}</i>
 age: ${pos.age}
 buy: ${NumberHelper.formatNumber(pos.buyRate)}
 last: ${NumberHelper.formatNumber(lastRate)}
+<i>${bot.exchange}</i>
 """
 
         return msg.toString()

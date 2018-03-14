@@ -40,9 +40,10 @@ class MiningHamster extends DefaultRestService {
     @Override
     public Map addAdditionalParmas(String resourcePath, Map params) {
 
-        if(!(resourcePath.indexOf("public") > -1)) {
+        /* if(!(resourcePath.indexOf("public") > -1)) {
             params.put("apikey", publicKey);
         }
+        */
         return params;
     }
 

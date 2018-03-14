@@ -1,8 +1,9 @@
 {
   "exchange": "bittrex",
   "baseCurrency": "BTC",
+  "chartLink": "https://bittrex.com/market/marketStandardChart?MarketName=$market",
 
-  "amountPerOrder": 0.00055,
+  "amountPerOrder": 0.001,
   "maxPositions": 5,
   "maxOpenPositions": 30,
 
@@ -17,22 +18,31 @@
     "listenTo": ["Mining Hamster"]
   },
 
-  "forbiddenAssets": [],
+  "assetFilter": {
+    "enabled": false,
+    "forbiddenAssets": [],
+    "allowedAssets": ["SC","NEO","STEEM","OMG","ETH","BTG","PAY","IOT","XRP","LTC","BCH","TRX","XRP","FUN", "BNB", "EXP", "MUSIC", "WTC","DBET","PIRL","LTC"]
+  },
+
 
   "takeProfit": {
-    "enabled": false,
-    "value": 20
+    "enabled": true,
+    "value": 3,
+    "activeAfterHours": 0
   },
 
   "stopLoss": {
-    "enabled": false,
-    "value": -5
+    "enabled": true,
+    "value": -5,
+    "activeAfterHours": 1
   },
 
   "trailingStopLoss": {
     "enabled": false,
     "value": 2,
-    "startAt": 4
+    "startAt": 4,
+    "activeAfterHours": 0,
+    "checkInterval": 30
   }
 
 }

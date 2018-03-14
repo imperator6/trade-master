@@ -49,6 +49,7 @@ class CommentCell extends React.Component {
     if (this.state.editMode) {
       result = (
           <table>
+            <tbody>
             <tr>
               <td rowSpan="2">
                 <TextArea rows={2} value={this.state.comment} onChange={this.onChangeComment} />
@@ -62,6 +63,7 @@ class CommentCell extends React.Component {
               <Icon type="check" onClick={this.applyComment}/>
               </td>
             </tr>
+            </tbody>
           </table> 
       );
     } else {

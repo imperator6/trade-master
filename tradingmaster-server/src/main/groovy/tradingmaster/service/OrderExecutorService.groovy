@@ -3,6 +3,7 @@ package tradingmaster.service
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.exchange.ExchangeResponse
@@ -23,9 +24,10 @@ class OrderExecutorService {
                                              BuySell bs,
                                              BigDecimal spendOrAmount,
                                              PriceLimit priceRange,
-                                             String market) {
+                                             String market,
+                                             Position pos) {
 
-        ExchangeResponse<IOrder> res = trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, 1)
+        ExchangeResponse<IOrder> res = trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, 1, pos)
 
         return res
     }
@@ -38,11 +40,11 @@ class OrderExecutorService {
                                              BigDecimal spendOrAmount,
                                              PriceLimit priceRange,
                                              String currency,
-                                             String asset) {
+                                             String asset, Position pos) {
 
         String market = exchangeAdapter.buildMarket(currency, asset)
 
-        ExchangeResponse<IOrder> res = trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, 1)
+        ExchangeResponse<IOrder> res = trade(bot, exchangeAdapter, bs, spendOrAmount, priceRange, market, 1, pos)
 
         return res
     }
@@ -52,7 +54,7 @@ class OrderExecutorService {
                                            BuySell bs,
                                            BigDecimal spendOrAmount,
                                            PriceLimit priceLimit,
-                                           String market, int tryCount) {
+                                           String market, int tryCount, Position pos) {
 
         ExchangeResponse<IOrder> orderResponse = new ExchangeResponse<IOrder>()
 
@@ -77,7 +79,7 @@ class OrderExecutorService {
             if(bs == BuySell.BUY) {
 
                 def quantity = spendOrAmount / ticker.getAsk()
-                def price = ticker.getBid() // use aks instead to sell son as possible?
+                def price = ticker.getAsk() // use aks instead to sell son as possible?
 
                 if(priceLimit != null) {
                     log.info("BUY: Checking price limit: $priceLimit")
@@ -136,7 +138,7 @@ class OrderExecutorService {
             if(order == null) {
                 tryCount++
                 log.info("Order $market is not executed.")
-                return trade(bot, exchangeAdapter, bs, spendOrAmount, priceLimit, market, tryCount)
+                return trade(bot, exchangeAdapter, bs, spendOrAmount, priceLimit, market, tryCount, pos)
             }
 
             orderResponse.setResult(order)

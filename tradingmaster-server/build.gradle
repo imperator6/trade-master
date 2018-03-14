@@ -1,4 +1,9 @@
+buildscript {
 
+    dependencies {
+        classpath("se.transmode.gradle:gradle-docker:1.2")
+    }
+}
 
 jar {
     baseName = 'tradingmaster'
@@ -7,10 +12,25 @@ jar {
 }
 
 apply plugin: 'org.springframework.boot'
+apply plugin: 'docker'
 
 bootRepackage {
     executable = true
 }
+
+
+task buildDocker(type: Docker, dependsOn: build) {
+    baseImage = 'java:8'
+    push = false
+    //tag = 'geowarin/sout-chuck-norris'
+    addFile {
+        from jar
+        rename {'app.jar'}
+    }
+    entryPoint(['java', '-Djava.security.egd=file:/dev/./urandom', '-jar', '/app.jar'])
+    // exposePort(8080)
+}
+
 
 dependencies {
     compile project(':platform-core')

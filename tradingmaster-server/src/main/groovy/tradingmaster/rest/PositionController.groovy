@@ -106,6 +106,21 @@ class PositionController {
         return new RestResponse(false, "TradeBot not found!")
     }
 
+    @RequestMapping(value = "/clone", method = RequestMethod.GET)
+    RestResponse<Position> clonePosition(@RequestParam Integer botId, @RequestParam Integer positionId) {
+
+        Position pos = positionService.findPositionById(botId, positionId)
+        //TradeBot bot = tradeBotManager.findBotById(botId)
+
+        if(pos != null) {
+            positionService.clonePosition(pos)
+            return new RestResponse(true)
+        }
+
+        return new RestResponse(false, "Position $positionId  not found!")
+    }
+
+
     @RequestMapping(value = "/applySettings", method = RequestMethod.POST)
     RestResponse<Position> applySettings(@RequestParam Integer botId, @RequestParam Integer positionId, @RequestBody PositionSettings settings) {
 
@@ -134,6 +149,7 @@ class PositionController {
         return new RestResponse(false, "TradeBot not found!")
     }
 
+
     @RequestMapping(value = "/save", method = RequestMethod.POST)
     RestResponse<Position> save(@RequestBody Position position) {
 
@@ -144,6 +160,7 @@ class PositionController {
 
             // Update only allowed fields
             posToUpdate.amount = position.amount
+            posToUpdate.buyRate = position.buyRate
             posToUpdate.comment = position.comment
 
             positionRepository.save(posToUpdate)

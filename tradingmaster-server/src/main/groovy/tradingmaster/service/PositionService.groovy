@@ -159,7 +159,7 @@ class PositionService {
         String currency  = market.getCurrency()
         String asset = market.getAsset()
 
-        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset)
+        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset, pos)
 
         if(newOrderRes.success) {
 
@@ -399,6 +399,19 @@ class PositionService {
         pos.setStatus("open")
     }
 
+    void clonePosition( Position pos) {
+
+        log.info("Cloning position ${pos.id} ${pos.market}")
+
+        TradeBot bot = tradeBotManager.findBotById( pos.getBotId() )
+
+        Position newPos = pos.clone()
+        newPos.setId(null)
+        positionRepository.save( newPos )
+        bot.addPosition( newPos )
+
+
+    }
     void closePosition(Position pos, Candle c, TradeBot bot) {
         closePosition(pos, c.close, bot)
     }
@@ -417,7 +430,7 @@ class PositionService {
         pos.sellInPogress = true
         positionRepository.save(pos)
 
-        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.SELL, pos.amount, (PriceLimit) priceLimit, pos.market)
+        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.SELL, pos.amount, (PriceLimit) priceLimit, pos.market, pos)
 
         if(newOrderRes.success) {
 
