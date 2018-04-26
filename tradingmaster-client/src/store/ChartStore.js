@@ -16,6 +16,10 @@ export default class ChartStore {
 
   @observable seriesTypes = ["candlestick", "line"]
 
+  buySignales = []
+
+  sellSignales = []
+
   chart = null;
 
   config = {
@@ -56,7 +60,7 @@ export default class ChartStore {
           text: "All"
         }
       ],
-      selected: 1,
+      selected: 4,
       inputEnabled: false
     }
 
@@ -139,6 +143,45 @@ export default class ChartStore {
       }
     }
 
+    series.push(
+    {
+      name: "Sell Signals",
+      type: "flags",
+      id: "sell",
+      onSeries: "dataseries_0",
+      shape: "circlepin",
+      width: 16,
+      data: this.sellSignales.slice(),
+      color: "red",
+      fillColor: "#8B0000",
+      style: {
+        // text style
+        color: "white"
+      },
+      states: {
+        hover: {
+          fillColor: "#F35772"
+        }
+      }
+    })
+
+    series.push({
+      name: "Buy Signals",
+      type: "flags",
+      id: "buy",
+      onSeries: "dataseries_0",
+      shape: "circlepin",
+      width: 16,
+      data: this.buySignales.slice(),
+      color: "green",
+      fillColor: "#57A289",
+      states: {
+        hover: {
+          fillColor: "#516247"
+        }
+      }
+    })
+
     this.config = {
       ...this.config,
       rangeSelector: rangeSelector,
@@ -147,7 +190,7 @@ export default class ChartStore {
       series: series
     };
 
-    console.log(plotOptions)
+    console.log(this.config)
   };
 
   @action
@@ -275,6 +318,69 @@ export default class ChartStore {
     });
   }
 
+  clearSignals = () => {
+    console.log('Clearing signals.')
+    this.buySignales = []
+    this.sellSignales = []
+    this.loadChart()
+  }
+
+  @action
+  addSignal = signal => {
+
+
+    let date = new Date(signal.signalDate)
+
+    console.log(signal)
+
+    if(signal.buySell == "buy") {
+      
+      let point = {
+        x: date.getTime(),
+        title: "B",
+        text: signal.triggerName + " Buy: " + signal.price
+      }
+      
+      this.buySignales.push(point)
+
+      
+      this.chart.getChart().series.forEach(series => {
+
+        if ((series.name === "Buy Signals")) {
+
+          console.log("Adding new Signal to series " + series.name + " for date " + date )
+         
+          series.addPoint(point);
+
+         // this.chart.redraw()
+        }
+      });
+
+      
+    } else {
+      
+      let point = {
+        x: date.getTime(),
+        title: "S",
+        text: signal.triggerName + " Sell: " + signal.price
+      }
+
+      this.sellSignales.push(point)
+
+      this.chart.getChart().series.forEach(series => {
+
+        if ((series.name === "Sell Signals")) {
+
+          console.log("Adding new Signal to series " + series.name + " for date " + date )
+         
+          series.addPoint(point);
+
+         // this.chart.redraw()
+        }
+      });
+    }
+  }
+
   @action
   updateSignales = signals => {
     this.removeSignals();
@@ -292,13 +398,13 @@ export default class ChartStore {
         buySignales.push({
           x: new Date(signal.date).getTime(),
           title: "B",
-          text: "Buy: " + signal.value
+          text: signal.tiggerName + " Buy: " + signal.value
         });
       } else if (signal.type === "sell") {
         sellSignales.push({
           x: new Date(signal.date).getTime(),
           title: "S",
-          text: "Sell: " + signal.value
+          text: signal.tiggerName + " Sell: " + signal.value
         });
       }
     });

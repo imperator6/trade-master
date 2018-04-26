@@ -11,6 +11,8 @@ class StompStore {
 
     @observable conected = false
 
+    @observable conectInPogress = false
+
     @observable debug = true
 
     constructor(rootStore, url) {
@@ -38,7 +40,7 @@ class StompStore {
                 let position = JSON.parse(data.body);
                 this.rootStore.positionStore.updatePosition(position)
             })
-      
+
           } , 5000)
     }
 
@@ -47,6 +49,7 @@ class StompStore {
     onConnect = () => {
         this.log.debug("StompClient sucsessfully connected to " + this.url);
         this.conected = true
+        this.conectInPogress = false
         setTimeout(() => {
             this.rebuildChannels()
         }, 2000)
@@ -63,6 +66,7 @@ class StompStore {
 
     onError = (error) => {
         this.conected = false
+        this.conectInPogress = false
         this.log.debug("StompClient Error: " + error)
         setTimeout(this.connect, 10000)
         this.log.debug('StompClient: Reconecting in 10 seconds')
@@ -70,18 +74,24 @@ class StompStore {
 
     @action
     connect = () => {
-        this.log.debug('StompClient: Attempting connection to ' + this.url);
 
-        let header = {}
+        if(!this.conectInPogress) {
 
-        let url = this.url + '?token=' + encodeURIComponent(this.rootStore.userStore.userToken)
-        
-        this.sockjs = new SockJS(url)
-        this.client = Stomp.over(this.sockjs)
-        
-        this.client.debug = null // disable underlying  logging
+            this.conectInPogress = true
 
-        this.client.connect(header, this.onConnect, this.onError);
+            this.log.debug('StompClient: Attempting connection to ' + this.url);
+
+            let header = {}
+
+            let url = this.url + '?token=' + encodeURIComponent(this.rootStore.userStore.userToken)
+            
+            this.sockjs = new SockJS(url)
+            this.client = Stomp.over(this.sockjs)
+            
+            this.client.debug = null // disable underlying logging
+
+            this.client.connect(header, this.onConnect, this.onError);
+        }
     }
 
     @action
@@ -90,12 +100,16 @@ class StompStore {
             this.log.debug("StompClient: Adding new subscription for channel" + channel)
             let subscription = this.client.subscribe(channel, cb)
             this.addSubscription(channel, subscription)
-        } else {
-            this.log.debug("StompClient: New Subscription but is not connected. -> Let's connect!. ")
 
             this.channles.set(channel, cb)
+        } else {
 
-            this.connect()
+            this.channles.set(channel, cb)
+            
+            if(!this.conectInPogress) {
+                this.log.debug("StompClient: New Subscription but is not connected. -> Let's connect!. ")
+                this.connect()
+            }
         }
     }
 
@@ -109,7 +123,7 @@ class StompStore {
 
     @action
     unsubscribe = (channel) => {
-        this.log.debug("StompClient: Unsubscribe old channel " + channel )
+        this.log.debug("StompClient: Unsubscribe existing channel " + channel )
         let s = this.subscriptions.get(channel)
         if(s) {
             s.unsubscribe()

@@ -2,20 +2,15 @@ package tradingmaster.service
 
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import tradingmaster.db.OrderRepository
 import tradingmaster.db.entity.Order
-import tradingmaster.db.entity.Position
-import tradingmaster.db.entity.TradeBot
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.IOrder
-
-import java.time.ZoneOffset
-import java.time.ZonedDateTime
-import java.time.temporal.ChronoUnit
 
 @Service
 @Commons
@@ -30,8 +25,13 @@ class OrderService {
     @Autowired
     ExchangeService exchangeService
 
+    @Value('${orderimport.enabled}')
+    Boolean enabled
+
     @Scheduled(initialDelay=60000l, fixedRate=3600000l) // every hour
     void importOrders() {
+
+        if(!enabled) return
 
         log.info("Starting scheduled order import...")
 

@@ -29,6 +29,8 @@ export default class StrategyStore {
 
   @observable portfolioResult = {}
 
+  @observable backtestId = ""
+
   newStrategyCount = 0;
 
   @action
@@ -145,7 +147,7 @@ export default class StrategyStore {
   };
 
   @action
-  backtestStrategy = () => {
+  backtestStrategy = (botId) => {
     console.log("backtest strategy");
 
     let url = this.rootStore.remoteApiUrl + "/strategy/backtestStrategy";
@@ -160,8 +162,16 @@ export default class StrategyStore {
       .toDate()
       .toISOString();
 
+    this.rootStore.chartStore.clearSignals()
+
+    this.rootStore.stompStore.subscribe( "/topic/signal" , (data) => {
+      this.rootStore.chartStore.addSignal(JSON.parse(data.body));
+      this.rootStore.positionStore.load();
+    })
+
     axios
       .post(url, {
+        botId: botId,
         strategyId: this.selectedStrategy.id,
         strategyParams: { param: 1, param2: 2 },
         exchange: this.rootStore.marketSelectionStore.getSelectedExchange(0),
@@ -172,8 +182,11 @@ export default class StrategyStore {
         end: end
       },  this.rootStore.userStore.getHeaderConfig())
       .then(response => {
-        let backtestId = response.data.id;
-        this.fetchBacktestResult(backtestId);
+        this.backtestId = response.data.id;
+
+        console.log("New active backtest id is " + this.backtestId);
+ 
+        //this.fetchBacktestResult(backtestId);
       })
       .catch(function(error) {
         console.log(error);

@@ -56,15 +56,21 @@ class CandleAggregator implements MessageHandler {
 
             tempList.add(c)
 
+            c.period = candleCount + "min"
+
             if(tempList.size() == candleCount) {
                 Candle next = buildCandle( tempList )
                 tempList.clear()
+
+
+
                 aggregatedCandles << next
             }
         }
 
         return aggregatedCandles
     }
+
 
     private static Candle buildCandle(List<Candle> minuteCandleList) {
 

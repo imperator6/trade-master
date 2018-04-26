@@ -53,7 +53,7 @@ export default class UserStore {
           this.userToken = response.data.token;
           this.loadUser()
 
-          this.rootStore.stompStore.startDefaultSubscriptions()
+          this.rootStore.init()
           
         })
         .catch(err => {

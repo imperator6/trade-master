@@ -5,29 +5,35 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.ApplicationContext
 import org.springframework.core.task.TaskExecutor
 import org.springframework.integration.channel.PublishSubscribeChannel
+import org.springframework.integration.support.MessageBuilder
 import org.springframework.messaging.Message
 import org.springframework.messaging.MessageHandler
 import org.springframework.messaging.MessagingException
 import org.springframework.stereotype.Service
 import tradingmaster.core.CandleAggregator
+import tradingmaster.db.PositionRepository
+import tradingmaster.db.SignalRepository
+import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
+import tradingmaster.exchange.paper.PaperExchange
 import tradingmaster.model.*
 import tradingmaster.strategy.*
 import tradingmaster.strategy.runner.CombinedStrategyRun
 import tradingmaster.strategy.runner.IStrategyRunner
-import tradingmaster.strategy.runner.ScriptStrategyRun
 
 import javax.annotation.PostConstruct
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 import java.time.temporal.ChronoUnit
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.locks.ReentrantLock
 
 @Service
 @Commons
 class StrategyRunnerService implements  MessageHandler {
 
-    Map<String, IStrategyRunner> runnerMap = [:]
+    Map<String, ReentrantLock> lockMap = new ConcurrentHashMap()
 
     Map<String, IStrategyRunner> backtestRunnerMap = [:]
 
@@ -35,8 +41,10 @@ class StrategyRunnerService implements  MessageHandler {
     TaskExecutor backtestTaskExecutor
 
     @Autowired
-    PublishSubscribeChannel candelChannel1Minute
+    PublishSubscribeChannel mixedCandelSizesChannel
 
+    @Autowired
+    PublishSubscribeChannel backtestChannel
 
     @Autowired
     ICandleStore candleStore
@@ -47,25 +55,53 @@ class StrategyRunnerService implements  MessageHandler {
     @Autowired
     TradeBotManager tradeBotManager
 
+    @Autowired
+    SignalRepository signalRepository
+
+    @Autowired
+    PositionRepository positionRepository
+
     @PostConstruct
     init() {
-        //candelChannel1Minute.subscribe(this)
+        backtestChannel.subscribe(this)
     }
 
     @Override
     void handleMessage(Message<?> message) throws MessagingException {
-        // Not active check init()
-       Candle c = message.getPayload()
+        BacktestMessage msg = message.getPayload()
 
-        Map strategies = new HashMap(this.runnerMap)
+        BacktestRun lock = lockMap.get(msg.getBacktestId())
 
-        def matchingStrategies = strategies.values().findAll { ScriptStrategyRun s ->
-            s.getMarket().equals( c.getMarket() )
+        if(lock == null) {
+            log.error("Can't find BacktestRun for id ${msg.getBacktestId()}")
+            return
         }
 
-        matchingStrategies.each { ScriptStrategyRun s ->
-           s.nextCandle(c)
+        synchronized (lock) {
+            if("complete".equalsIgnoreCase(msg.action)) {
+                lock.unlock()
+            } else if ("setSignalCount".equalsIgnoreCase(msg.action)) {
+                lock.setTotalSignalCount(msg.signalCount)
+            } else if ("signalComplete".equalsIgnoreCase(msg.action)) {
+
+                if(lock.getTotalSignalCount() == null) {
+                    throw new RuntimeException("totalSignalCount is ZERO! Can't increase complete count!")
+                }
+
+                if(msg.getPositionId() != null) {
+                    Position pos = tradeBotManager.findPositionById(lock.getBotId(), msg.getPositionId())
+                    if(pos != null)
+                        positionRepository.save(pos)
+                }
+
+                lock.increaseSignalCompleteCount()
+
+                if(lock.allSignalseComplete()) {
+                    lock.unlock()
+                }
+            }
         }
+
     }
 
 
@@ -80,14 +116,40 @@ class StrategyRunnerService implements  MessageHandler {
 
     String startBacktest(LocalDateTime start, LocalDateTime end, StrategyRunConfig config) {
 
-        log.info("Starting a new Backtest for strategyId/config ${config.strategyId}.")
 
-        IStrategyRunner run = crerateStrategyRun(config.strategyId, true)
-        backtestRunnerMap.put(config.id, run)
+        TradeBot bot = tradeBotManager.findBotById(config.getBotId())
+
+        if(bot.backtest) {
+
+            log.info("Starting a new Backtest for strategyId/config ${config.strategyId}.")
+
+        } else {
+            log.error("Can't backtest bot with id ${config.getBotId()}. As flag backtest is false")
+        }
+
+        // update candle size
+        bot.config.candleSize = config.getCandleSize() + "m"
+        bot.config.exchange = 'PaperExchange'
+
+        PaperExchange exchange = bot.getPaperExchange()
+        exchange.config = bot.config
+        exchange.setBalance((String) bot.config.baseCurrency, (BigDecimal) bot.config.startBalance)
+
+        // delete all exsisting positions
+        tradeBotManager.removeAllPositions(bot.getId())
+        signalRepository.deleteByBotId(bot.getId())
+
+        bot.setStrategyRunner( crerateStrategyRun(bot) )
+
+       // IStrategyRunner run = crerateStrategyRun(config.strategyId, true)
+       // backtestRunnerMap.put(config.id, run)
 
         Runnable task = {
 
             List<TimeRange> ranges = []
+
+            Candle firstCandle = null
+            Candle lastCandle = null
 
             // split into smaller date ranges
             Instant from = start.toInstant(ZoneOffset.UTC).truncatedTo(ChronoUnit.MINUTES)
@@ -106,6 +168,9 @@ class StrategyRunnerService implements  MessageHandler {
                 current = nextTo.plus(1, ChronoUnit.MINUTES)
             }
 
+            BacktestRun lock = new BacktestRun(bot.getId())
+            lockMap.put(config.getId(), lock)
+
             ranges.each { range ->
 
                 List<Candle> candles = candleStore.find( "1min", config.exchange, config.market, LocalDateTime.ofInstant(range.from, ZoneOffset.UTC), LocalDateTime.ofInstant(range.to, ZoneOffset.UTC))
@@ -113,21 +178,50 @@ class StrategyRunnerService implements  MessageHandler {
 
                 log.info("Processing ${candles.size()} candles of size ${config.candleSize} from ${range.from} to ${range.to}")
 
-
                 candles.each { c ->
-                    run.nextCandle(c)
+
+                    lock.lock()
+
+
+                    c.botId = bot.getId()
+                    c.backtestId = config.getId()
+
+                    exchange.candle = c
+
+                    CryptoMarket market = c.market
+                    String currency  = market.getCurrency()
+                    String asset = market.getAsset()
+                    exchange.setTicker( c.close, currency, asset)
+
+                    mixedCandelSizesChannel.send(MessageBuilder.withPayload( c ).build() )
+
+                    if(firstCandle == null) {
+                        firstCandle = c
+                    }
+
+                    lastCandle = c
+                    lock.waitForUnlock() // wait till candle execution is complete
                 }
             }
 
+            // save update for open positions..
+            tradeBotManager.findAllOpenPosition(bot.getId()).each {
+                positionRepository.save(it)
+            }
+
+            // calc hold result
+            def startAmount = bot.config.startBalance / firstCandle.close
+            def finalCurrency = startAmount * lastCandle.close
+
+            log.info("Hold result: ${finalCurrency}")
+
+            tradeBotManager.syncBanlance(bot)
+
             log.info("Backtest task: all candles done!")
 
-            run.close()
-
-            // Todo... persit results?
         } as Runnable
 
         backtestTaskExecutor.execute(task)
-
 
         return config.getId()
         // ... loading
@@ -146,8 +240,45 @@ class StrategyRunnerService implements  MessageHandler {
         return result
     }
 
-    IStrategyRunner crerateStrategyRun(Integer configId, boolean backtest) {
+    IStrategyRunner crerateStrategyRun(TradeBot tradeBot) {
 
+        IStrategyRunner run = ctx.getBean(CombinedStrategyRun.class)
+        run.init(tradeBot)
+
+        Map paramMap = tradeBot.config
+
+        // configure strategies
+        if(paramMap.dema) {
+            DemaSettings demaSettings = new DemaSettings(paramMap.dema) // as DemaSettings
+
+            if(demaSettings.enabled) {
+                log.info("Adding Strategy DEMA settings: $demaSettings")
+                run.strategies << new Dema(demaSettings)
+            }
+        }
+
+        if(paramMap.macd) {
+            MacdSettings settings = new MacdSettings(paramMap.macd)
+
+            if(settings.enabled) {
+                log.info("Adding Strategy MACD settings: $settings")
+                run.strategies << new Macd(settings)
+            }
+        }
+
+        if(paramMap.rsi) {
+            RsiSettings settings = new RsiSettings(paramMap.rsi)
+
+            if(settings.enabled) {
+                log.info("Adding Strategy RSI settings: $settings")
+                run.strategies << new Rsi(settings)
+            }
+        }
+
+        return run
+    }
+
+    IStrategyRunner crerateStrategyRun(Integer configId, boolean backtest) {
 
         TradeBot tradeBot = tradeBotManager.createNewBot(configId, backtest)
 
@@ -159,7 +290,6 @@ class StrategyRunnerService implements  MessageHandler {
         // configure strategies
         if(paramMap.dema) {
             DemaSettings demaSettings = new DemaSettings(paramMap.dema) // as DemaSettings
-
 
             if(demaSettings.enabled) {
                 log.info("Adding Strategy DEMA settings: $demaSettings")
@@ -175,7 +305,6 @@ class StrategyRunnerService implements  MessageHandler {
                 log.info("Adding Strategy MACD settings: $settings")
                 run.strategies << new Macd(settings)
             }
-
         }
 
         if(paramMap.rsi) {

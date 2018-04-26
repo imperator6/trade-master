@@ -41,6 +41,9 @@ class TradeBotManager {
     @Autowired
     MarketWatcherService marketWatcheService
 
+    @Autowired
+    StrategyRunnerService strategyRunnerService
+
 
     List<TradeBot> getActiveBots() {
         return new ArrayList(this.TRADE_BOT_MAP.values().findAll { it.active })
@@ -56,6 +59,20 @@ class TradeBotManager {
 
     Position findPositionById(Integer botId, Integer posId) {
         return this.TRADE_BOT_MAP.get(botId).getPositions().find { it.id == posId }
+    }
+
+    Position findFirstOpenPosition(Integer botId, String market) {
+        return this.TRADE_BOT_MAP.get(botId).getPositions().find { it.market == market && !it.closed }
+    }
+
+    List<Position> findAllOpenPosition(Integer botId) {
+        return this.TRADE_BOT_MAP.get(botId).getPositions().findAll{ !it.closed }
+    }
+
+    synchronized void removeAllPositions(Integer botId) {
+       TradeBot bot = this.TRADE_BOT_MAP.get(botId)
+        bot.positionMap.clear()
+        positionRepository.deleteByBotId( bot.getId() )
     }
 
 
@@ -77,10 +94,15 @@ class TradeBotManager {
                 b.addPosition(it)
             }
 
+            Set distinctPositions = new HashSet()
+
             b.getPositions().findAll { !it.closed || (it.settings && it.settings.traceClosedPosition) }.each { Position p ->
-                marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange, p.market) )
+                distinctPositions.add(new CryptoMarket(b.exchange, p.market))
             }
 
+            distinctPositions.each {
+                marketWatcheService.createMarketWatcher(  it )
+            }
 
             if(b.baseCurrency.toUpperCase().indexOf("USD") >= 0) {
                // USDT or USD...
@@ -88,6 +110,8 @@ class TradeBotManager {
                 // for Dollar conversion start a market watcher for USDT
                 marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-${b.baseCurrency}"))
             }
+
+            b.setStrategyRunner( strategyRunnerService.crerateStrategyRun(b) )
 
 
             TRADE_BOT_MAP.put( b.getId(), b )
@@ -101,6 +125,12 @@ class TradeBotManager {
 
         TRADE_BOT_MAP.values().findAll{ it.configId == strategy.getId() }.each {
             it.config = parseBotConfig( strategy.getScript() )
+
+            if(it.strategyRunner) {
+                it.strategyRunner.close()
+            }
+
+            it.setStrategyRunner( strategyRunnerService.crerateStrategyRun(it) )
             log.info("Bot config on bot ${it.id} has been updated!")
         }
 
@@ -131,43 +161,93 @@ class TradeBotManager {
     IExchangeAdapter getExchangeAdapter(TradeBot b) {
         if(b.isBacktest()) {
 
-            PaperExchange exchange = new PaperExchange()
-            exchange.config = b.config
-            return exchange
+            synchronized (b) {
+                if(b.paperExchange == null) {
+                    b.paperExchange = new PaperExchange()
+                    b.paperExchange.setBalance(b.config.baseCurrency, b.currentBalance)
+                }
+            }
+
+            return b.getPaperExchange()
 
         } else {
            return exchangeService.getExchangyByName( b.exchange )
         }
     }
 
+//    IExchangeAdapter getPaperExchangeAdapter(TradeBot b, Position p, Candle c) {
+//
+//        if(b.isBacktest()) {
+//            PaperExchange exchange = new PaperExchange()
+//            exchange.config = b.config
+//            exchange.candle = c
+//
+//            log.info(p.market)
+//
+//            CryptoMarket market = new CryptoMarket(b.exchange, p.market)
+//            String currency  = market.getCurrency()
+//            String asset = market.getAsset()
+//            exchange.setTicker( c.close, currency, asset)
+//            return exchange
+//        } else {
+//            throw new RuntimeException("Not supported!")
+//        }
+//    }
+
 
     TradeBot createNewBot(Integer configId, boolean backtest) {
 
-        TradeBot p = new TradeBot()
-        p.configId = configId
-        p.backtest = backtest
+        if(backtest) {
+            TradeBot bot = new TradeBot()
+            bot.configId = 7 // TODO... load config by name or given parametr
+            bot.backtest = backtest
+            bot.active = false
 
-        ScriptStrategy strategy = strategyStore.loadStrategyById(configId, null)
-        Map params = parseBotConfig(strategy.getScript())
+            ScriptStrategy strategy = strategyStore.loadStrategyById(bot.configId , null)
+            Map params = parseBotConfig(strategy.getScript())
 
-        p.config = params
-        p.baseCurrency = params.baseCurrency
-        p.exchange = params.exchange
+            bot.config = params
+            bot.baseCurrency = params.baseCurrency
 
-        syncBanlance(p)
+            bot.startBalance = params.startBalance
 
-        tradeBotRepository.save(p)
+            bot.exchange = "PaperExchange"
 
-        log.info("A new trade bot has been initilized: ${p}")
+            return bot
 
-        TRADE_BOT_MAP.put( p.getId(), p )
+        } else {
 
-        return p
+            TradeBot p = new TradeBot()
+            p.configId = configId
+            p.backtest = backtest
+
+            ScriptStrategy strategy = strategyStore.loadStrategyById(p.configId , null)
+            Map params = parseBotConfig(strategy.getScript())
+
+            p.config = params
+            p.baseCurrency = params.baseCurrency
+            p.exchange = params.exchange
+
+            syncBanlance(p)
+
+            tradeBotRepository.save(p)
+
+            log.info("A new trade bot has been initilized: ${p}")
+
+            TRADE_BOT_MAP.put( p.getId(), p )
+
+            return p
+        }
+
     }
 
 
     boolean isValidSignalForBot(TradeBot b, Signal s) {
         boolean valid = false
+
+        if(b.backtest && b.getPositions().size() > 500) {
+            return false
+        }
 
         if(s.getExchange().equalsIgnoreCase(b.exchange)) {
 
@@ -176,37 +256,8 @@ class TradeBotManager {
 
             if(b.getPositions().findAll { !it.closed }.size() < b.config.maxOpenPositions) {
 
-                if(b.config.assetFilter.enabled) {
+                valid = isValidAssest(b, s.asset)
 
-                    Map filter = b.config.assetFilter
-
-                    // check allowed
-                    if(filter.allowed) {
-                        List<String> allowedAssets = filter.allowed
-
-                        if(allowedAssets.find{ it.equalsIgnoreCase(s.asset) }) {
-                            log.info("Asset $s.asset is allowed for Bot ${b.getId()}")
-                            valid = true
-                        } else {
-                            log.info("Asset $s.asset is NOT allowed for Bot ${b.getId()}")
-                            valid = false
-                        }
-
-                    } else if (filter.forbidden) {
-
-                        List<String> forbiddenAssets = filter.forbidden
-
-                        if(forbiddenAssets.find{ it.equalsIgnoreCase(s.asset) }) {
-                            log.info("Asset $s.asset is forbidden for Bot ${b.getId()}")
-                        } else {
-                            valid = true
-                        }
-                    } else {
-                        valid = true
-                    }
-                } else {
-                    valid = true
-                }
             } else {
                 log.info("Max open positions  (${b.config.maxPosition}) has reached! Signal $s.id is not valid for TradeBot $b.id. ")
             }
@@ -217,6 +268,46 @@ class TradeBotManager {
         }
 
         return valid
+    }
+
+    boolean isValidAssest(TradeBot b, String asset) {
+
+        boolean valid = false
+
+        if(b.config.assetFilter.enabled) {
+
+            Map filter = b.config.assetFilter
+
+            // check allowed
+            if(filter.allowed) {
+                List<String> allowedAssets = filter.allowed
+
+                if(allowedAssets.find{ it.equalsIgnoreCase(asset) }) {
+                    log.debug("Asset $asset is allowed for Bot ${b.getId()}")
+                    valid = true
+                } else {
+                    log.debug("Asset $asset is NOT allowed for Bot ${b.getId()}")
+                    valid = false
+                }
+
+            } else if (filter.forbidden) {
+
+                List<String> forbiddenAssets = filter.forbidden
+
+                if(forbiddenAssets.find{ it.equalsIgnoreCase(asset) }) {
+                    log.debug("Asset $asset is forbidden for Bot ${b.getId()}")
+                } else {
+                    valid = true
+                }
+            } else {
+                valid = true
+            }
+        } else {
+            valid = true
+        }
+
+        return valid
+
     }
 
 

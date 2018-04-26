@@ -18,7 +18,7 @@ class MarketWactherControl extends React.Component {
   }
 
   componentDidMount() {
-    this.store.init()
+   
   }
 
   render() {

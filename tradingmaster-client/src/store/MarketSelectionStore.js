@@ -25,7 +25,7 @@ export default class MarketSelectionStore {
     "3 d"
   ];
 
-  @observable selectedPeriod = "5 m";
+  @observable selectedPeriod = "1 h";
 
   @observable seriesCount = 1;
 
@@ -194,17 +194,17 @@ export default class MarketSelectionStore {
     let startDate = this.startDate
       .utc()
       .toDate()
-      .toISOString();
+      .toISOString()
 
     let endDate = this.endDate
       .utc()
       .toDate()
-      .toISOString();
+      .toISOString()
 
-    if (!exchange || !asset) return;
+    if (!exchange || !asset) return
 
-    exchange = exchange.toLowerCase();
-    asset = asset.toLowerCase();
+    exchange = exchange.toLowerCase()
+    asset = asset.toLowerCase()
 
     let params = {
       start: startDate,

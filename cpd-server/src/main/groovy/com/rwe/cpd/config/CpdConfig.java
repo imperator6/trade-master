@@ -1,5 +1,6 @@
 package com.rwe.cpd.config;
 
+import com.zaxxer.hikari.HikariDataSource;
 import org.ektorp.CouchDbConnector;
 import org.ektorp.CouchDbInstance;
 import org.ektorp.http.HttpClient;
@@ -8,6 +9,8 @@ import org.ektorp.impl.StdCouchDbConnector;
 import org.ektorp.impl.StdCouchDbInstance;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceBuilder;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -60,5 +63,12 @@ public class CpdConfig {
     CouchDbConnector configStorage(CouchDbInstance couchDbInstance) throws Exception {
         CouchDbConnector client = new StdCouchDbConnector("cpd_config", couchDbInstance);
         return client;
+    }
+
+    @Bean
+    @ConfigurationProperties("wolfDB")
+    public HikariDataSource dataSource() {
+        return (HikariDataSource) DataSourceBuilder.create()
+                .type(HikariDataSource.class).build();
     }
 }

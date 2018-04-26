@@ -40,6 +40,8 @@ class PriceReciver  /* implements ConsumerSeekAware */ {
 
         orderbookService.updateOrderBook(nextSeq, data)
 
+        //log.info(data)
+
         priceChannel.send( MessageBuilder.withPayload(data).build() )
     }
 

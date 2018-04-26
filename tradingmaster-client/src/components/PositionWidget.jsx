@@ -45,7 +45,8 @@ class PositionWidget extends React.Component {
     super(props);
 
     this.state = {
-      filteredInfo: { closed: ["o"] },
+      //filteredInfo: { closed: ["o"] },
+      filteredInfo: null,
       sortedInfo: {
         order: "descend",
         columnKey: "created"
@@ -100,10 +101,6 @@ class PositionWidget extends React.Component {
       sortedInfo: sorter
     });
   };
-
-  componentDidMount() {
-    this.store.init();
-  }
 
   formtatPercent(value, color) {
     //color 35823fde
@@ -507,30 +504,10 @@ class PositionWidget extends React.Component {
       />
     );
 
-    let botOptions = this.store.botList.map(botString => {
-      let bot = botString.split("_");
-
-      return <Option key={bot[0]}>{botString}</Option>;
-    });
-
-    let botSelect = (
-      <Select
-        size="small"
-        placeholder="Select TradeBot"
-        value={this.store.selectedBot}
-        onChange={newValue => {
-          this.store.onBotSelected(newValue);
-        }}
-        style={{ width: 170 }}
-      >
-        {botOptions}
-      </Select>
-    );
-
     return (
       <div>
         <div style={{ paddingBottom: 8 + "px" }}>
-          {botSelect}
+        
           <Divider type="vertical" />
           <Tooltip title="Reload list for selected Bot">
             <Button
@@ -541,6 +518,8 @@ class PositionWidget extends React.Component {
               onClick={this.store.load}
             />
           </Tooltip>
+
+
           <Divider type="vertical" />
 
           <Tooltip placement="left" title="Open a new Position">

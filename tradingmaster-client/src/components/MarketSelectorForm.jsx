@@ -135,7 +135,7 @@ class MarketSelectorForm extends React.Component {
             format="YYYY-MM-DD HH:mm"
             placeholder="Select Time"
             defaultValue={this.store.startDate}
-            onOk={this.onEndDateChange}
+            onOk={this.onStartDateChange}
           />
         );
 

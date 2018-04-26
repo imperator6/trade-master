@@ -22,6 +22,9 @@ dependencies {
 
     compile 'org.ektorp:org.ektorp:1.4.4'
 
+    compile files('libs/ojdbc-60-11.2.0.3.jar') // oracle driver
+
+
     /*
     compile 'org.codehaus.groovy:groovy-all:2.4.12'
     compile "org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}"

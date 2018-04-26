@@ -1,6 +1,9 @@
 package tradingmaster.db.entity
 
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.ToString
+import tradingmaster.exchange.paper.PaperExchange
+import tradingmaster.strategy.runner.IStrategyRunner
 
 import javax.persistence.*
 import java.util.concurrent.ConcurrentHashMap
@@ -58,6 +61,14 @@ class TradeBot {
 
     @Transient
     BigDecimal result
+
+    @JsonIgnore
+    @Transient
+    PaperExchange paperExchange
+
+    @JsonIgnore
+    @Transient
+    IStrategyRunner strategyRunner
 
 
     List<Position> getPositions() {

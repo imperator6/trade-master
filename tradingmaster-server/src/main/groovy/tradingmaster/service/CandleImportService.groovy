@@ -28,7 +28,7 @@ class CandleImportService {
 
     void importCandles(final Date startDate, final Date endDate,final CryptoMarket market, final IHistoricDataExchangeAdapter exchange) {
 
-        candleStore.delete(CandleInterval.ONE_MINUTE.getKey(),
+        candleStore.delete("1min" /*CandleInterval.ONE_MINUTE.getKey()*/,
                 market.getExchange(),
                 market.getName(),
                 LocalDateTime.ofInstant(startDate.toInstant(), ZoneId.of("UTC")),

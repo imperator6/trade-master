@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 class DemaSettings {
 
     Boolean enabled = true
+    Boolean reverse = true
+    Boolean signalOnChange = false
     Integer shortPeriod = 10
     Integer longPeriod = 21
     BigDecimal up = 0.025

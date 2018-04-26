@@ -12,17 +12,18 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.entity.Position
+import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.entity.json.StopLoss
 import tradingmaster.db.entity.json.TakeProfit
 import tradingmaster.db.entity.json.TrailingStopLoss
+import tradingmaster.model.BacktestMessage
 import tradingmaster.model.Candle
 import tradingmaster.util.NumberHelper
 
 import javax.annotation.PostConstruct
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
-import java.time.temporal.ChronoField
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -46,9 +47,6 @@ class PositionUpdateHandler implements  MessageHandler {
     TaskExecutor positionTaskExecutor
 
     @Autowired
-    TaskExecutor orderTaskExecutor
-
-    @Autowired
     PositionService positionService
 
     @Autowired
@@ -56,6 +54,13 @@ class PositionUpdateHandler implements  MessageHandler {
 
     @Autowired
     PublishSubscribeChannel positionUpdateChannel
+
+    @Autowired
+    PublishSubscribeChannel backtestChannel
+
+
+    @Autowired
+    PublishSubscribeChannel signalChannel
 
     @PostConstruct
     init() {
@@ -84,8 +89,6 @@ class PositionUpdateHandler implements  MessageHandler {
                 } else {
                     log.debug("Position $p.id $p.market is up to date. Last update < $timeout minutes!")
                 }
-
-
             }
         }
     }
@@ -95,18 +98,74 @@ class PositionUpdateHandler implements  MessageHandler {
 
         Candle c = message.getPayload()
 
+        executeAsync(c)
+    }
+
+    void executeAsync(Candle c) {
         log.debug("Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ${c.market.exchange}")
 
-        tradeBotManager.getActiveBots().each { TradeBot bot ->
+        List botList = tradeBotManager.getActiveBots()
 
-            def task = {
-                processBotUpdate(bot, c)
-                processPositions(bot, c)
-            } as Runnable
-
-            positionTaskExecutor.execute(task)
+        if(c.botId != null) {
+            botList = []
+            botList.add( tradeBotManager.findBotById(c.botId))
         }
+
+        def task = {
+
+            List<Signal> signals = []
+
+            botList.each { TradeBot bot ->
+
+                if(bot.getStrategyRunner()) {
+
+                    List strategySignals =  bot.getStrategyRunner().nextCandle(c)
+
+                    strategySignals.each { Signal s ->
+                        signals.add(s)
+                    }
+                }
+
+                processBotUpdate(bot, c)
+
+                List signalsFromUpdateCheck = processPositions(bot, c)
+                signals.addAll( signalsFromUpdateCheck )
+            }
+
+            // TODO... remove double signlas....
+            signals = signals.unique { a, b -> a.positionId <=> b.positionId }
+
+            // send all signals
+            signals.each {
+                it.candle = c
+                signalChannel.send( MessageBuilder.withPayload(it).build() )
+            }
+
+            if(c.backtestId != null) {
+
+                BacktestMessage msg = new BacktestMessage()
+                msg.backtestId = c.backtestId
+                msg.action = "complete"
+                msg.signalCount = signals.size()
+
+                if(signals.isEmpty()) {
+                    // no actions --> notify strategy runner to fire next candle
+                    backtestChannel.send( MessageBuilder.withPayload(msg).build()  )
+                } else {
+                    // Todo.. register signal count....
+                    msg.action = "setSignalCount"
+
+                   // Thread.sleep( 150 )
+                    backtestChannel.send( MessageBuilder.withPayload(msg).build() )
+                }
+            }
+
+        } as Runnable
+
+        positionTaskExecutor.execute(task)
+
     }
+
 
     void processBotUpdate(TradeBot bot, Candle c) {
 
@@ -123,7 +182,8 @@ class PositionUpdateHandler implements  MessageHandler {
             } else {
                 bot.setFxDollar( c.getClose() )
 
-                fxDollarChannel.send( MessageBuilder.withPayload( c ).build() )
+                if(!bot.backtest)
+                    fxDollarChannel.send( MessageBuilder.withPayload( c ).build() )
             }
 
             // update start fx for position if not set
@@ -152,6 +212,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
     boolean isValidCandleSize(TradeBot bot, Candle c) {
 
+        // period is always in minutes
         def candelSize = c.getPeriod().replace("min", "m")
 
         if(bot.config.candleSize) {
@@ -174,12 +235,13 @@ class PositionUpdateHandler implements  MessageHandler {
     }
 
 
-    void processPositions(TradeBot bot, Candle c) {
+    List<Signal> processPositions(TradeBot bot, Candle c) {
 
         if(!isValidCandleSize(bot, c)) {
-            return
+            return Collections.EMPTY_LIST
         }
 
+        List signals = []
 
         String candleMarket = c.getMarket().getName()
 
@@ -192,17 +254,21 @@ class PositionUpdateHandler implements  MessageHandler {
                 log.debug("${bot.shortName} -> Processing position for market: ${c.getMarket().getName()} candlesize: ${c.getPeriod()} ${c.market.exchange}")
 
                 if(checkOpenPosition(p, c, bot)) {
-                    openPosition(p, c, bot)
-                    return
+                    Signal s = openPosition(p, c, bot)
+                    signals.add( s )
+                    return signals
                 }
 
                 updatePosition(p, c, bot)
 
                 if(checkClosePosition(p, c, bot)) {
-                    closePosition(p, c, bot)
+                    Signal s = closePosition(p, c, bot)
+                    if(s) signals.add( s )
                 }
             }
         }
+
+        return signals
     }
 
      BigDecimal calculatePositionResult(BigDecimal buyRate, BigDecimal rate) {
@@ -226,7 +292,7 @@ class PositionUpdateHandler implements  MessageHandler {
     private updatePosition(Position p, Candle c, TradeBot bot) {
 
         if(p.sellInPogress) {
-            log.info("Skip update position $p.id. Sell is already in pogress!")
+            log.info("Skip update position $p.id. Sell is already in pogress! Candle ${c.end}  ${c.close}")
             return
         }
 
@@ -296,9 +362,10 @@ class PositionUpdateHandler implements  MessageHandler {
             }
         }
 
-        positionRepository.save(p)
+        positionService.save(p)
 
-        positionUpdateChannel.send(  MessageBuilder.withPayload( p ).build() )
+        if(!bot.backtest)
+            positionUpdateChannel.send(  MessageBuilder.withPayload( p ).build() )
 
         // buyRate: $p.buyRate curentRate: $c.close
         log.debug("PosId $p.id: $p.market: (range:${NumberHelper.twoDigits(p.minResult)}%  ${NumberHelper.twoDigits(p.maxResult)}%) -> ${NumberHelper.twoDigits(resultInPercent)}%")
@@ -333,7 +400,7 @@ class PositionUpdateHandler implements  MessageHandler {
                 p.closed = true
                 p.setError(true)
                 p.setErrorMsg("Timeout! Position is older than ${p.settings.buyWhen.timeoutHours} hours.")
-                positionRepository.save(p)
+                positionService.save(p)
             }
         }
 
@@ -378,7 +445,7 @@ class PositionUpdateHandler implements  MessageHandler {
             }
 
             if(!skipStopLoss && positionValueInPercent <= stopLoss.value) {
-                log.info("Stop Loss <= ${stopLoss.value}% detected: Position $p.id: $p.market result: ${positionValueInPercent}%")
+                log.info("Stop Loss <= ${stopLoss.value}% detected: Position $p.id: $p.market result: ${positionValueInPercent}% candle: ${c}")
                 return true
             }
         }
@@ -424,7 +491,7 @@ class PositionUpdateHandler implements  MessageHandler {
                     if(newTrailingStopLoss > p.trailingStopLoss) {
                         log.info("Increase Trailing-Stop-Loss for Position $p.id: $p.market new: ${newTrailingStopLoss}%")
                         p.trailingStopLoss = newTrailingStopLoss
-                        positionRepository.save(p)
+                        positionService.save(p)
                     }
                 }
 
@@ -433,7 +500,7 @@ class PositionUpdateHandler implements  MessageHandler {
                     BigDecimal trailingStopLossInitValue = positionValueInPercent - trailingStopLoss.value
                     log.info("Activate Trailing-Stop-Loss for Position $p.id: $p.market trailingStopLoss at: $trailingStopLossInitValue")
                     p.trailingStopLoss = trailingStopLossInitValue
-                    positionRepository.save(p)
+                    positionService.save(p)
                 }
             }
         }
@@ -462,32 +529,51 @@ class PositionUpdateHandler implements  MessageHandler {
         return false
     }
 
-    synchronized void closePosition(Position p, Candle c, TradeBot bot) {
+    Signal closePosition(Position p, Candle c, TradeBot bot) {
 
         if(p.settings && p.settings.holdPosition) {
             log.info("Can't close position $p.id. Flag HoldPosition is active!")
             return
         }
 
-        if(p.sellInPogress) {
+       /* if(p.sellInPogress) {
             log.info("Can't close position $p.id. Sell is already in pogress!")
             return
-        }
+        }*/
 
         if(!positionService.isTradingActive(bot)) {
             return
         }
 
-        p.sellInPogress = true
+        //p.sellInPogress = true
 
-        def task = {
-            positionService.closePosition(p, c, bot)
+        Signal s = new Signal()
+        s.buySell = "sell"
+        s.asset = c.getMarket().getAsset()
+        s.price = c.close
+        s.signalDate = c.end
+        s.exchange = bot.exchange
+        s.triggerName = "Close Trigger"
+        s.positionId = p.id
+        s.botId = bot.id
+        s.candle = c
+
+        return s
+
+        //signalChannel.send( MessageBuilder.withPayload(s).build() )
+
+      /*  def task = {
+
+
+
+
+            positionService.closePosition(p, c.close, bot, c.end)
         } as Runnable
 
-        orderTaskExecutor.execute(task)
+        orderTaskExecutor.execute(task) */
     }
 
-    synchronized void openPosition(Position p, Candle c, TradeBot bot) {
+    Signal openPosition(Position p, Candle c, TradeBot bot) {
 
         if(p.settings && p.settings.holdPosition) {
             log.info("Can't close position $p.id. Flag HoldPosition is active!")
@@ -505,27 +591,44 @@ class PositionUpdateHandler implements  MessageHandler {
 
         p.buyInPogress = true
 
-        def task = {
-            // calc balance....
-            def balanceToSpend
+        Signal s = new Signal()
+        s.buySell = "buy"
+        s.asset = c.getMarket().getAsset()
+        s.price = c.close
+        s.signalDate = c.end
+        s.exchange = bot.exchange
+        s.triggerName = "Open Trigger"
+        s.positionId = p.id
+        s.botId = bot.id
+        s.candle = c
 
-            if(p.settings.buyWhen.spend > 0) {
-                balanceToSpend = p.settings.buyWhen.spend
-                log.info("Open a new position using 'buyWhen.spend'. balanceToSpend: ${balanceToSpend}")
-            } else if (p.settings.buyWhen.quantity > 0) {
-                balanceToSpend = p.settings.buyWhen.quantity * c.close
-                p.settings.buyWhen.spend = balanceToSpend
-                log.info("Open a new position using 'buyWhen.quantity'. balanceToSpend: ${balanceToSpend}")
-            } else {
-                balanceToSpend = tradeBotManager.calcBalanceForNextTrade(bot)
-                p.settings.buyWhen.spend = balanceToSpend
-                log.info("Open a new position using 'tradeBotManager'. balanceToSpend: ${balanceToSpend}")
-            }
+        return s
 
-            positionService.openPosition(bot, p, balanceToSpend , c.close)
-        } as Runnable
+        //signalChannel.send( MessageBuilder.withPayload(s).build() )
 
-        orderTaskExecutor.execute(task)
+
+
+//        def task = {
+//            // calc balance....
+//            def balanceToSpend
+//
+//            if(p.settings.buyWhen.spend > 0) {
+//                balanceToSpend = p.settings.buyWhen.spend
+//                log.info("Open a new position using 'buyWhen.spend'. balanceToSpend: ${balanceToSpend}")
+//            } else if (p.settings.buyWhen.quantity > 0) {
+//                balanceToSpend = p.settings.buyWhen.quantity * c.close
+//                p.settings.buyWhen.spend = balanceToSpend
+//                log.info("Open a new position using 'buyWhen.quantity'. balanceToSpend: ${balanceToSpend}")
+//            } else {
+//                balanceToSpend = tradeBotManager.calcBalanceForNextTrade(bot)
+//                p.settings.buyWhen.spend = balanceToSpend
+//                log.info("Open a new position using 'tradeBotManager'. balanceToSpend: ${balanceToSpend}")
+//            }
+//
+//            positionService.openPosition(bot, p, balanceToSpend , c.close, exchangeAdapter)
+//        } as Runnable
+//
+//        orderTaskExecutor.execute(task)
     }
 
 }

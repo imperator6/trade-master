@@ -13,12 +13,19 @@ public class Dema implements Strategy {
     private Ema longEma;
     private double up = 0.025;
     private double down = -0.025;
+    private boolean reverse = false;
+    private boolean signalOnChange = false;
+
+    String direction = "neutral";
+
 
     public Dema(DemaSettings settings) {
         this.shortEma = new Ema(settings.getShortPeriod());
         this.longEma = new Ema(settings.getLongPeriod());
         this.up = settings.getUp().doubleValue();
         this.down = settings.getDown().doubleValue();
+        this.reverse = settings.getReverse();
+        this.signalOnChange = settings.getSignalOnChange();
     }
 
     public String getName() {
@@ -32,17 +39,32 @@ public class Dema implements Strategy {
 
         double diff = 100.0 * (s.doubleValue() - l.doubleValue()) / ((s.doubleValue() + l.doubleValue()) / 2.0);
 
-        if (diff < down) {
+        if (diff < down /*&& direction != "down"*/) {
 
-            return StrategyResult.SHORT;
-        } else if (diff > up) {
+            if(signalOnChange) {
+                if(direction != "down") {
+                    this.direction = "down";
+                    return reverse ? StrategyResult.LONG :  StrategyResult.SHORT;
+                }
+            } else {
+                return reverse ? StrategyResult.LONG :  StrategyResult.SHORT;
+            }
 
 
-            return StrategyResult.LONG;
-        } else {
+        } else if (diff > up /* &&  direction != "up" */) {
 
-            return StrategyResult.NEUTRAL;
+            if(signalOnChange) {
+                if(direction != "up") {
+                    this.direction = "up";
+                    return reverse ? StrategyResult.SHORT :  StrategyResult.LONG;
+                }
+
+            } else {
+                return reverse ? StrategyResult.SHORT :  StrategyResult.LONG;
+            }
         }
+
+        return StrategyResult.NEUTRAL;
 
     }
 

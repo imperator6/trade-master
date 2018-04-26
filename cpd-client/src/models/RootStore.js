@@ -4,6 +4,8 @@ import PouchDBStore from "./PouchDBStore"
 import OrderbookModel from "./OrderbookModel"
 import StompStore from "./StompStore"
 import CpdConfigStore from "./CpdConfigStore"
+import PositionStore from "./PositionStore"
+
 import { observable, computed, action } from "mobx";
 
 export default class RootStore {
@@ -24,6 +26,8 @@ export default class RootStore {
         this.cpdConfigStore = new CpdConfigStore(this)
         
         this.stompStore = new StompStore(this, this.websocketUrl)
+
+        this.positionStore = new PositionStore(this)
     }
 
     @action

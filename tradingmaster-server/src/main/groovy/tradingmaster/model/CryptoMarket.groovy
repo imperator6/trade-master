@@ -1,9 +1,13 @@
 package tradingmaster.model
 
+import groovy.transform.EqualsAndHashCode
 import groovy.transform.ToString
+import groovy.util.logging.Commons
 
 
 @ToString
+@EqualsAndHashCode
+@Commons
 class CryptoMarket extends DefaultMarket {
 
     String currency

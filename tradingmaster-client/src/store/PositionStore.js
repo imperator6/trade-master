@@ -156,7 +156,7 @@ class MarketWatcherStore {
           response.data.data.forEach(bot => {
             // console.log( exchange)
             newBotList.push(
-              bot.id + "_" + bot.exchange + "_" + bot.baseCurrency
+              bot.id + "_" + bot.exchange + "_" + bot.baseCurrency + "_" + bot.backtest
             );
             this.botMap.set(bot.id, bot);
             //newBotList.push(bot)
@@ -202,6 +202,11 @@ class MarketWatcherStore {
       this.selectedExchange = bot.exchange
 
       this.load();
+
+      // load a chart 
+      if(this.rootStore.marketSelectionStore.getSelectedExchange(0) == null)
+        this.rootStore.marketSelectionStore.select('Binance', 'USDT-BTC')
+
 
       // console.log(bot)
     }
@@ -666,6 +671,7 @@ class MarketWatcherStore {
   }
 
   updatePosition = (newPosition) => {
+    this.log.info("New Position update!", newPosition)
     this.positionMap.set(newPosition.id, newPosition)
 }
 

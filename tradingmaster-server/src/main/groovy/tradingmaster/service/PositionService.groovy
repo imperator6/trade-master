@@ -17,13 +17,11 @@ import tradingmaster.db.mariadb.MariaCandleStore
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.*
-import tradingmaster.util.DateHelper
 import tradingmaster.util.NumberHelper
 
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
-import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -93,31 +91,34 @@ class PositionService {
 
         //applyBotSettings(bot, pos.settings)
 
-        positionRepository.save(pos)
+        save(pos)
         bot.addPosition(pos)
 
         log.debug "New buyWehn position created! $pos"
 
         // start the watcher service to observe the market
-        marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
+        if(!bot.backtest)
+            marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
 
         return pos
     }
 
-    void openPosition(TradeBot bot, Signal s) {
+    Position openPosition(TradeBot bot, Signal s) {
 
         if(!isTradingActive(bot)) {
-            return
+            return null
         }
 
         Position pos = new Position()
 
         pos.created = new Date()
         pos.botId = bot.getId()
-        pos.market = "${bot.config.baseCurrency}-${s.asset}"
+        pos.market = bot.config.baseCurrency + '-' + s.asset
         pos.status = "pending"
         pos.buySignalId = s.getId()
         pos.signalRate = s.price
+
+        log.info(pos.market)
 
         applyBotSettings(bot, pos.settings)
 
@@ -125,13 +126,15 @@ class PositionService {
 
         if(balanceToSpend > 0) {
 
-            positionRepository.save(pos)
+            save(pos)
             bot.addPosition(pos)
 
-            openPosition(bot, pos, balanceToSpend, s.getPrice())
+            openPosition(bot, pos, balanceToSpend, s.getPrice(), s.signalDate)
         } else {
             log.warn("Can't open position ${s.asset} balance is to low. ${balanceToSpend}")
         }
+
+        return pos
     }
 
     void applyBotSettings(TradeBot bot, PositionSettings settings) {
@@ -144,11 +147,21 @@ class PositionService {
     }
 
 
-    void openPosition(TradeBot bot, Position pos, BigDecimal balanceToSpend, BigDecimal signalPrice) {
+    Position openPosition(TradeBot bot, Position pos, BigDecimal balanceToSpend, BigDecimal signalPrice, Date signalDate) {
 
         if(!isTradingActive(bot)) {
-            return
+            def msg = "Trading is not active bot bot ${bot}"
+            log.error(msg)
+            pos.buyInPogress = false
+            pos.setError(true)
+            pos.setErrorMsg(msg)
+            pos.setClosed(true)
+            return pos
         }
+
+        def startTime = LocalDateTime.now()
+
+        IExchangeAdapter exchangeAdapter = tradeBotManager.getExchangeAdapter(bot)
 
         PriceLimit priceLimit = null
         if(bot.config.buyPriceLimitPercent && signalPrice) {
@@ -159,7 +172,7 @@ class PositionService {
         String currency  = market.getCurrency()
         String asset = market.getAsset()
 
-        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset, pos)
+        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, exchangeAdapter, BuySell.BUY, balanceToSpend, (PriceLimit) priceLimit, currency, asset, pos)
 
         if(newOrderRes.success) {
 
@@ -169,7 +182,8 @@ class PositionService {
             log.debug "New position created! $pos"
 
             // start the watcher service to observe the market
-            marketWatcheService.createMarketWatcher(market)
+            if(!bot.backtest)
+                marketWatcheService.createMarketWatcher(market)
 
             tradeBotManager.syncBanlance(bot)
 
@@ -182,11 +196,16 @@ class PositionService {
             pos.setClosed(true)
         }
 
-        positionRepository.save(pos)
+        save(pos)
+        log.info("Took ${ChronoUnit.MILLIS.between(startTime,  LocalDateTime.now())} ms to open the signal!")
+
+        return pos
     }
 
     boolean isTradingActive(TradeBot bot) {
         if(bot && bot.config) {
+
+            if(bot.backtest) return true
 
             if( bot.config.liveTrading != null) {
                 if(!bot.config.liveTrading) {
@@ -203,6 +222,11 @@ class PositionService {
     }
 
     void loadPositionsFromExchange(TradeBot bot) {
+
+        if(bot.backtest) {
+            log.warn("Can't load position for a backtest Bot!")
+            return
+        }
 
         IExchangeAdapter exchangeAdapter = tradeBotManager.getExchangeAdapter(bot)
 
@@ -254,7 +278,7 @@ class PositionService {
 
                     setStartFx(bot, pos)
 
-                    positionRepository.save(pos)
+                    save(pos)
                     bot.addPosition(pos)
 
                     marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
@@ -291,7 +315,7 @@ class PositionService {
                         // use the buy rate from the last order
                         pos.setBuyRate( orders.first().getPricePerUnit() )
 
-                        positionRepository.save(pos)
+                        save(pos)
                         bot.addPosition(pos)
                         marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
                     } else {
@@ -304,7 +328,7 @@ class PositionService {
 
                             pos.setBuyRate(ticker.getAsk())
 
-                            positionRepository.save(pos)
+                            save(pos)
                             bot.addPosition(pos)
                             marketWatcheService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
 
@@ -348,7 +372,18 @@ class PositionService {
             }
         }
 
-        positionRepository.save(pos)
+        save(pos)
+    }
+
+
+    void save(Position pos) {
+        synchronized (pos) {
+            TradeBot bot = tradeBotManager.findBotById(pos.getBotId())
+
+            if(!bot.backtest || pos.id == null) {
+                positionRepository.save(pos)
+            }
+        }
     }
 
     private void updateSellPosition(Position pos, IOrder newOrder) {
@@ -407,20 +442,24 @@ class PositionService {
 
         Position newPos = pos.clone()
         newPos.setId(null)
-        positionRepository.save( newPos )
+        save( newPos )
         bot.addPosition( newPos )
 
 
     }
-    void closePosition(Position pos, Candle c, TradeBot bot) {
-        closePosition(pos, c.close, bot)
-    }
 
-    void closePosition(Position pos, BigDecimal sellPrice, TradeBot bot) {
+    Position closePosition(Position pos, BigDecimal sellPrice, TradeBot bot, Date closeDate) {
 
         if(!isTradingActive(bot)) {
-            return
+            def msg = "Trading is not active bot bot ${bot}"
+            log.error(msg)
+            pos.sellInPogress = false
+            pos.setError(true)
+            pos.setErrorMsg(msg)
+            return pos
         }
+
+        def startTime = LocalDateTime.now()
 
         PriceLimit priceLimit = null
         if(bot.config.sellPriceLimitPercent && sellPrice) {
@@ -428,9 +467,25 @@ class PositionService {
         }
 
         pos.sellInPogress = true
-        positionRepository.save(pos)
+        save(pos)
 
-        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, tradeBotManager.getExchangeAdapter(bot), BuySell.SELL, pos.amount, (PriceLimit) priceLimit, pos.market, pos)
+        IExchangeAdapter exchangeAdapter = tradeBotManager.getExchangeAdapter(bot)
+
+//        if(bot.backtest) {
+//            // A new instance will be returned in case of a paper exchange
+//            // fake a candle
+//            Candle c = new Candle()
+//            c.close = sellPrice
+//            c.end = closeDate
+//            c.market = new CryptoMarket(bot.exchange, pos.market)
+//
+//            exchangeAdapter = tradeBotManager.getPaperExchangeAdapter( bot, pos, c)
+//        } else {
+//
+//        }
+
+
+        ExchangeResponse<IOrder> newOrderRes = orderExecutorService.placeLimitOrder(bot, exchangeAdapter, BuySell.SELL, pos.amount, (PriceLimit) priceLimit, pos.market, pos)
 
         if(newOrderRes.success) {
 
@@ -438,7 +493,7 @@ class PositionService {
             updateSellPosition(pos, newOrder)
 
             log.debug "position ${pos.id} closed! ${NumberHelper.twoDigits(pos.result)}%"
-            positionRepository.save(pos) // save before stopping the market manager
+            save(pos) // save before stopping the market manager
 
             try {
                 marketWatcheService.stopMarketWatcher(bot.getExchange(), pos.getMarket())
@@ -473,7 +528,11 @@ class PositionService {
             pos.setClosed(false)
             pos.sellInPogress = false
 
-            positionRepository.save(pos)
+            save(pos)
         }
+
+        log.info("Took ${ChronoUnit.MILLIS.between(startTime, LocalDateTime.now())} ms to open the signal!")
+
+        return pos
     }
 }

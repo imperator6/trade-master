@@ -3,8 +3,8 @@
   "version": "1.0.0",
   "description": "Boilerplate for MobX + React project with JSX, ES6 and decorator compilation",
   "scripts": {
-    "start2": "webpack-dev-server --hot --open --host 0.0.0.0",
-    "start": "webpack-dev-server --hot --open --port 8081",
+    "start2": "webpack-dev-server --hot --open --history-api-fallback --host 0.0.0.0",
+    "start": "webpack-dev-server --hot --open --history-api-fallback --port 8081",
     "lint": "eslint src",
     "storybook": "start-storybook -p 9001 -c .storybook"
   },
@@ -41,10 +41,13 @@
     "less": "^2.7.3",
     "less-loader": "^4.0.5",
     "less-vars-to-js": "^1.2.1",
+    "node-sass": "^4.7.2",
     "preload-webpack-plugin": "^2.2.0",
+    "sass-loader": "^6.0.7",
     "storybook-addon-jsx": "^5.0.0",
     "style-loader": "^0.19.1",
-    "webpack": "^3.5.5",
+    "svg-colorize-loader": "^0.1.1",
+    "webpack": "^3.11.0",
     "webpack-dev-server": "^2.7.1"
   },
   "dependencies": {
@@ -71,6 +74,7 @@
     "react": "^16.0.0",
     "react-ace": "^5.8.0",
     "react-dom": "^16.0.0",
+    "react-dom-factories": "^1.0.2",
     "react-highcharts": "^15.0.0",
     "react-media": "^1.8.0",
     "react-router-dom": "^4.2.2",

@@ -36,6 +36,7 @@ class Macd implements Strategy {
             // new trend detected
             if(this.direction != 'up') {
                 // reset the state for the new trend
+                log.debug("New up trend detection")
                 duration = 0
                 persisted = false
                 direction = 'up'
@@ -59,6 +60,7 @@ class Macd implements Strategy {
             // new trend detected
             if(this.direction != 'down') {
                 // reset the state for the new trend
+                log.debug("New down trend detection")
                 duration = 0
                 persisted = false
                 direction = 'down'
@@ -77,12 +79,12 @@ class Macd implements Strategy {
                 return StrategyResult.SHORT
             }
 
-        } else {
-
-            log.debug('In no trend')
-
-            return StrategyResult.NEUTRAL
         }
+
+        //log.debug('In no trend')
+
+        return StrategyResult.NEUTRAL
+
     }
 
 }

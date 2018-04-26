@@ -3,14 +3,13 @@ package tradingmaster.strategy.runner
 import tradingmaster.model.Candle
 import tradingmaster.model.IPortfolio
 import tradingmaster.model.ScriptStrategy
-import tradingmaster.model.StrategyRun
 
 import javax.script.Bindings
 import javax.script.Invocable
 import javax.script.ScriptContext
 import javax.script.ScriptEngine
 
-class ScriptStrategyRun extends DefaultStrategyRun implements StrategyRun {
+class ScriptStrategyRun extends DefaultStrategyRun {
 
     ScriptStrategy strategy
     Map strategyParmas

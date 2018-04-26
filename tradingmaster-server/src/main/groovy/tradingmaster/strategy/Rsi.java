@@ -47,7 +47,7 @@ public class Rsi implements Strategy {
             if(duration >= settings.persistence)
                 this.persisted = true;
 
-            if(this.persisted && !this.adviced) {
+            if(this.persisted /*&& !this.adviced*/) {
                 this.adviced = true;
                 return StrategyResult.SHORT;
             }
@@ -72,7 +72,7 @@ public class Rsi implements Strategy {
             if(duration >= settings.persistence)
                 this.persisted = true;
 
-            if(this.persisted && !this.adviced) {
+            if(this.persisted /*&& !this.adviced*/) {
                 this.adviced = true;
                 return StrategyResult.LONG;
             }

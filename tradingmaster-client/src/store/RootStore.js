@@ -27,6 +27,17 @@ export default class RootStore {
 
     this.stompStore = new StompStore(this, this.websocketUrl);
 
-    
+    setTimeout(() => {
+      console.log('Init!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+
+      
+     
+    }, 500)
+  }
+
+  init() {
+    this.stompStore.startDefaultSubscriptions()
+    this.marketSelectionStore.init()
+    this.positionStore.init()
   }
 }

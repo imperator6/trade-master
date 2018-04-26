@@ -5,12 +5,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
-import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.exchange.ExchangeResponse
-import tradingmaster.model.BuySell
-import tradingmaster.model.IOrder
-import tradingmaster.model.ITicker
-import tradingmaster.model.PriceLimit
+import tradingmaster.exchange.IExchangeAdapter
+import tradingmaster.model.*
 
 @Service
 @Commons
@@ -74,6 +71,7 @@ class OrderExecutorService {
 
             ITicker ticker = tickerRes.getResult()
 
+
             ExchangeResponse<String> orderIdRes = null
 
             if(bs == BuySell.BUY) {
@@ -131,7 +129,8 @@ class OrderExecutorService {
 
             log.info("Order with id $orderId has been placed. Waiting to be executed.....")
 
-            Thread.sleep(60000) // Wait a minute than check
+            if(!bot.backtest)
+                Thread.sleep(60000) // Wait a minute than check
 
             IOrder order = checkOrderIfExecuted(bot, orderId, market, exchangeAdapter, 1)
 
@@ -167,11 +166,14 @@ class OrderExecutorService {
                 log.fatal("OrderId for market id null!")
             }
 
-            Thread.sleep(1000)
+            if(!bot.backtest)
+                Thread.sleep(1000)
+
             count++
 
             if(count > 2) {
-                Thread.sleep(count * 10000)
+                if(!bot.backtest)
+                    Thread.sleep(count * 10000)
             }
 
             ExchangeResponse<IOrder> orderRes = exchangeAdapter.getOrder(market, orderId)

@@ -7,6 +7,8 @@ class StrategyRunConfig {
 
     String id
 
+    Integer botId
+
     Integer strategyId
 
     //Map strategyParams

@@ -105,7 +105,7 @@ class MarketWatcherService {
                openPositions.each { Position p ->
                     TradeBot bot = tradeBotRepository.findOne(p.getBotId())
                     if(bot.getExchange().equalsIgnoreCase(exchange)) {
-                         log.warn("Can't stop market watcher for exchange $exchange and market $market as position ${p.id} is still open!")
+                         log.debug("Can't stop market watcher for exchange $exchange and market $market as position ${p.id} is still open!")
                          stoppable = false
                     }
                }
@@ -119,7 +119,6 @@ class MarketWatcherService {
                }
 
                stopMarketWatcher(w.id)
-
           }
 
      }

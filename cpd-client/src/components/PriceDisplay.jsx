@@ -9,6 +9,10 @@ import PeriodGroup from "./PeriodGroup";
 
 var _ = require("lodash");
 
+const Row = styled.div`
+  display: felx;
+  flex-direction: row;
+`;
 
 const HeaderItem = styled.div`flex: 0 1 auto;`;
 
@@ -40,7 +44,7 @@ class PriceDisplay extends React.Component {
             key={p.groupName + "_" + i}
             periodGroup={p}
             products={config.products}
-            store={this.props.store}
+            store={this.store.orderbookStore}
           />
         ))}
        

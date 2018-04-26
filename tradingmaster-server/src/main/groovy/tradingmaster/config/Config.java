@@ -14,6 +14,7 @@ import org.springframework.integration.dsl.channel.MessageChannels;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import tradingmaster.core.CandleAggregator;
 import tradingmaster.core.CandleBuilder;
 import tradingmaster.core.CandleWriter;
@@ -28,6 +29,7 @@ import java.util.TimeZone;
 @EnableAsync
 @EnableScheduling
 @ComponentScan(basePackages = {"com.rwe.platform.*", "tradingmaster.*"})
+@EnableTransactionManagement
 @EnableJpaRepositories(basePackages = {"com.rwe.platform.*", "tradingmaster.*"})
 @EntityScan(basePackages = {"com.rwe.platform.db.*", "tradingmaster.db.*" , "tradingmaster.exchange.mininghamster.model"})
 public class Config {
@@ -119,6 +121,14 @@ public class Config {
     public PublishSubscribeChannel signalChannel() {
         return MessageChannels.publishSubscribe().get();
     }
+
+    @Bean
+    public PublishSubscribeChannel executedSignalChannel() {
+        return MessageChannels.publishSubscribe().get();
+    }
+
+    @Bean
+    public PublishSubscribeChannel backtestChannel() { return MessageChannels.publishSubscribe().get(); }
 
     @Bean
     public PublishSubscribeChannel positionUpdateChannel() {

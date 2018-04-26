@@ -1,17 +1,44 @@
 package tradingmaster.exchange.paper
 
 import tradingmaster.exchange.DefaultExchageAdapter
-import tradingmaster.exchange.bittrex.model.BittrexBalance
 import tradingmaster.exchange.ExchangeResponse
+import tradingmaster.exchange.bittrex.model.BittrexBalance
 import tradingmaster.model.*
+
+import java.util.concurrent.atomic.AtomicInteger
 
 class PaperExchange extends DefaultExchageAdapter {
 
+    static AtomicInteger nextOrderId = new AtomicInteger(0)
+
     Map config
+
+    Map<String, IBalance> balances = [:]
+
+    Map<String, ITicker> tickerMap = [:]
+
+    Candle candle
+
+    Map orderMap = [:]
+
+
 
     PaperExchange() {
         super("PaperExchange")
     }
+
+    void setTicker(BigDecimal signalPrice, String currency, String asset) {
+
+        Ticker t = new Ticker()
+
+        String makret =  buildMarket(currency, asset)
+        t.setMarket( makret )
+        t.setBid(signalPrice)
+        t.setAsk(signalPrice)
+
+        this.tickerMap.put(makret, t)
+    }
+
 
     @Override
     Boolean cancelOrder(String market, String id) {
@@ -20,27 +47,76 @@ class PaperExchange extends DefaultExchageAdapter {
 
     @Override
     ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
-        return null
+
+        int nextOrderId = nextOrderId.incrementAndGet()
+
+        Order order = new Order()
+        order.id = nextOrderId
+        order.market = market
+        order.quantity = quantity
+        order.quantityRemaining = 0.0
+        order.pricePerUnit = rate
+        order.price = quantity * rate
+        order.buySell = "sell"
+        order.open = false
+        order.closeDate = candle.end
+        order.timeStamp = candle.end
+
+        def fee = quantity * rate * config.fee
+        order.commissionPaid = fee
+
+        String nextOrderIdKey = "" + nextOrderId
+
+        CryptoMarket cm = new CryptoMarket(this.name, market)
+        addBalance( cm.getCurrency(), order.price - order.commissionPaid)
+
+        this.orderMap.put(nextOrderIdKey, order)
+        return new ExchangeResponse<String>(nextOrderIdKey)
     }
 
     @Override
     ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
-        return null
+
+        int nextOrderId = nextOrderId.incrementAndGet()
+
+
+        Order order = new Order()
+        order.id = nextOrderId
+        order.market = market
+        order.quantity = quantity
+        order.quantityRemaining = 0.0
+        order.pricePerUnit = rate
+        order.price = quantity * rate
+        order.buySell = "buy"
+        order.open = false
+        order.closeDate = candle.end
+        order.timeStamp = candle.end
+
+        String nextOrderIdKey = "" + nextOrderId
+        order.commissionPaid =  quantity * rate * config.fee
+
+        CryptoMarket cm = new CryptoMarket(this.name, market)
+
+        addBalance( cm.getCurrency(), (order.price * -1) - order.commissionPaid)
+
+        this.orderMap.put(nextOrderIdKey, order)
+        return new ExchangeResponse<String>(nextOrderIdKey)
     }
 
     @Override
     ExchangeResponse<ITicker> getTicker(String market) {
-        return null
+        ITicker ticker = tickerMap.get(market)
+        return new ExchangeResponse<ITicker>(ticker)
     }
 
     @Override
     ExchangeResponse<IOrder> getOrder(String market, String id) {
-        return null
+        return new ExchangeResponse<IOrder>( this.orderMap.get(id))
     }
 
     @Override
     List<IOrder> getOrderHistory() {
-        return null
+        return new ArrayList(this.orderMap.values())
     }
 
     TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
@@ -53,15 +129,23 @@ class PaperExchange extends DefaultExchageAdapter {
     }
 
     List<IBalance> getBalances() {
-        def balances = []
+        return new ArrayList<IBalance>(balances.values())
+    }
+
+    void setBalance(String currency, BigDecimal value) {
 
         IBalance b = new BittrexBalance()
-        b.currency = config.baseCurrency
-        b.value = config.startBalance
+        b.currency = currency
+        b.value = value
 
-        balances << b
+        this.balances.put(currency, b)
+    }
 
-        return balances
+    void addBalance( String currency, BigDecimal value) {
+
+        def balance = getBalance(currency).value
+
+        setBalance( currency, (balance + value))
     }
 
 

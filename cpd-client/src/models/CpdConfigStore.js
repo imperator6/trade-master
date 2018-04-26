@@ -24,6 +24,12 @@ class CpdConfigStore {
 
     @observable productSelectMap = new Map()
 
+    @observable productList = []
+
+    @observable selectedKeys = []
+
+    @observable targetKeys = []
+
     constructor(rootStore) {
         this.log.debug("New CpdConfigStore!");
         this.rootStore = rootStore
@@ -76,10 +82,18 @@ class CpdConfigStore {
     showDialog = () => {
         
         this.log.info("showDialog!!");
+        
         this.productSelectMap.clear()
         let productCheckboxList = this.config.products.forEach(p => {
-            this.productSelectMap.set(p, true)
+            this.productSelectMap.set(p, true) 
         })
+
+        this.productList = []
+
+        this.config_all.products.forEach(p => {
+            this.productList.push({key: p})
+        }) 
+
 
         this.show = true
     } 

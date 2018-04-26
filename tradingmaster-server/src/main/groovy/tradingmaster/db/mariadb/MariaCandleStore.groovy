@@ -105,7 +105,11 @@ where
     period = ? 
     """
 
-       def deleteCount = sql.executeUpdate( query, [Timestamp.valueOf(startDate), Timestamp.valueOf(endDate), exchange, market, period])
+        def values = [Timestamp.valueOf(startDate), Timestamp.valueOf(endDate), exchange, market, period]
+
+        log.info(values)
+
+       def deleteCount = sql.executeUpdate( query, values)
 
         def duration = Duration.between(start, Instant.now())
 

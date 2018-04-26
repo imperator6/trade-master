@@ -57,7 +57,7 @@ class PositionController {
         TradeBot bot = tradeBotManager.findBotById(botId)
 
         if(pos != null && bot != null) {
-            positionService.closePosition(pos, (BigDecimal) null, bot)
+            positionService.closePosition(pos, (BigDecimal) null, bot, new Date())
             return new RestResponse(pos)
         }
 
@@ -137,7 +137,7 @@ class PositionController {
             }
 
             pos.settings = settings
-            positionRepository.save(pos)
+            positionService.save(pos)
 
             if(settings.traceClosedPosition) {
                 marketWatcherService.createMarketWatcher(new CryptoMarket(bot.exchange, pos.getMarket()))
@@ -163,7 +163,7 @@ class PositionController {
             posToUpdate.buyRate = position.buyRate
             posToUpdate.comment = position.comment
 
-            positionRepository.save(posToUpdate)
+            positionService.save(posToUpdate)
             return new RestResponse(true)
         }
 

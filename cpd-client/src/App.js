@@ -1,10 +1,14 @@
 import React, { Component } from "react";
 import PriceDisplay from "./components/PriceDisplay";
+import PositionPage from "./components/PositionPage";
 import ThemeProvider from "styled-components";
 import DevTools from "mobx-react-devtools";
 import { observer, inject } from "mobx-react";
 import TopNavBar from "./components/TopNavBar";
-import CpdConfig from './components/CpdConfig';
+
+import { Switch, Route } from "react-router-dom";
+
+require('./agGridStyle.scss');
 
 
 
@@ -16,17 +20,20 @@ class App extends Component {
     super(props);
     let { classes } = props;
     this.classes = classes;
-    this.orderbookStore = this.props.rootStore.orderbookStore;
   }
 
   render() {
+
+  
     return (
 
         <div>
           <DevTools />
           <TopNavBar />
-          <CpdConfig />
-          <PriceDisplay store={this.orderbookStore} />
+          <Switch>
+                <Route path="/positions" component={PositionPage} />
+                <Route exact path="/cpd" component={PriceDisplay} />
+          </Switch>
         </div>
 
     );

@@ -37,6 +37,8 @@ class PushoverService {
     void send(TradeBot bot, String title, String message) {
         try {
 
+            if(bot.backtest) return
+
             pushover.sendMessage(title, message, homepage , "TradeMaster")
 
         } catch(all) {

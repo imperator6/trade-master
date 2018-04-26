@@ -24,7 +24,10 @@ module.exports = {
   resolve: {
     extensions: [".js", ".jsx"],
     alias: {
-      stompjs: node_dir + "/stompjs/lib/stomp.js"
+      stompjs: node_dir + "/stompjs/lib/stomp.js",
+      "ag-grid": path.resolve('./node_modules/ag-grid'),
+      "ag-grid-enterprise": path.resolve('./node_modules/ag-grid-enterprise'),
+      react: path.resolve('./node_modules/react')
     }
   },
   module: {
@@ -34,18 +37,18 @@ module.exports = {
         use: {
           loader: 'babel-loader',
           options: {
-            plugins: [
+           plugins: [
               ['import', { libraryName: "antd", style: true }]
-            ]
+            ] 
           }
         },
         exclude: /node_modules/,
         include: path.join(__dirname, "src")
       },
-   /*   {
+     {
         test: /\.css$/,
         use: [{ loader: "style-loader" }, { loader: "css-loader" }]
-      }, */
+     },
       {
         test: /\.less$/,
         use: [
@@ -57,7 +60,34 @@ module.exports = {
             }
           }
         ]
-      }
+      },
+      {
+        test: /\.scss$/,
+        use: [
+          {loader: "style-loader"},
+          {loader: "css-loader"},
+          {loader: "sass-loader"}
+        ]
+      },
+      {
+        test: /\.svg$/,
+        use: [
+            {loader: 'url-loader'},
+            {
+                loader: 'svg-colorize-loader',
+                options: {
+                    color1: '#000000',
+                    color2: '#FFFFFF'
+                }
+            }
+        ]
+    } ,
+    {
+      test: /\.json$/,
+      use: [
+          {loader: 'raw'}
+      ]
+  } 
     ]
   }
 };

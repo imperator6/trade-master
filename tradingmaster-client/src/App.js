@@ -12,6 +12,7 @@ import { Stomp } from "stompjs";
 
 import Sidebar from "./components/Sidebar";
 import StompDisplay from "./components/StompConnectionDisplay";
+import BotSelectWidget from "./components/BotSelectWidget";
 import StrategyPage from "./components/StrategyPage";
 import ReactHighstock from "react-highcharts/ReactHighstock";
 
@@ -54,6 +55,7 @@ class App extends Component {
     <Sidebar />
           <Layout>
             <HeaderDiv>
+              <BotSelectWidget />
               <StompDisplay />
             </HeaderDiv>
             <Content style={{ margin: "8px 8px" }}>

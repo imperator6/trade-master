@@ -271,6 +271,6 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
 
     String convertMarketToSymbol(String market) {
         String[] symbols = market.split("-")
-        return symbols[1]+ symbols[0]
+        return symbols[1] + symbols[0]
     }
 }

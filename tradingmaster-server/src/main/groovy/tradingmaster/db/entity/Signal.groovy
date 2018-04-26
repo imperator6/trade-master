@@ -1,6 +1,9 @@
 package tradingmaster.db.entity
 
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.ToString
+import tradingmaster.model.Candle
 
 import javax.persistence.*
 
@@ -27,6 +30,7 @@ class Signal {
     @Column(nullable = false)
     String buySell
 
+    @JsonFormat(shape=JsonFormat.Shape.STRING, pattern="yyyy-MM-dd'T'HH:mm:ss.SSSZ", timezone = "UTC")
     @Column(nullable = false)
     Date signalDate
 
@@ -44,6 +48,11 @@ class Signal {
 
     @Column(nullable = false)
     Integer executionCount = 0
+
+    @JsonIgnore
+    @Transient
+    Candle candle
+
 
     //Map triggerValues = [:]
 

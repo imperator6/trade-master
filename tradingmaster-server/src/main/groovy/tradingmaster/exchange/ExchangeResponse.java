@@ -12,6 +12,11 @@ public class ExchangeResponse<T> {
     public ExchangeResponse() {
     }
 
+    public ExchangeResponse(T result) {
+        this.result = result;
+        this.success = true;
+    }
+
     public Boolean getSuccess() {
         return success;
     }

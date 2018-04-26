@@ -1,8 +1,8 @@
 import React from "react";
 
-import { observer, inject } from "mobx-react";
+import { observable, observer, inject} from "mobx-react";
 
-import { Modal, Button } from 'antd';
+import { Modal, Button, Transfer } from 'antd';
 
 @inject("rootStore")
 @observer
@@ -13,6 +13,8 @@ class CpdConfig extends React.Component {
 
     this.store = this.props.rootStore.cpdConfigStore;
   }
+
+  
 
   handleClickOpen = () => {
     this.store.showDialog();
@@ -27,10 +29,26 @@ class CpdConfig extends React.Component {
     this.store.hideDialog();
   };
 
-  handleProductChange = p => (event, checked) => {
-    this.store.selectProduct(p, checked)
-    event.preventDefault();
-  };
+  handleChange = (nextTargetKeys, direction, moveKeys) => {
+    this.store.targetKeys = nextTargetKeys
+
+    console.log('targetKeys: ', nextTargetKeys);
+    console.log('direction: ', direction);
+    console.log('moveKeys: ', moveKeys);
+  }
+
+  handleSelectChange = (sourceSelectedKeys, targetSelectedKeys) => {
+    this.store.selectedKeys = [...sourceSelectedKeys, ...targetSelectedKeys]
+
+    console.log('sourceSelectedKeys: ', sourceSelectedKeys);
+    console.log('targetSelectedKeys: ', targetSelectedKeys);
+  }
+
+  handleScroll = (direction, e) => {
+    console.log('direction:', direction);
+    console.log('target:', e.target);
+  }
+
 
   render() {
    /* let productCheckboxList = this.store.config_all.products.map(p => {
@@ -54,18 +72,21 @@ class CpdConfig extends React.Component {
           title="Configuration"
           visible={this.store.show}
           onOk={this.handleOk}
+          okType={'primary'}
           onCancel={this.handleClose}
         >
-          <p>Some contents...</p>
-          <p>Some contents...</p>
-          <p>Some contents...</p>
-          <p>Some contents...</p>
-          <p>Some contents...</p>
-          <p>Some contents...</p>
-          <p>Some contents...</p>
-          <p>Some contents...</p>
-          <p>Some contents...</p>
-          <p>Some contents...</p>
+          <p>Products</p>
+
+         <Transfer
+        dataSource={this.store.productList}
+        titles={['Source', 'Target']}
+        targetKeys={this.store.targetKeys}
+        selectedKeys={this.store.selectedKeys}
+        onChange={this.handleChange}
+        onSelectChange={this.handleSelectChange}
+        onScroll={this.handleScroll}
+        render={item => item.key}
+      />
        
         </Modal>
       </div>
