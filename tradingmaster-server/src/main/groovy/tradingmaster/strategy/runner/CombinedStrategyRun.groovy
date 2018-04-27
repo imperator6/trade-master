@@ -28,6 +28,8 @@ class CombinedStrategyRun implements IStrategyRunner {
 
     TradeBot bot
 
+    Integer candleCount = 0
+
     @Override
     void init(TradeBot bot) {
         this.bot = bot
@@ -36,6 +38,8 @@ class CombinedStrategyRun implements IStrategyRunner {
 
     @Override
     List<Signal> nextCandle(Candle c) {
+
+        candleCount++
 
         boolean execute = false
 
@@ -51,6 +55,10 @@ class CombinedStrategyRun implements IStrategyRunner {
 
             // check if assed is allowed
             if(!tradeBotManager.isValidAssest(this.bot, c.getMarket().getAsset())) {
+                execute = false
+            }
+
+            if(bot.config.warmup && (candleCount <= bot.config.warmup)) {
                 execute = false
             }
         }

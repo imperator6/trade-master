@@ -1,0 +1,78 @@
+{
+  "exchange": "binance",
+  "baseCurrency": "USDT",
+  "startBalance": 1000,
+  "fee": 0.001,
+  "warmup": 48,
+  "chartLink": "https://bittrex.com/Market/Index?MarketName=$market",
+
+  "amountPerOrder": 1000,
+  "maxPositions": 20,
+  "maxOpenPositions": 30,
+
+  "candleSize": "1m",
+  "liveTrading": false,
+
+  "sellPriceLimitPercent": -2,
+  "buyPriceLimitPercent": 3,
+
+  "signal": {
+    "enabled": true,
+    "listenTo": ["TA Strategy"]
+  },
+
+  "assetFilter": {
+    "enabled": true,
+    "forbidden": [],
+    "allowed": ["BTC", "USDT"]
+  },
+
+  "takeProfit": {
+    "enabled": false,
+    "value": 10,
+    "activeAfterHours": 0
+  },
+
+  "stopLoss": {
+    "enabled": false,
+    "value": -4,
+    "activeAfterHours": 0
+  },
+
+  "trailingStopLoss": {
+    "enabled": false,
+    "value": 2,
+    "startAt": 2,
+    "activeAfterHours": 0,
+    "checkInterval": 1
+  },
+
+  "dema": {
+    "enabled": true,
+    "reverse": false,
+    "signalOnChange": false,
+    "shortPeriod": 10,
+    "longPeriod": 48,
+    "up": 0.025,
+    "down": -0.025
+  },
+
+  "macd": {
+    "enabled": false,
+    "shortPeriod": 10,
+    "longPeriod": 55,
+    "signalPeriod": 6,
+    "up": 0.025,
+    "down": -0.025,
+    "persistence": 4
+  },
+
+  "rsi": {
+    "enabled": false,
+    "interval": 8,
+    "low": 30,
+    "high": 70,
+    "persistence": 1
+  }
+
+}
