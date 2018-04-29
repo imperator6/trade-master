@@ -84,6 +84,8 @@ class TradeBotManager {
 
             if(b.baseCurrency.toUpperCase().indexOf("USD") >= 0) {
                // USDT or USD...
+                marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-BTC"))
+                //TODO check if USDT or USD exchange
             } else {
                 // for Dollar conversion start a market watcher for USDT
                 marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-${b.baseCurrency}"))

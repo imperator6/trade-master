@@ -73,7 +73,7 @@ class PositionService {
         bot.removePosition(pos)
         positionRepository.delete(pos.getId())
 
-        marketWatcheService.stopMarketWatcher(bot.getExchange() ,pos.getMarket())
+        stopMarketWatcher(bot ,pos)
     }
 
     Position newPosition(TradeBot bot, String market, PositionSettings settings) {
@@ -441,7 +441,7 @@ class PositionService {
             positionRepository.save(pos) // save before stopping the market manager
 
             try {
-                marketWatcheService.stopMarketWatcher(bot.getExchange(), pos.getMarket())
+                stopMarketWatcher(bot, pos)
             } catch(Exception e) {
                 log.error("Error while trying to stop the market watcher!")
             }
@@ -475,5 +475,16 @@ class PositionService {
 
             positionRepository.save(pos)
         }
+    }
+
+    void stopMarketWatcher(TradeBot bot, Position pos) {
+
+        def market = pos.getMarket()
+        if(market.equalsIgnoreCase("USDT-${bot.baseCurrency}")
+                || market.equalsIgnoreCase("USD-${bot.baseCurrency}")) {
+            return
+        }
+
+        marketWatcheService.stopMarketWatcher(bot.getExchange(), market)
     }
 }

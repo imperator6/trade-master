@@ -40,8 +40,8 @@ public class Application {
 
 
         // start Hamster Watcher
-        HamsterWatcherService hamsterWatcherService = ctx.getBean(HamsterWatcherService.class);
-        hamsterWatcherService.startHamsterWatcher();
+        //HamsterWatcherService hamsterWatcherService = ctx.getBean(HamsterWatcherService.class);
+        //hamsterWatcherService.startHamsterWatcher();
 
 
     }

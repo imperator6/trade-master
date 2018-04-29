@@ -119,9 +119,7 @@ class MarketWatcherService {
                }
 
                stopMarketWatcher(w.id)
-
           }
-
      }
 
      private MarketWatcher startMarketWatcher(final MarketWatcher w, final CryptoMarket market, final IExchangeAdapter exchange) {

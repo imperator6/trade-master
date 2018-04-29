@@ -205,6 +205,20 @@ class PositionUpdateHandler implements  MessageHandler {
         }
     }
 
+    BigDecimal calculatePositionResult(BigDecimal buyRate, BigDecimal rate, BigDecimal fallback) {
+
+        def resultInPercent = calculatePositionResult(buyRate, rate)
+
+        if(resultInPercent > 500) {
+            log.error("calculatePositionResult: result is > 500% invalid rate? $rate buyRate: $buyRate")
+
+            if(fallback != null)
+                return fallback
+        }
+
+        return resultInPercent
+    }
+
      BigDecimal calculatePositionResult(BigDecimal buyRate, BigDecimal rate) {
 
          if(buyRate == null || rate == null || rate == 0 || buyRate == 0) {
@@ -220,8 +234,10 @@ class PositionUpdateHandler implements  MessageHandler {
              resultInPercent = resultInPercent.abs()
          }
 
+
          return resultInPercent
     }
+
 
     private updatePosition(Position p, Candle c, TradeBot bot) {
 
@@ -260,7 +276,7 @@ class PositionUpdateHandler implements  MessageHandler {
                 p.setAge("$minutes Min.")
             }
 
-            BigDecimal resultInPercent = calculatePositionResult(p.getBuyRate(), c.close)
+            BigDecimal resultInPercent = calculatePositionResult(p.getBuyRate(), c.close, p.result)
             p.setResult(resultInPercent)
 
             // waiting for buy
@@ -269,9 +285,9 @@ class PositionUpdateHandler implements  MessageHandler {
                     && p.settings.buyWhen.enabled) {
 
                 if(c.close > p.settings.buyWhen.maxPrice) {
-                    p.result = calculatePositionResult(p.settings.buyWhen.maxPrice, c.close)
+                    p.result = calculatePositionResult(p.settings.buyWhen.maxPrice, c.close, p.result)
                 } else if(c.close < p.settings.buyWhen.minPrice) {
-                    p.result = calculatePositionResult(p.settings.buyWhen.minPrice, c.close)
+                    p.result = calculatePositionResult(p.settings.buyWhen.minPrice, c.close, p.result)
                 }
             } else {
                 // open position
@@ -291,7 +307,7 @@ class PositionUpdateHandler implements  MessageHandler {
         } else {
             // a closed position with setting traceClosed!
             if(p.getSellRate() != null) {
-                BigDecimal traceResultInPercent = calculatePositionResult(p.getSellRate(), c.close)
+                BigDecimal traceResultInPercent = calculatePositionResult(p.getSellRate(), c.close, p.traceResult)
                 p.traceResult = traceResultInPercent
             }
         }
