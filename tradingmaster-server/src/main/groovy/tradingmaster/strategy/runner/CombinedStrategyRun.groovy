@@ -132,7 +132,7 @@ class CombinedStrategyRun implements IStrategyRunner {
                 signals.add(s)
                 log.debug("Strategy go SHORT (sell)!")
             } else {
-                log.debug("Can't close any position for Signal s ${s}, as no open position exsits!")
+                log.info("Can't close any position for Signal s ${s}, as no open position exsits for market ${c.getMarket()}!")
             }
         }
 
