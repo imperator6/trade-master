@@ -77,6 +77,9 @@ class OrderExecutorService {
             if(bs == BuySell.BUY) {
 
                 def quantity = spendOrAmount / ticker.getAsk()
+                def fee = quantity * 0.0025 // TODO... use exchange related fee
+                quantity  = quantity - fee
+
                 def price = ticker.getAsk() // use aks instead to sell son as possible?
 
                 if(priceLimit != null) {
