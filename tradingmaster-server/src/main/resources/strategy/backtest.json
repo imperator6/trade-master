@@ -3,12 +3,11 @@
   "baseCurrency": "USDT",
   "startBalance": 1000,
   "fee": 0.001,
-  "warmup": 48,
+  "warmup": 12,
   "chartLink": "https://bittrex.com/Market/Index?MarketName=$market",
 
-  "amountPerOrder": 1000,
-  "maxPositions": 20,
-  "maxOpenPositions": 30,
+  "amountPerOrder": 500,
+  "maxOpenPositions": 2,
 
   "candleSize": "1m",
   "liveTrading": false,
@@ -28,14 +27,14 @@
   },
 
   "takeProfit": {
-    "enabled": false,
-    "value": 10,
+    "enabled": true,
+    "value": 19,
     "activeAfterHours": 0
   },
 
   "stopLoss": {
     "enabled": false,
-    "value": -4,
+    "value": -5,
     "activeAfterHours": 0
   },
 
@@ -51,7 +50,7 @@
     "enabled": true,
     "reverse": false,
     "signalOnChange": false,
-    "shortPeriod": 10,
+    "shortPeriod": 8,
     "longPeriod": 48,
     "up": 0.025,
     "down": -0.025

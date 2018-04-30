@@ -9,7 +9,7 @@ import javax.persistence.*
 
 @Entity(name = "tradingSignal")
 @ToString
-class Signal {
+class Signal implements Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

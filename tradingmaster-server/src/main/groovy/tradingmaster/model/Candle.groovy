@@ -8,7 +8,7 @@ import javax.persistence.Transient
 import java.time.Duration
 
 @ToString
-class Candle {
+class Candle implements Serializable {
 
     CryptoMarket market
 

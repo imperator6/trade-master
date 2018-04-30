@@ -22,12 +22,11 @@ class PaperExchange extends DefaultExchageAdapter {
     Map orderMap = [:]
 
 
-
     PaperExchange() {
         super("PaperExchange")
     }
 
-    void setTicker(BigDecimal signalPrice, String currency, String asset) {
+    synchronized void setTicker(BigDecimal signalPrice, String currency, String asset) {
 
         Ticker t = new Ticker()
 
@@ -41,12 +40,12 @@ class PaperExchange extends DefaultExchageAdapter {
 
 
     @Override
-    Boolean cancelOrder(String market, String id) {
+    synchronized Boolean cancelOrder(String market, String id) {
         return null
     }
 
     @Override
-    ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
+    synchronized ExchangeResponse<String> sellLimit(String market, BigDecimal quantity, BigDecimal rate) {
 
         int nextOrderId = nextOrderId.incrementAndGet()
 
@@ -75,10 +74,9 @@ class PaperExchange extends DefaultExchageAdapter {
     }
 
     @Override
-    ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
+    synchronized ExchangeResponse<String> buyLimit(String market, BigDecimal quantity, BigDecimal rate) {
 
         int nextOrderId = nextOrderId.incrementAndGet()
-
 
         Order order = new Order()
         order.id = nextOrderId
@@ -104,35 +102,35 @@ class PaperExchange extends DefaultExchageAdapter {
     }
 
     @Override
-    ExchangeResponse<ITicker> getTicker(String market) {
+    synchronized ExchangeResponse<ITicker> getTicker(String market) {
         ITicker ticker = tickerMap.get(market)
         return new ExchangeResponse<ITicker>(ticker)
     }
 
     @Override
-    ExchangeResponse<IOrder> getOrder(String market, String id) {
+    synchronized ExchangeResponse<IOrder> getOrder(String market, String id) {
         return new ExchangeResponse<IOrder>( this.orderMap.get(id))
     }
 
     @Override
-    List<IOrder> getOrderHistory() {
+    synchronized List<IOrder> getOrderHistory() {
         return new ArrayList(this.orderMap.values())
     }
 
-    TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
+    synchronized TradeBatch getTrades(Date startDate, Date endDate, CryptoMarket market) {
         return null
     }
 
     @Override
-    List<CryptoMarket> getMakets() {
+    synchronized List<CryptoMarket> getMakets() {
         return null
     }
 
-    List<IBalance> getBalances() {
+    synchronized List<IBalance> getBalances() {
         return new ArrayList<IBalance>(balances.values())
     }
 
-    void setBalance(String currency, BigDecimal value) {
+    synchronized void setBalance(String currency, BigDecimal value) {
 
         IBalance b = new BittrexBalance()
         b.currency = currency
@@ -141,7 +139,7 @@ class PaperExchange extends DefaultExchageAdapter {
         this.balances.put(currency, b)
     }
 
-    void addBalance( String currency, BigDecimal value) {
+    synchronized void addBalance( String currency, BigDecimal value) {
 
         def balance = getBalance(currency).value
 

@@ -39,31 +39,37 @@ class CombinedStrategyRun implements IStrategyRunner {
     @Override
     List<Signal> nextCandle(Candle c) {
 
-        candleCount++
 
         boolean execute = false
 
         if(positionUpdateHandler.isValidCandleSize(this.bot, c) && !this.strategies.isEmpty()) {
 
+            candleCount++
+
             if(bot.backtest && c.botId == this.bot.id) {
-                execute = true
+                execute = true // backtest only
             }
 
             if (!bot.backtest && c.botId == null) {
-                execute = false
+                // execute for live trading!
+                execute = true
             }
 
             // check if assed is allowed
             if(!tradeBotManager.isValidAssest(this.bot, c.getMarket().getAsset())) {
+                log.debug("Skipping checking startegies for bot ${bot.id}. Asset ${c.getMarket().getAsset()} is not allowed!")
                 execute = false
             }
 
             if(bot.config.warmup && (candleCount <= bot.config.warmup)) {
+                log.debug("Skipping checking startegies for bot ${bot.id}. Warmup is not complete ${bot.config.warmup} < ${candleCount} ")
                 execute = false
             }
         }
 
         if(!execute) return Collections.EMPTY_LIST
+
+        log.debug("Checking startegies for bot ${bot.id}. Candlesize ${c.period} Market: ${c.market}")
 
         List signals = []
 
@@ -90,6 +96,7 @@ class CombinedStrategyRun implements IStrategyRunner {
 
         Position firstOpenPosition = tradeBotManager.findFirstOpenPosition( bot.id, market )
 
+        List<Position> allOpenPositions = tradeBotManager.findAllOpenPositionByMarket(bot.id, market)
 
         if(goLong && !goShort) {
 
@@ -105,8 +112,8 @@ class CombinedStrategyRun implements IStrategyRunner {
             s.triggerName = triggerName
             s.botId = this.bot.id
 
-            if(firstOpenPosition) {
-                log.debug("Can't open a new position for Signal s ${s}, as position is already open exsits!")
+            if(allOpenPositions.size() >= bot.config.maxOpenPositions) {
+                log.debug("Can't open a new position for Signal s ${s}, as max open position ${bot.config.maxOpenPositions} has been reached!")
             } else {
                 signals.add(s)
                 log.debug("Strategy go LONG (buy)!")

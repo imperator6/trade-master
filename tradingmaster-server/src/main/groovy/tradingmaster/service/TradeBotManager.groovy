@@ -62,7 +62,24 @@ class TradeBotManager {
     }
 
     Position findFirstOpenPosition(Integer botId, String market) {
-        return this.TRADE_BOT_MAP.get(botId).getPositions().find { it.market == market && !it.closed }
+
+        List<Position> allByMarket = findAllOpenPositionByMarket(botId, market)
+
+        if(!allByMarket.isEmpty()) {
+            allByMarket = allByMarket.sort { a,b -> a.buyDate <=> b.buyDate }
+            return allByMarket.first()
+        }
+
+        // not found
+        return null
+    }
+
+    List<Position> findAllOpenPositionByMarket(Integer botId, String market) {
+        def res = this.TRADE_BOT_MAP.get(botId).getPositions().findAll { it.market == market && !it.closed && it.buyDate != null}
+        if(res == null) {
+            res = Collections.EMPTY_LIST
+        }
+        return res
     }
 
     List<Position> findAllOpenPosition(Integer botId) {
@@ -256,14 +273,11 @@ class TradeBotManager {
             // check if asset is supported
             //getExchangeAdapter(b).
 
-            if(b.getPositions().findAll { !it.closed }.size() < b.config.maxOpenPositions) {
-
-                valid = isValidAssest(b, s.asset)
-
+            if("buy".equalsIgnoreCase(s.buySell) && findAllOpenPosition(b.id).size() > b.config.maxOpenPositions) {
+                log.info("Max open positions (${b.config.maxOpenPositions}) has reached! Signal $s.id is not valid for TradeBot $b.id. ")
             } else {
-                log.info("Max open positions  (${b.config.maxPosition}) has reached! Signal $s.id is not valid for TradeBot $b.id. ")
+                valid = isValidAssest(b, s.asset)
             }
-
 
         } else {
             log.info("Signal $s.id is not valid for TradeBot $b.id. Exchange does not match! $s.exchange != $b.exchange")

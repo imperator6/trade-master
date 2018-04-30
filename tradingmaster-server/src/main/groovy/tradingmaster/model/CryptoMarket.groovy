@@ -8,7 +8,7 @@ import groovy.util.logging.Commons
 @ToString
 @EqualsAndHashCode
 @Commons
-class CryptoMarket extends DefaultMarket {
+class CryptoMarket extends DefaultMarket implements Serializable {
 
     String currency
     String asset

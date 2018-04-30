@@ -150,7 +150,7 @@ class PositionService {
     Position openPosition(TradeBot bot, Position pos, BigDecimal balanceToSpend, BigDecimal signalPrice, Date signalDate) {
 
         if(!isTradingActive(bot)) {
-            def msg = "Trading is not active bot bot ${bot}"
+            def msg = "Trading is not active bot ${bot}"
             log.error(msg)
             pos.buyInPogress = false
             pos.setError(true)
