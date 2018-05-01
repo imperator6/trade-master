@@ -9,6 +9,7 @@ import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.model.Candle
 import tradingmaster.service.PositionUpdateHandler
+import tradingmaster.service.StrategyRunnerService
 import tradingmaster.service.TradeBotManager
 import tradingmaster.strategy.Strategy
 import tradingmaster.strategy.StrategyResult
@@ -23,6 +24,9 @@ class CombinedStrategyRun implements IStrategyRunner {
 
     @Autowired
     PositionUpdateHandler positionUpdateHandler
+
+    @Autowired
+    StrategyRunnerService strategyRunnerService
 
     List<Strategy> strategies = []
 
@@ -92,7 +96,9 @@ class CombinedStrategyRun implements IStrategyRunner {
 
         boolean goShort = !shortResults.isEmpty()
 
-        String market = "${bot.baseCurrency}-${c.getMarket().getAsset()}".toString()
+      //  goShort = false; // TODO... only via stop loss make it configurable !!! Does not work on downtrend !!!
+
+        String market = "${bot.config.baseCurrency}-${c.getMarket().getAsset()}".toString()
 
         Position firstOpenPosition = tradeBotManager.findFirstOpenPosition( bot.id, market )
 
@@ -139,9 +145,11 @@ class CombinedStrategyRun implements IStrategyRunner {
                 signals.add(s)
                 log.debug("Strategy go SHORT (sell)!")
             } else {
-                log.info("Can't close any position for Signal s ${s}, as no open position exsits for market ${c.getMarket()}!")
+                log.debug("Can't close any position for Signal s ${s}, as no open position exsits for market ${c.getMarket()}!")
             }
         }
+
+
 
 
 
@@ -155,6 +163,13 @@ class CombinedStrategyRun implements IStrategyRunner {
         // find positions for given asset! check candle
 
         return signals
+
+    }
+
+    void resetStrategies() {
+
+        this.candleCount = 0
+        this.strategies = this.strategyRunnerService.createStrategies(bot.config)
 
     }
 

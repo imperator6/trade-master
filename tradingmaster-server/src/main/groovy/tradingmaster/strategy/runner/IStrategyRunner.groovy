@@ -12,4 +12,6 @@ interface IStrategyRunner {
 
     void close()
 
+    void resetStrategies()
+
 }

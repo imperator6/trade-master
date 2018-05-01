@@ -6,8 +6,8 @@
   "warmup": 12,
   "chartLink": "https://bittrex.com/Market/Index?MarketName=$market",
 
-  "amountPerOrder": 500,
-  "maxOpenPositions": 2,
+  "amountPerOrder": 1000,
+  "maxOpenPositions": 1,
 
   "candleSize": "1m",
   "liveTrading": false,
@@ -23,7 +23,7 @@
   "assetFilter": {
     "enabled": true,
     "forbidden": [],
-    "allowed": ["BTC", "USDT"]
+    "allowed": [ "BTC", "OMG","ADA"]
   },
 
   "takeProfit": {
@@ -41,7 +41,7 @@
   "trailingStopLoss": {
     "enabled": false,
     "value": 2,
-    "startAt": 2,
+    "startAt": 6,
     "activeAfterHours": 0,
     "checkInterval": 1
   },

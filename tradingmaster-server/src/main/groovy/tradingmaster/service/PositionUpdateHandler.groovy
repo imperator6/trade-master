@@ -129,6 +129,12 @@ class PositionUpdateHandler implements  MessageHandler {
                 processBotUpdate(bot, c)
 
                 List signalsFromUpdateCheck = processPositions(bot, c)
+
+                if(!signalsFromUpdateCheck.isEmpty()) {
+                    // TODO... check only for sell signal and make it configurable
+                    bot.getStrategyRunner().resetStrategies()
+                }
+
                 signals.addAll( signalsFromUpdateCheck )
             }
 
@@ -188,7 +194,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
             // update start fx for position if not set
             bot.positions.findAll { p -> (p.buyFx == null || p.buyFx <= 0) && p.buyDate != null }.each {
-                log.info("Setting buyFx for pos $it.id $it.market to ${bot.fxDollar}")
+                log.debug("Setting buyFx for pos $it.id $it.market to ${bot.fxDollar}")
                 it.setBuyFx(bot.fxDollar)
             }
 

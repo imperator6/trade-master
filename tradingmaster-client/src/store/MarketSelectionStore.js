@@ -53,7 +53,7 @@ export default class MarketSelectionStore {
       "init Market Selection Store -> loading available exchanges"
     );
 
-    let url = this.rootStore.remoteApiUrl + "/exchange/watchedExchanges/";
+    let url = this.rootStore.remoteApiUrl + "/exchange/";
 
     axios
       .get(url, this.rootStore.userStore.getHeaderConfig())

@@ -107,6 +107,12 @@ class TradeBotManager {
             b.config = parseBotConfig( strategy.getScript() )
             b.config.exchange = b.exchange // sync exchange
 
+            if(b.baseCurrency != b.config.baseCurrency) {
+                log.warn("Bot ${b.id} baseCurrency is diffrent from config.baseCurrency! Using value from config ${b.config.baseCurrency} !")
+                b.baseCurrency = b.config.baseCurrency
+            }
+
+
             positionRepository.findByBotId(b.id).each {
                 b.addPosition(it)
             }

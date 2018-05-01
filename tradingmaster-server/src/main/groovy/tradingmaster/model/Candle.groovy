@@ -43,4 +43,8 @@ class Candle implements Serializable {
         return Duration.between(start.toInstant(), end.toInstant()).toMinutes() + 1
     }
 
+    transient boolean isMinuteCandle() {
+        return "1min".equalsIgnoreCase(this.period)
+    }
+
 }

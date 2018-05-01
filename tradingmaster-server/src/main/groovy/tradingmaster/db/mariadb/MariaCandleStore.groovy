@@ -157,6 +157,7 @@ where
             c.close = row.close
             c.volume = row.volume
             c.market = crypteMarket
+            c.period = period
             c.volumnWeightedPrice = row.price
 
             candles << c

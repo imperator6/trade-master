@@ -20,6 +20,7 @@ import tradingmaster.model.*
 import tradingmaster.strategy.*
 import tradingmaster.strategy.runner.CombinedStrategyRun
 import tradingmaster.strategy.runner.IStrategyRunner
+import tradingmaster.util.DateHelper
 
 import javax.annotation.PostConstruct
 import java.time.Instant
@@ -135,6 +136,12 @@ class StrategyRunnerService implements  MessageHandler {
         exchange.config = bot.config
         exchange.setBalance((String) bot.config.baseCurrency, (BigDecimal) bot.config.startBalance)
 
+        bot.setStartBalance( (BigDecimal) bot.config.startBalance )
+        bot.setTotalBaseCurrencyValue( (BigDecimal) bot.config.startBalance )
+        bot.setResult( 0.0 )
+        bot.setTotalBalanceDollar( null )
+        bot.setFxDollar( null )
+
         // delete all exsisting positions
         tradeBotManager.removeAllPositions(bot.getId())
         signalRepository.deleteByBotId(bot.getId())
@@ -204,6 +211,17 @@ class StrategyRunnerService implements  MessageHandler {
                 }
             }
 
+            // update USDT values!
+            List usdtCandles = candleStore.find( "1min", config.exchange, "USDT-BTC", DateHelper.toLocalDateTime(lastCandle.start) ,DateHelper.toLocalDateTime(lastCandle.end))
+           // usdtCandles = CandleAggregator.aggregate(config.candleSize, usdtCandles)
+
+            if(usdtCandles) {
+                Candle lastUsdt = usdtCandles.last()
+                lastUsdt.period = bot.config.candleSize // fake the candle size..
+                mixedCandelSizesChannel.send(MessageBuilder.withPayload( lastUsdt ).build() )
+            }
+
+
             // save update for open positions..
             tradeBotManager.findAllOpenPosition(bot.getId()).each {
                 positionRepository.save(it)
@@ -245,8 +263,11 @@ class StrategyRunnerService implements  MessageHandler {
         IStrategyRunner run = ctx.getBean(CombinedStrategyRun.class)
         run.init(tradeBot)
 
-        Map paramMap = tradeBot.config
+        //Map paramMap = tradeBot.config
 
+        run.strategies.addAll( createStrategies( tradeBot.config ))
+
+        /*
         // configure strategies
         if(paramMap.dema) {
             DemaSettings demaSettings = new DemaSettings(paramMap.dema) // as DemaSettings
@@ -274,8 +295,44 @@ class StrategyRunnerService implements  MessageHandler {
                 run.strategies << new Rsi(settings)
             }
         }
+        */
 
         return run
+    }
+
+    List createStrategies(Map paramMap) {
+
+        def strategies = []
+
+        // configure strategies
+        if(paramMap.dema) {
+            DemaSettings demaSettings = new DemaSettings(paramMap.dema) // as DemaSettings
+
+            if(demaSettings.enabled) {
+                log.info("Adding Strategy DEMA settings: $demaSettings")
+                strategies << new Dema(demaSettings)
+            }
+        }
+
+        if(paramMap.macd) {
+            MacdSettings settings = new MacdSettings(paramMap.macd)
+
+            if(settings.enabled) {
+                log.info("Adding Strategy MACD settings: $settings")
+                strategies << new Macd(settings)
+            }
+        }
+
+        if(paramMap.rsi) {
+            RsiSettings settings = new RsiSettings(paramMap.rsi)
+
+            if(settings.enabled) {
+                log.info("Adding Strategy RSI settings: $settings")
+                strategies << new Rsi(settings)
+            }
+        }
+
+        return strategies
     }
 
     IStrategyRunner crerateStrategyRun(Integer configId, boolean backtest) {
