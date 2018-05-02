@@ -46,6 +46,8 @@ class MarketWatcherStore {
 
   @observable selectedPosition;
 
+  @observable selectedConfig = ""
+
   constructor(rootStore) {
     this.log.debug("New MarketWatcherStore!");
     this.rootStore = rootStore;
@@ -200,6 +202,8 @@ class MarketWatcherStore {
       this.totalBotResult = bot.result || 0
 
       this.selectedExchange = bot.exchange
+
+      this.selectedConfig = JSON.stringify(bot.config, null, 4) 
 
       this.load();
 

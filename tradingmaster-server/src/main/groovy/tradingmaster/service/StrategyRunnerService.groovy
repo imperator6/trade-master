@@ -15,6 +15,7 @@ import tradingmaster.db.PositionRepository
 import tradingmaster.db.SignalRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
+import tradingmaster.db.entity.json.Config
 import tradingmaster.exchange.paper.PaperExchange
 import tradingmaster.model.*
 import tradingmaster.strategy.*
@@ -128,16 +129,22 @@ class StrategyRunnerService implements  MessageHandler {
             log.error("Can't backtest bot with id ${config.getBotId()}. As flag backtest is false")
         }
 
+        bot.config.backtest.market = config.market
+        bot.config.backtest.startDate = DateHelper.toDate(start)
+        bot.config.backtest.endDate = DateHelper.toDate(end)
+
+        tradeBotManager.save(bot)
+
         // update candle size
         bot.config.candleSize = config.getCandleSize() + "m"
         bot.config.exchange = 'PaperExchange'
 
         PaperExchange exchange = bot.getPaperExchange()
         exchange.config = bot.config
-        exchange.setBalance((String) bot.config.baseCurrency, (BigDecimal) bot.config.startBalance)
+        exchange.setBalance((String) bot.config.baseCurrency, (BigDecimal) bot.config.backtest.startBalance)
 
-        bot.setStartBalance( (BigDecimal) bot.config.startBalance )
-        bot.setTotalBaseCurrencyValue( (BigDecimal) bot.config.startBalance )
+        bot.setStartBalance( (BigDecimal) bot.config.backtest.startBalance )
+        bot.setTotalBaseCurrencyValue( (BigDecimal) bot.config.backtest.startBalance )
         bot.setResult( 0.0 )
         bot.setTotalBalanceDollar( null )
         bot.setFxDollar( null )
@@ -228,7 +235,7 @@ class StrategyRunnerService implements  MessageHandler {
             }
 
             // calc hold result
-            def startAmount = bot.config.startBalance / firstCandle.close
+            def startAmount = bot.config.backtest.startBalance / firstCandle.close
             def finalCurrency = startAmount * lastCandle.close
 
             log.info("Hold result: ${finalCurrency}")
@@ -300,13 +307,13 @@ class StrategyRunnerService implements  MessageHandler {
         return run
     }
 
-    List createStrategies(Map paramMap) {
+    List createStrategies(Config paramMap) {
 
         def strategies = []
 
         // configure strategies
         if(paramMap.dema) {
-            DemaSettings demaSettings = new DemaSettings(paramMap.dema) // as DemaSettings
+            DemaSettings demaSettings = paramMap.dema // as DemaSettings
 
             if(demaSettings.enabled) {
                 log.info("Adding Strategy DEMA settings: $demaSettings")
@@ -315,7 +322,7 @@ class StrategyRunnerService implements  MessageHandler {
         }
 
         if(paramMap.macd) {
-            MacdSettings settings = new MacdSettings(paramMap.macd)
+            MacdSettings settings = paramMap.macd
 
             if(settings.enabled) {
                 log.info("Adding Strategy MACD settings: $settings")
@@ -324,7 +331,7 @@ class StrategyRunnerService implements  MessageHandler {
         }
 
         if(paramMap.rsi) {
-            RsiSettings settings = new RsiSettings(paramMap.rsi)
+            RsiSettings settings = paramMap.rsi
 
             if(settings.enabled) {
                 log.info("Adding Strategy RSI settings: $settings")

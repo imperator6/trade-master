@@ -13,6 +13,9 @@ class CryptoMarket extends DefaultMarket implements Serializable {
     String currency
     String asset
 
+    CryptoMarket() {
+    }
+
     CryptoMarket(String exchange, String market) {
         this( exchange, market.split("-")[0], market.split("-")[1])
     }

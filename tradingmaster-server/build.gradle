@@ -37,6 +37,11 @@ dependencies {
 
     compile 'org.telegram:telegramapi:66.2'
 
+    compile "org.apache.activemq:activemq-broker"
+
+    compile 'org.springframework:spring-jms:4.3.16.RELEASE'
+
+
     /*
     compile 'org.codehaus.groovy:groovy-all:2.4.12'
     compile "org.springframework.boot:spring-boot-starter-websocket:${springBootVersion}"

@@ -19,4 +19,8 @@ public class DateHelper {
                 .toLocalDateTime();
     }
 
+    public static Date toDate(LocalDateTime date) {
+        return java.sql.Timestamp.valueOf(date);
+    }
+
 }

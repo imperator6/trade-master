@@ -9,10 +9,7 @@ import tradingmaster.db.entity.Order
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
-import tradingmaster.db.entity.json.PositionSettings
-import tradingmaster.db.entity.json.StopLoss
-import tradingmaster.db.entity.json.TakeProfit
-import tradingmaster.db.entity.json.TrailingStopLoss
+import tradingmaster.db.entity.json.*
 import tradingmaster.db.mariadb.MariaCandleStore
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.IExchangeAdapter
@@ -139,11 +136,11 @@ class PositionService {
 
     void applyBotSettings(TradeBot bot, PositionSettings settings) {
 
-        Map config = bot.config
+        Config config = bot.config
 
-        settings.stopLoss = config.stopLoss as StopLoss
-        settings.trailingStopLoss = config.trailingStopLoss as TrailingStopLoss
-        settings.takeProfit = config.takeProfit as TakeProfit
+        settings.stopLoss = config.stopLoss.clone()
+        settings.trailingStopLoss = config.trailingStopLoss.clone()
+        settings.takeProfit = config.takeProfit.clone()
     }
 
 

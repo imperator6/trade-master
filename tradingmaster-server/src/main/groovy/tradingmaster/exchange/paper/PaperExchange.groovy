@@ -1,5 +1,6 @@
 package tradingmaster.exchange.paper
 
+import tradingmaster.db.entity.json.Config
 import tradingmaster.exchange.DefaultExchageAdapter
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.bittrex.model.BittrexBalance
@@ -11,7 +12,7 @@ class PaperExchange extends DefaultExchageAdapter {
 
     static AtomicInteger nextOrderId = new AtomicInteger(0)
 
-    Map config
+    Config config
 
     Map<String, IBalance> balances = [:]
 
@@ -61,7 +62,7 @@ class PaperExchange extends DefaultExchageAdapter {
         order.closeDate = candle.end
         order.timeStamp = candle.end
 
-        def fee = quantity * rate * config.fee
+        def fee = quantity * rate * config.backtest.fee
         order.commissionPaid = fee
 
         String nextOrderIdKey = "" + nextOrderId
@@ -91,7 +92,7 @@ class PaperExchange extends DefaultExchageAdapter {
         order.timeStamp = candle.end
 
         String nextOrderIdKey = "" + nextOrderId
-        order.commissionPaid =  quantity * rate * config.fee
+        order.commissionPaid =  quantity * rate * config.backtest.fee
 
         CryptoMarket cm = new CryptoMarket(this.name, market)
 

@@ -132,7 +132,7 @@ export default class StrategyStore {
 
     axios
       .post(url, {
-        strategyId: this.selectedStrategy.id,
+        strategyId: 1,
         strategyParams: { param: 1, param2: 2 },
         exchange: this.rootStore.marketSelectionStore.getSelectedExchange(0),
         market: this.rootStore.marketSelectionStore.getSelectedAsset(0),
@@ -173,7 +173,7 @@ export default class StrategyStore {
     axios
       .post(url, {
         botId: botId,
-        strategyId: this.selectedStrategy.id,
+        strategyId: 1,
         strategyParams: { param: 1, param2: 2 },
         exchange: this.rootStore.marketSelectionStore.getSelectedExchange(0),
         market: this.rootStore.marketSelectionStore.getSelectedAsset(0),

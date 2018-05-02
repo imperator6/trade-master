@@ -8,6 +8,7 @@ import { observer, inject } from "mobx-react";
 import MarketWatcherControl from "./MarketWatcherControl";
 import PositionWidget from "./PositionWidget";
 import StrategyForm from "./StrategyForm"
+import ConfigForm from "./ConfigForm"
 
 import { Tabs, Timeline, Badge } from "antd";
 const TabPane = Tabs.TabPane;
@@ -147,7 +148,7 @@ class StrategyResults extends React.Component {
           <PositionWidget />
         </TabPane> 
         <TabPane tab="Config" key="config">
-          <StrategyForm />
+          <ConfigForm />
         </TabPane>
         <TabPane tab="Market Watcher" key="watcher">
           <MarketWatcherControl />

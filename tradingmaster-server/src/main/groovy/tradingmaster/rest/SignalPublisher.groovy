@@ -22,7 +22,6 @@ class SignalPublisher implements MessageHandler {
 
     MessageSendingOperations<String> messagingTemplate
 
-
     @Autowired
     PublishSubscribeChannel executedSignalChannel
 
@@ -30,6 +29,7 @@ class SignalPublisher implements MessageHandler {
     SignalPublisher(MessageSendingOperations<String> messagingTemplate) {
         this.messagingTemplate = messagingTemplate
     }
+
 
     @PostConstruct
     init() {
@@ -45,7 +45,6 @@ class SignalPublisher implements MessageHandler {
         messagingTemplate.convertAndSend("/topic/signal".toString() , s)
         signalRepository.save( message.getPayload() )
     }
-
 
 
 }

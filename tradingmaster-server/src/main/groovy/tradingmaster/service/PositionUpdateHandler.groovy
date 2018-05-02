@@ -14,6 +14,7 @@ import tradingmaster.db.PositionRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
+import tradingmaster.db.entity.json.Config
 import tradingmaster.db.entity.json.StopLoss
 import tradingmaster.db.entity.json.TakeProfit
 import tradingmaster.db.entity.json.TrailingStopLoss
@@ -448,7 +449,7 @@ class PositionUpdateHandler implements  MessageHandler {
             return false
         }
 
-        Map config = bot.config
+        Config config = bot.config
         def age = getAgeInHours(p)
         BigDecimal positionValueInPercent = p.result
 

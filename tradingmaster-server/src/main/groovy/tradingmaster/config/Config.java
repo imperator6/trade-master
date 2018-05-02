@@ -151,7 +151,7 @@ public class Config {
         lastRecentCandelChannel().subscribe(ca);
         return ca;
     }
-/*
+
     @Bean
     CandleAggregator candelAggregator15Minutes(PublishSubscribeChannel mixedCandelSizesChannel) {
         CandleAggregator ca = new CandleAggregator(15, mixedCandelSizesChannel);
@@ -171,7 +171,7 @@ public class Config {
         CandleAggregator ca = new CandleAggregator(60, mixedCandelSizesChannel);
         lastRecentCandelChannel().subscribe(ca);
         return ca;
-    } */
+    }
 
 
     @Bean

@@ -2,6 +2,8 @@ package tradingmaster.db.entity
 
 import com.fasterxml.jackson.annotation.JsonIgnore
 import groovy.transform.ToString
+import org.hibernate.annotations.Type
+import tradingmaster.db.entity.json.Config
 import tradingmaster.exchange.paper.PaperExchange
 import tradingmaster.strategy.runner.IStrategyRunner
 
@@ -38,8 +40,19 @@ class TradeBot {
     @Column(nullable = false)
     boolean active = true
 
-    @Transient
-    Map config
+    @Type(type = "json")
+    //@Column(columnDefinition = "json")
+    @Column(columnDefinition = "TEXT")
+    Config config
+
+    @Column(nullable = true)
+    String name
+
+    @Column(nullable = true)
+    String comment
+
+    //@Transient
+    //Map config
 
     @Transient
     Map<Integer, Position> positionMap = new ConcurrentHashMap<Integer,Position>()

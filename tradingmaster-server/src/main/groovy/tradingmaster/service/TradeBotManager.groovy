@@ -9,6 +9,7 @@ import tradingmaster.db.TradeBotRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
+import tradingmaster.db.entity.json.AssetFilter
 import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
@@ -92,6 +93,9 @@ class TradeBotManager {
         positionRepository.deleteByBotId( bot.getId() )
     }
 
+    void save(TradeBot b) {
+        tradeBotRepository.save(b)
+    }
 
 
     void startBots() {
@@ -103,8 +107,9 @@ class TradeBotManager {
             log.info("********************************************")
 
             // load the config
-            ScriptStrategy strategy = strategyStore.loadStrategyById(b.configId, null)
-            b.config = parseBotConfig( strategy.getScript() )
+          //  ScriptStrategy strategy = strategyStore.loadStrategyById(b.configId, null)
+          //  b.config = parseBotConfig( strategy.getScript() )
+
             b.config.exchange = b.exchange // sync exchange
 
             if(b.baseCurrency != b.config.baseCurrency) {
@@ -112,7 +117,12 @@ class TradeBotManager {
                 b.baseCurrency = b.config.baseCurrency
             }
 
+            if(b.backtest != b.config.backtest.enabled) {
+                log.warn("Bot ${b.id} backtest is diffrent from config.backtest! Using value from config ${b.config.backtest.enabled}!")
+                b.backtest = b.config.backtest.enabled
+            }
 
+            // loading all positions...
             positionRepository.findByBotId(b.id).each {
                 b.addPosition(it)
             }
@@ -298,7 +308,7 @@ class TradeBotManager {
 
         if(b.config.assetFilter.enabled) {
 
-            Map filter = b.config.assetFilter
+            AssetFilter filter = b.config.assetFilter
 
             // check allowed
             if(filter.allowed) {

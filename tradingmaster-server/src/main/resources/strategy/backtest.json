@@ -1,51 +1,48 @@
 {
-  "exchange": "binance",
+  "exchange": "PaperExchange",
   "baseCurrency": "USDT",
-  "startBalance": 1000,
-  "fee": 0.001,
-  "warmup": 12,
   "chartLink": "https://bittrex.com/Market/Index?MarketName=$market",
-
+  "warmup": 12,
+  "backtest": {
+    "enabled": true,
+    "startBalance": 1000,
+    "fee": 0.001,
+    "market": "USDT-BTC",
+    "startDate": "2018-01-07T13:42:50.015+0000",
+    "endDate": "2018-05-02T21:59:59.999+0000"
+  },
   "amountPerOrder": 1000,
   "maxOpenPositions": 1,
-
-  "candleSize": "1m",
+  "candleSize": "60m",
   "liveTrading": false,
-
   "sellPriceLimitPercent": -2,
   "buyPriceLimitPercent": 3,
-
-  "signal": {
-    "enabled": true,
-    "listenTo": ["TA Strategy"]
-  },
-
   "assetFilter": {
     "enabled": true,
     "forbidden": [],
-    "allowed": [ "BTC", "OMG","ADA"]
+    "allowed": [
+      "BTC",
+      "USDT"
+    ]
   },
-
   "takeProfit": {
     "enabled": true,
     "value": 19,
     "activeAfterHours": 0
   },
-
   "stopLoss": {
     "enabled": false,
     "value": -5,
     "activeAfterHours": 0
   },
-
   "trailingStopLoss": {
     "enabled": false,
     "value": 2,
-    "startAt": 6,
+    "startAt": 2,
+    "keepAtLeastForHours": 0,
     "activeAfterHours": 0,
     "checkInterval": 1
   },
-
   "dema": {
     "enabled": true,
     "reverse": false,
@@ -55,7 +52,6 @@
     "up": 0.025,
     "down": -0.025
   },
-
   "macd": {
     "enabled": false,
     "shortPeriod": 10,
@@ -65,7 +61,6 @@
     "down": -0.025,
     "persistence": 4
   },
-
   "rsi": {
     "enabled": false,
     "interval": 8,
@@ -73,5 +68,4 @@
     "high": 70,
     "persistence": 1
   }
-
 }
