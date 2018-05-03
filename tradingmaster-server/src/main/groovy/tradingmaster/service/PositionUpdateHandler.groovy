@@ -75,8 +75,8 @@ class PositionUpdateHandler implements  MessageHandler {
 
         tradeBotManager.getActiveBots().each { TradeBot bot ->
 
-            String candelSizeM = bot.config.candleSize // 1m, 15 30m....
-            def candleSize = candelSizeM.replace("m", "") as Integer
+            //String candelSizeM = bot.config.candleSize // 1m, 15 30m....
+            def candleSize = bot.config.candleSize //candelSizeM.replace("m", "") as Integer
             def timeout = candleSize * 3
 
             bot.getPositions().findAll { !it.closed && it.lastUpdate != null }.each { Position p ->
@@ -220,18 +220,18 @@ class PositionUpdateHandler implements  MessageHandler {
     boolean isValidCandleSize(TradeBot bot, Candle c) {
 
         // period is always in minutes
-        def candelSize = c.getPeriod().replace("min", "m")
+        def candelSize = c.getPeriod().replace("min", "").replace("m", "")
 
-        if(bot.config.candleSize) {
+        if(bot.config.candleSize != null) {
 
-            if(candelSize.equalsIgnoreCase( bot.config.candleSize)) {
+            if(candelSize.equalsIgnoreCase( "" + bot.config.candleSize)) {
                 return true
             }
 
         } else  {
-            log.warn("No candle size configured for bot ${bot.id} ${bot.exchange}")
+            log.error("No candle size configured for bot ${bot.id} ${bot.exchange}")
 
-            if("1m".equals(candelSize)) {
+            if("1".equals(candelSize)) {
                 return true
             }
         }

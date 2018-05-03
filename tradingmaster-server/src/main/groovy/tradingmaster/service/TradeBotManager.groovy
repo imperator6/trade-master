@@ -4,21 +4,25 @@ import groovy.json.JsonSlurper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
+import tradingmaster.core.CandleAggregator
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.TradeBotRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.entity.json.AssetFilter
+import tradingmaster.db.entity.json.Config
 import tradingmaster.db.mariadb.MariaStrategyStore
 import tradingmaster.exchange.ExchangeService
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.exchange.paper.PaperExchange
+import tradingmaster.model.Candle
 import tradingmaster.model.CryptoMarket
-import tradingmaster.model.IScriptStrategy
+import tradingmaster.model.ICandleStore
 import tradingmaster.model.ScriptStrategy
 
 import java.text.DecimalFormat
+import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
@@ -45,6 +49,8 @@ class TradeBotManager {
     @Autowired
     StrategyRunnerService strategyRunnerService
 
+    @Autowired
+    ICandleStore candleStore
 
     List<TradeBot> getActiveBots() {
         return new ArrayList(this.TRADE_BOT_MAP.values().findAll { it.active })
@@ -164,7 +170,51 @@ class TradeBotManager {
 
         TRADE_BOT_MAP.put( b.getId(), b )
 
+        warmupStrategies(b)
+
         syncBanlance(b)
+    }
+
+    void warmupStrategies(TradeBot bot) {
+        if(!bot.config.backtest.enabled && bot.getStrategyRunner() != null) {
+
+            Config config = bot.config
+
+            if(config.assetFilter.enabled ) {
+                if(config.warmup > 0) {
+
+                    config.assetFilter.allowed.each { String asset ->
+
+                        String market = "${bot.config.baseCurrency}-${asset}".toString()
+
+                        LocalDateTime start = LocalDateTime.now()
+                                .minusDays(2)
+                                .withSecond(0)
+                                .withMinute(0)
+                                .withHour(0)
+
+                        LocalDateTime end = LocalDateTime.now()
+
+                        List<Candle> candles = candleStore.find("1min",
+                                config.exchange,
+                                market,
+                                start,
+                                end)
+
+                        candles = CandleAggregator.aggregate(config.candleSize, candles)
+
+                        log.info("Processing ${candles.size()} candles of size ${config.candleSize} from $start} to ${end}")
+
+                        candles.each { Candle c ->
+                            bot.getStrategyRunner().nextCandle( c )
+                        }
+
+                    }
+                }
+            } else {
+                log.warn("AssetFilter is disabled. Can't warmup bot ${bot.id}")
+            }
+        }
     }
 
     TradeBot cloneBot(TradeBot b) {
@@ -172,6 +222,7 @@ class TradeBotManager {
         TradeBot newBot = new TradeBot()
         newBot.config = b.config.clone()
         newBot.configId = 0
+        newBot.exchange = b.exchange
 
         newBot.config.liveTrading = false
 

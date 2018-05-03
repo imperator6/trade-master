@@ -21,7 +21,7 @@ class Config {
     BigDecimal amountPerOrder = 1000
     BigDecimal maxOpenPositions = 1
 
-    String candleSize = "1m"
+    Integer candleSize = 1
     Boolean liveTrading = false
 
     BigDecimal sellPriceLimitPercent = -2
@@ -35,6 +35,7 @@ class Config {
     TrailingStopLoss trailingStopLoss = new TrailingStopLoss()
 
     Boolean resetStrategiesOnStopLoss = true
+    BigDecimal dustTradeProtection = 0 // don't sell within x% range
 
     DemaSettings dema = new DemaSettings()
 

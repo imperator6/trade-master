@@ -14,7 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 @Component
-class Pushover extends DefaultRestService {
+public class Pushover extends DefaultRestService {
 
     @Value("${pushover.device}")
     String device;

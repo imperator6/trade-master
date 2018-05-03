@@ -65,10 +65,6 @@ class CombinedStrategyRun implements IStrategyRunner {
                 execute = false
             }
 
-            if(bot.config.warmup && (candleCount <= bot.config.warmup)) {
-                log.debug("Skipping checking startegies for bot ${bot.id}. Warmup is not complete ${bot.config.warmup} < ${candleCount} ")
-                execute = false
-            }
         }
 
         if(!execute) return Collections.EMPTY_LIST
@@ -90,6 +86,11 @@ class CombinedStrategyRun implements IStrategyRunner {
             if(r == StrategyResult.SHORT) {
                 shortResults.put(it.getName(), r )
             }
+        }
+
+        if(bot.config.warmup && (candleCount <= bot.config.warmup)) {
+            log.debug("Skipping StrategyResult results. Warmup is not complete ${bot.config.warmup} < ${candleCount} ")
+            return []
         }
 
         boolean goLong = !longResults.isEmpty()
@@ -142,8 +143,17 @@ class CombinedStrategyRun implements IStrategyRunner {
 
             if(firstOpenPosition) {
                 s.positionId = firstOpenPosition.id
-                signals.add(s)
-                log.debug("Strategy go SHORT (sell)!")
+
+                def posResult = positionUpdateHandler.calculatePositionResult(firstOpenPosition.buyRate, c.close, 0.0)
+
+                // dust trade protection
+                if(posResult.abs() < bot.config.dustTradeProtection) {
+                    log.info("Dust trade protection. Won't sell pos ${firstOpenPosition.id} result ${firstOpenPosition.result}% is within ${bot.config.dustTradeProtection}%")
+                } else {
+                    signals.add(s)
+                    log.debug("Strategy go SHORT (sell)!")
+                }
+
             } else {
                 log.debug("Can't close any position for Signal s ${s}, as no open position exsits for market ${c.getMarket()}!")
             }

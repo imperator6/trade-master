@@ -43,6 +43,9 @@ class StrategyRunnerService implements  MessageHandler {
     TaskExecutor backtestTaskExecutor
 
     @Autowired
+    PositionUpdateHandler positionUpdateHandler
+
+    @Autowired
     PublishSubscribeChannel mixedCandelSizesChannel
 
     @Autowired
@@ -121,7 +124,7 @@ class StrategyRunnerService implements  MessageHandler {
 
         TradeBot bot = tradeBotManager.findBotById(config.getBotId())
 
-        if(bot.backtest) {
+        if(bot.config.backtest.enabled) {
 
             log.info("Starting a new Backtest for strategyId/config ${config.strategyId}.")
 
@@ -129,6 +132,9 @@ class StrategyRunnerService implements  MessageHandler {
             log.error("Can't backtest bot with id ${config.getBotId()}. As flag backtest is false")
         }
 
+        CryptoMarket cm = new CryptoMarket(bot.config.exchange, config.market)
+        bot.config.baseCurrency = cm.getCurrency()
+        bot.baseCurrency = bot.config.baseCurrency
         bot.config.backtest.market = config.market
         bot.config.backtest.startDate = DateHelper.toDate(start)
         bot.config.backtest.endDate = DateHelper.toDate(end)
@@ -136,8 +142,10 @@ class StrategyRunnerService implements  MessageHandler {
         tradeBotManager.save(bot)
 
         // update candle size
-        bot.config.candleSize = config.getCandleSize() + "m"
+        bot.config.candleSize = config.getCandleSize()
         //bot.config.exchange = 'PaperExchange'
+
+
 
         PaperExchange exchange = bot.getPaperExchange()
         exchange.config = bot.config
@@ -196,7 +204,6 @@ class StrategyRunnerService implements  MessageHandler {
 
                     lock.lock()
 
-
                     c.botId = bot.getId()
                     c.backtestId = config.getId()
 
@@ -228,6 +235,7 @@ class StrategyRunnerService implements  MessageHandler {
                 mixedCandelSizesChannel.send(MessageBuilder.withPayload( lastUsdt ).build() )
             }
 
+            positionUpdateHandler.processBotUpdate(bot ,lastCandle)
 
             // save update for open positions..
             tradeBotManager.findAllOpenPosition(bot.getId()).each {

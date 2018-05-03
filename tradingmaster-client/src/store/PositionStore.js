@@ -206,8 +206,20 @@ class MarketWatcherStore {
       this.totalBotResult = bot.result || 0
 
       this.selectedExchange = bot.exchange
-
       this.selectedConfig = JSON.stringify(bot.config, null, 4) 
+
+      if(bot.config.backtest.enabled) {
+          // update market selection form
+          let market = bot.config.backtest.market
+          let ex = bot.config.exchange.charAt(0).toUpperCase() + bot.config.exchange.slice(1);
+
+          this.rootStore.marketSelectionStore.onExchangeChange(ex, 0)
+          this.rootStore.marketSelectionStore.onAssetChange(market, 0)
+
+          let candleSizeStr = this.rootStore.marketSelectionStore.getCandleSizeStr(bot.config.candleSize)
+          this.rootStore.marketSelectionStore.onPeriodChange(candleSizeStr)
+
+      }
 
       this.load();
 

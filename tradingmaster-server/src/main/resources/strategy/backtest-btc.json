@@ -1,17 +1,17 @@
 {
   "exchange": "binance",
-  "baseCurrency": "USDT",
+  "baseCurrency": "BTC",
   "chartLink": "https://bittrex.com/Market/Index?MarketName=$market",
   "warmup": 12,
   "backtest": {
     "enabled": true,
-    "startBalance": 1000,
+    "startBalance": 0.1,
     "fee": 0.001,
-    "market": "USDT-BTC",
-    "startDate": "2017-11-01T00:00:00.000+0000",
-    "endDate": "2018-05-03T21:59:59.999+0000"
+    "market": "BTC-ADA",
+    "startDate": "2018-03-02T23:00:00.000+0000",
+    "endDate": "2018-04-01T21:59:59.999+0000"
   },
-  "amountPerOrder": 1000,
+  "amountPerOrder": 0.1,
   "maxOpenPositions": 1,
   "candleSize": 60,
   "liveTrading": false,
@@ -21,7 +21,10 @@
     "enabled": true,
     "forbidden": [],
     "allowed": [
-      "BTC"
+      "BTC",
+      "USDT",
+      "ADA",
+      "OMG"
     ]
   },
   "takeProfit": {
@@ -37,13 +40,13 @@
   "trailingStopLoss": {
     "enabled": false,
     "value": 2,
-    "startAt": 19,
+    "startAt": 2,
     "keepAtLeastForHours": 0,
     "activeAfterHours": 0,
     "checkInterval": 1
   },
   "resetStrategiesOnStopLoss": true,
-  "dustTradeProtection": 1.5,
+  "dustTradeProtection": 1.2,
   "dema": {
     "enabled": true,
     "reverse": false,
@@ -56,11 +59,11 @@
   "macd": {
     "enabled": false,
     "shortPeriod": 10,
-    "longPeriod": 21,
-    "signalPeriod": 9,
+    "longPeriod": 55,
+    "signalPeriod": 6,
     "up": 0.025,
     "down": -0.025,
-    "persistence": 1
+    "persistence": 4
   },
   "rsi": {
     "enabled": false,

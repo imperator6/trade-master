@@ -44,9 +44,9 @@ export default class MarketSelectionStore {
 
   //@observable selectedAsset = "USDT-BTC" //this.assetMap[this.selectedExchange][0];
 
-  @observable startDate = moment().subtract(2, "month");
+  @observable startDate = moment().subtract(2, "month").set({hour:0,minute:0,second:0,millisecond:0})
 
-  @observable endDate = moment().endOf("day");
+  @observable endDate = moment().endOf("day")
 
   init = () => {
     this.log.debug(
@@ -259,5 +259,15 @@ export default class MarketSelectionStore {
     }
 
     return candleSize;
+  };
+
+  getCandleSizeStr= (intValue) => {
+    if(intValue < 60) {
+      return intValue + " m"
+    } else if (intValue < (24 * 60)) {
+      return (intValue/60) + " h"
+    } else {
+      return (intValue/60/24) + " d"
+    }
   };
 }

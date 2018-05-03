@@ -73,6 +73,8 @@ class ConfigForm extends React.Component {
 
       let botId = this.store.getSelectedBot().id
 
+     
+
       this.store.rootStore.strategyStore.backtestStrategy(botId)
 
       // reload bot list to refresh config as backtest start/end dates hav changed
@@ -85,6 +87,17 @@ class ConfigForm extends React.Component {
    }
 
    this.saveScript(cb)
+
+  }
+
+  useBotDates = () => {
+
+    let bot = this.store.getSelectedBot()
+     //if(bot.config.backtest.startDate != null)
+     this.store.rootStore.marketSelectionStore.startDate = moment(bot.config.backtest.startDate)
+
+     //if(bot.config.backtest.endDate != null)
+       this.store.rootStore.marketSelectionStore.endDate = moment(bot.config.backtest.endDate)
 
   }
 
@@ -124,6 +137,15 @@ class ConfigForm extends React.Component {
             <th>
               <Tooltip placement="top" title="Save Config">
                 <Button icon="save" onClick={this.saveScript} />
+              </Tooltip>
+            </th>
+            <th>
+              <Tooltip placement="top" title="Set Dates from config to selection">
+                <Button
+                  icon="clock-circle"
+                  shape="circle"
+                  onClick={() => {this.useBotDates()}}
+                />
               </Tooltip>
             </th>
             <th>

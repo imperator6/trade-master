@@ -24,14 +24,20 @@ class MarketSelectorForm extends React.Component {
   constructor(props) {
     super(props);
     this.store = this.props.rootStore.marketSelectionStore;
+
+    this.state = {
+      startValue: null,
+      endValue: null
+    };
   }
 
   componentDidMount() {
-    this.store.init();
+    //this.store.init();
   }
 
   onStartDateChange = (value) => {
     console.log("Selected Start Time: ", value);
+    value = value.set({hour:0,minute:0,second:0,millisecond:0})
     this.store.startDate = value
   };
 
@@ -73,7 +79,6 @@ class MarketSelectorForm extends React.Component {
 
       let onAssetSelect = newValue => {
         let value = newValue.split("_")[0]; // _0
-
         this.store.onAssetChange(value, seriesIndex);
       };
 
@@ -134,8 +139,8 @@ class MarketSelectorForm extends React.Component {
             showTime
             format="YYYY-MM-DD HH:mm"
             placeholder="Select Time"
-            defaultValue={this.store.startDate}
-            onOk={this.onStartDateChange}
+            value={this.store.startDate}
+            onChange={this.onStartDateChange}
           />
         );
 
@@ -145,8 +150,8 @@ class MarketSelectorForm extends React.Component {
             showTime
             format="YYYY-MM-DD HH:mm"
             placeholder="Select Time"
-            defaultValue={this.store.endDate}
-            onOk={this.onEndDateChange}
+            value={this.store.endDate}
+            onChange={this.onEndDateChange}
           />
         );
 
