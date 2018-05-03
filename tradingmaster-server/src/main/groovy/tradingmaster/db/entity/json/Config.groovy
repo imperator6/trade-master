@@ -34,6 +34,8 @@ class Config {
     StopLoss stopLoss = new StopLoss()
     TrailingStopLoss trailingStopLoss = new TrailingStopLoss()
 
+    Boolean resetStrategiesOnStopLoss = true
+
     DemaSettings dema = new DemaSettings()
 
     MacdSettings macd = new MacdSettings()

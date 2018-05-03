@@ -131,8 +131,8 @@ class PositionUpdateHandler implements  MessageHandler {
 
                 List signalsFromUpdateCheck = processPositions(bot, c)
 
-                if(!signalsFromUpdateCheck.isEmpty()) {
-                    // TODO... check only for sell signal and make it configurable
+                if(!signalsFromUpdateCheck.isEmpty() && bot.config.resetStrategiesOnStopLoss) {
+                    // TODO... check only for sell signal
                     bot.getStrategyRunner().resetStrategies()
                 }
 

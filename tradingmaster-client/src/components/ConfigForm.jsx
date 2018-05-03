@@ -62,10 +62,42 @@ class ConfigForm extends React.Component {
     this.store.selectStrategyByName(value);
   };
 
-  saveScript = () => {
+  saveScript = (callback) => {
     let newScript = this.refs.strategyEditor.editor.getValue();
-    this.store.saveScript(newScript);
+    this.store.saveConfig(newScript, callback);
   };
+
+  startBacktest = () => {
+
+    let cb = () => {
+
+      let botId = this.store.getSelectedBot().id
+
+      this.store.rootStore.strategyStore.backtestStrategy(botId)
+
+      // reload bot list to refresh config as backtest start/end dates hav changed
+      setTimeout(() => { 
+          this.store.selectedConfig = ""
+          this.store.loadBotList( () => {
+            this.store.onBotSelected(botId)
+          }) 
+      },2000)
+   }
+
+   this.saveScript(cb)
+
+  }
+
+  refreshConfig() {
+
+    let botId = this.store.getSelectedBot().id
+
+    this.store.selectedConfig = ""
+        this.store.loadBotList( () => {
+          this.store.onBotSelected(botId)
+        }) 
+
+  }
 
 
   render() {
@@ -80,13 +112,18 @@ class ConfigForm extends React.Component {
                 <Button
                   shape="circle"
                   icon="reload"
-                  onClick={this.loadStrategies}
+                  onClick={() => {this.refreshConfig()}}
                 />
               </Tooltip>
             </th>
             <th>
-              <Tooltip placement="top" title="Save Strategy">
-                <Button type="primary" icon="save" onClick={this.saveScript} />
+              <Tooltip placement="top" title="Clone Config">
+                <Button  icon="copy" onClick={() => {this.store.cloneBot()}} />
+              </Tooltip>
+            </th>
+            <th>
+              <Tooltip placement="top" title="Save Config">
+                <Button icon="save" onClick={this.saveScript} />
               </Tooltip>
             </th>
             <th>
@@ -94,7 +131,7 @@ class ConfigForm extends React.Component {
                 <Button
                   icon="play-circle-o"
                   shape="circle"
-                  onClick={this.store.backtestStrategy}
+                  onClick={() => {this.startBacktest()}}
                 />
               </Tooltip>
             </th>

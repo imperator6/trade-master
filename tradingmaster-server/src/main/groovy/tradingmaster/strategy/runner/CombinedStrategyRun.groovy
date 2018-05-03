@@ -168,8 +168,8 @@ class CombinedStrategyRun implements IStrategyRunner {
 
     void resetStrategies() {
 
-        //this.candleCount = 0
-        //this.strategies = this.strategyRunnerService.createStrategies(bot.config)
+        this.candleCount = 0
+        this.strategies = this.strategyRunnerService.createStrategies(bot.config)
 
     }
 

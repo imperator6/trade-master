@@ -98,76 +98,100 @@ class TradeBotManager {
     }
 
 
+
+
     void startBots() {
-
         tradeBotRepository.findByActive(true).each { TradeBot b ->
-
-            log.info("********************************************")
-            log.info("* Starting trading bot $b")
-            log.info("********************************************")
-
-            // load the config
-          //  ScriptStrategy strategy = strategyStore.loadStrategyById(b.configId, null)
-          //  b.config = parseBotConfig( strategy.getScript() )
-
-            b.config.exchange = b.exchange // sync exchange
-
-            if(b.baseCurrency != b.config.baseCurrency) {
-                log.warn("Bot ${b.id} baseCurrency is diffrent from config.baseCurrency! Using value from config ${b.config.baseCurrency} !")
-                b.baseCurrency = b.config.baseCurrency
-            }
-
-            if(b.backtest != b.config.backtest.enabled) {
-                log.warn("Bot ${b.id} backtest is diffrent from config.backtest! Using value from config ${b.config.backtest.enabled}!")
-                b.backtest = b.config.backtest.enabled
-            }
-
-            // loading all positions...
-            positionRepository.findByBotId(b.id).each {
-                b.addPosition(it)
-            }
-
-            Set distinctPositions = new HashSet()
-
-            b.getPositions().findAll { !it.closed || (it.settings && it.settings.traceClosedPosition) }.each { Position p ->
-                distinctPositions.add(new CryptoMarket(b.exchange, p.market))
-            }
-
-            distinctPositions.each {
-                marketWatcheService.createMarketWatcher(  it )
-            }
-
-            if(b.baseCurrency.toUpperCase().indexOf("USD") >= 0) {
-               // USDT or USD...
-                marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-BTC"))
-                //TODO check if USDT or USD exchange
-            } else {
-                // for Dollar conversion start a market watcher for USDT
-                marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-${b.baseCurrency}"))
-            }
-
-            b.setStrategyRunner( strategyRunnerService.crerateStrategyRun(b) )
-
-
-            TRADE_BOT_MAP.put( b.getId(), b )
-
-            syncBanlance(b)
+            startBot(b)
         }
-
     }
 
-    void refreshBotConfig(IScriptStrategy strategy) {
+    void startBot(TradeBot b) {
 
-        TRADE_BOT_MAP.values().findAll{ it.configId == strategy.getId() }.each {
-            it.config = parseBotConfig( strategy.getScript() )
+        log.info("********************************************")
+        log.info("* Starting trading bot $b")
+        log.info("********************************************")
 
-            if(it.strategyRunner) {
-                it.strategyRunner.close()
-            }
-
-            it.setStrategyRunner( strategyRunnerService.crerateStrategyRun(it) )
-            log.info("Bot config on bot ${it.id} has been updated!")
+        // load the config
+        //  ScriptStrategy strategy = strategyStore.loadStrategyById(b.configId, null)
+        //  b.config = parseBotConfig( strategy.getScript() )
+        boolean dirty = false
+        if(b.exchange != b.config.exchange) {
+            log.warn("Bot ${b.id} exchange is diffrent from config.exchange! Using value from bot ${b.config.exchange} !")
+            b.config.exchange = b.exchange
+            dirty = true
         }
+
+        if(b.baseCurrency != b.config.baseCurrency) {
+            log.warn("Bot ${b.id} baseCurrency is diffrent from config.baseCurrency! Using value from config ${b.config.baseCurrency} !")
+            b.baseCurrency = b.config.baseCurrency
+            dirty = true
+        }
+
+        if(b.backtest != b.config.backtest.enabled) {
+            log.warn("Bot ${b.id} backtest is diffrent from config.backtest! Using value from config ${b.config.backtest.enabled}!")
+            b.backtest = b.config.backtest.enabled
+            dirty = true
+        }
+
+        if(dirty) tradeBotRepository.save(b)
+
+        // loading all positions...
+        positionRepository.findByBotId(b.id).each {
+            b.addPosition(it)
+        }
+
+        Set distinctPositions = new HashSet()
+
+        b.getPositions().findAll { !it.closed || (it.settings && it.settings.traceClosedPosition) }.each { Position p ->
+            distinctPositions.add(new CryptoMarket(b.exchange, p.market))
+        }
+
+        distinctPositions.each {
+            marketWatcheService.createMarketWatcher(  it )
+        }
+
+        if(b.baseCurrency.toUpperCase().indexOf("USD") >= 0) {
+            // USDT or USD...
+            marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-BTC"))
+            //TODO check if USDT or USD exchange
+        } else {
+            // for Dollar conversion start a market watcher for USDT
+            marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-${b.baseCurrency}"))
+        }
+
+        b.setStrategyRunner( strategyRunnerService.crerateStrategyRun(b) )
+
+        TRADE_BOT_MAP.put( b.getId(), b )
+
+        syncBanlance(b)
+    }
+
+    TradeBot cloneBot(TradeBot b) {
+
+        TradeBot newBot = new TradeBot()
+        newBot.config = b.config.clone()
+        newBot.configId = 0
+
+        newBot.config.liveTrading = false
+
+        // this will also save the new bot as exchange is not set...
+        startBot(newBot)
+
+        return newBot
+    }
+
+    void refreshBotConfig(TradeBot newBot) {
+
+        TradeBot oldBot = findBotById(newBot.id)
+
+        if(oldBot.strategyRunner) {
+            oldBot.strategyRunner.close()
+        }
+
+        oldBot.setStrategyRunner( strategyRunnerService.crerateStrategyRun(newBot) )
+        log.info("Bot config on bot ${newBot.id} has been updated!")
+
 
     }
 
@@ -194,7 +218,7 @@ class TradeBotManager {
     }
 
     IExchangeAdapter getExchangeAdapter(TradeBot b) {
-        if(b.isBacktest()) {
+        if(b.config.backtest.enabled) {
 
             synchronized (b) {
                 if(b.paperExchange == null) {

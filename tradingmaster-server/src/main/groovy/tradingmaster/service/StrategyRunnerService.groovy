@@ -137,7 +137,7 @@ class StrategyRunnerService implements  MessageHandler {
 
         // update candle size
         bot.config.candleSize = config.getCandleSize() + "m"
-        bot.config.exchange = 'PaperExchange'
+        //bot.config.exchange = 'PaperExchange'
 
         PaperExchange exchange = bot.getPaperExchange()
         exchange.config = bot.config

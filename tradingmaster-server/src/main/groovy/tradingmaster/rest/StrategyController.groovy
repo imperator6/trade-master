@@ -43,7 +43,7 @@ class StrategyController {
 
         strategy = store.saveStrategy(strategy)
 
-        tradeBotManager.refreshBotConfig(strategy)
+        //tradeBotManager.refreshBotConfig(strategy)
 
         return strategy
     }

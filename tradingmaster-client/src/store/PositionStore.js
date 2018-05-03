@@ -144,6 +144,7 @@ class MarketWatcherStore {
     this.selectedPosition = pos
   } */
 
+  @action
   loadBotList = (callback) => {
     let url = this.rootStore.remoteApiUrl + "/bot/";
 
@@ -170,7 +171,6 @@ class MarketWatcherStore {
              callback()
           }
 
-          
         } else {
           // error
           console.info(response.data.message);
@@ -183,6 +183,10 @@ class MarketWatcherStore {
 
   getSelectedBot = () => {
     return this.botMap.get(this.selectedBot);
+  };
+
+  getSelectedBotId = () => {
+    return getSelectedBot().id
   };
 
   @action
@@ -669,6 +673,66 @@ class MarketWatcherStore {
         console.log(error);
       });
   }
+
+  @action
+  saveConfig = (newScript, callback) => {
+    let bot = this.getSelectedBot()
+    bot.config = JSON.parse(newScript)
+
+    let url = this.rootStore.remoteApiUrl + "/bot/saveConfig";
+
+    axios
+      .post(
+        url,
+        bot,
+        this.rootStore.userStore.getHeaderConfig()
+      )
+      .then(response => {
+
+        console.log(response)
+
+        if(response.data.success) {
+          //this.botMap.set(bot.id, response.data);
+         // this.onBotSelected(response.data)
+          message.success("Config saved!");
+
+          if(callback) callback()
+        } else {
+          message.error(response.data.message);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
+
+  @action
+  cloneBot = () => {
+    let bot = this.getSelectedBot()
+    let url = this.rootStore.remoteApiUrl + "/bot/clone";
+
+    axios
+      .post(
+        url,
+        bot,
+        this.rootStore.userStore.getHeaderConfig()
+      )
+      .then(response => {
+
+        console.log(response)
+
+        if(response.data.success) {
+        
+          message.success("Bot cloned!");
+          this.loadBotList();
+        } else {
+          message.error(response.data.message);
+        }
+      })
+      .catch(function(error) {
+        console.log(error);
+      });
+  };
 
   updateDollarFx = (newFxDollarCandle) => {
       this.fxDollar = newFxDollarCandle.close

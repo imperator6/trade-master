@@ -18,21 +18,25 @@ class TradeBot {
     @GeneratedValue(strategy = GenerationType.AUTO)
     Integer id
 
-    @Column(nullable = false)
+    @Deprecated
+    @Column(nullable = true)
     Integer configId // script strategy hold the config with all parmas --> Map config
 
-    @Column(nullable = false)
+    @Deprecated
+    @Column(nullable = true)
     boolean backtest = false
 
+    @Deprecated
     @Column(nullable = false)
     String exchange
 
     // BTC, ETH, USDT
-    @Column(nullable = false)
+    @Deprecated
+    @Column(nullable = true)
     String baseCurrency
 
     @Column(nullable = false, precision=25, scale=10)
-    BigDecimal startBalance
+    BigDecimal startBalance = 0
 
     @Column(nullable = false, precision=25, scale=10)
     BigDecimal currentBalance = 0
