@@ -51,6 +51,7 @@ class CandleImportService {
                 data = data.collect {
                     it.period = "1min"
                     it.market = market
+                    it.source = "import"
                     return it
                 }
 

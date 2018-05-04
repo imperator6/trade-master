@@ -3,6 +3,7 @@ package tradingmaster.service
 import groovy.json.JsonSlurper
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.ApplicationContext
 import org.springframework.stereotype.Service
 import tradingmaster.core.CandleAggregator
 import tradingmaster.db.PositionRepository
@@ -20,6 +21,8 @@ import tradingmaster.model.Candle
 import tradingmaster.model.CryptoMarket
 import tradingmaster.model.ICandleStore
 import tradingmaster.model.ScriptStrategy
+import tradingmaster.strategy.runner.IStrategyRunner
+import tradingmaster.strategy.runner.StrategyByMarketCache
 
 import java.text.DecimalFormat
 import java.time.LocalDateTime
@@ -51,6 +54,9 @@ class TradeBotManager {
 
     @Autowired
     ICandleStore candleStore
+
+    @Autowired
+    ApplicationContext ctx
 
     List<TradeBot> getActiveBots() {
         return new ArrayList(this.TRADE_BOT_MAP.values().findAll { it.active })
@@ -166,13 +172,26 @@ class TradeBotManager {
             marketWatcheService.createMarketWatcher( new CryptoMarket(b.exchange,  "USDT-${b.baseCurrency}"))
         }
 
-        b.setStrategyRunner( strategyRunnerService.crerateStrategyRun(b) )
+        // start market watcher for all allowed assets
+        if(!b.config.backtest.enabled) {
+            b.config.assetFilter.allowed.each {
+                String market = "${b.config.baseCurrency}-${it}"
+                marketWatcheService.createMarketWatcher( new CryptoMarket(b.config.exchange,  market))
+            }
+        }
+
+        IStrategyRunner strategyRunner = ctx.getBean(StrategyByMarketCache.class)
+        strategyRunner.init(b)
+
+        b.setStrategyRunner( strategyRunner )
 
         TRADE_BOT_MAP.put( b.getId(), b )
 
         warmupStrategies(b)
 
         syncBanlance(b)
+
+        log.info("Bot ${b.id} startup complete")
     }
 
     void warmupStrategies(TradeBot bot) {
@@ -203,11 +222,13 @@ class TradeBotManager {
 
                         candles = CandleAggregator.aggregate(config.candleSize, candles)
 
-                        log.info("Processing ${candles.size()} candles of size ${config.candleSize} from $start} to ${end}")
+                        log.info("WARMUP bot: ${bot.id} ${asset}: Processing ${candles.size()} candles of size ${config.candleSize} from $start} to ${end}")
 
                         candles.each { Candle c ->
                             bot.getStrategyRunner().nextCandle( c )
                         }
+
+                        log.info("*************   Warmup complete for Bot ${bot.id}    ****************")
 
                     }
                 }
@@ -240,10 +261,8 @@ class TradeBotManager {
             oldBot.strategyRunner.close()
         }
 
-        oldBot.setStrategyRunner( strategyRunnerService.crerateStrategyRun(newBot) )
-        log.info("Bot config on bot ${newBot.id} has been updated!")
-
-
+        // restart the bot
+        startBot(newBot)
     }
 
     private Map parseBotConfig(String configScript) {
@@ -407,7 +426,7 @@ class TradeBotManager {
                     valid = true
                 }
             } else {
-                valid = true
+                valid = false
             }
         } else {
             valid = true

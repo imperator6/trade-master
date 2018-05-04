@@ -59,21 +59,25 @@ class CandleAggregator implements MessageHandler {
                 Candle next = buildCandle( candleList, candleCount)
                 candleList.clear()
 
-
                 // log.info("Next ${candleCount} minutes candel $next")
 
                 // log.info(next.getDurationInMinutes())
 
-                destinationChannel.send( MessageBuilder.withPayload(next).build() )
-            } else {
-                // candle is not valid for the current bucket -> start a new bucket
-                Candle next = buildCandle( candleList, candleCount)
-                candleList.clear()
-
-                candleList.add( minuteCandle )
+                log.debug("Fire next candle for  candleCount: ${this.candleCount}" + next)
 
                 destinationChannel.send( MessageBuilder.withPayload(next).build() )
             }
+
+        } else {
+
+            // candle is not valid for the current bucket -> start a new bucket
+            Candle next = buildCandle( candleList, candleCount)
+            candleList.clear()
+
+            candleList.add( minuteCandle )
+
+            log.debug("Fire next candle for  candleCount: ${this.candleCount}" + next)
+            destinationChannel.send( MessageBuilder.withPayload(next).build() )
         }
     }
 

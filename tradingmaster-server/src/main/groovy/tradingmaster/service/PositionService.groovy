@@ -541,6 +541,7 @@ class PositionService {
             return
         }
 
-        marketWatcheService.stopMarketWatcher(bot.getExchange(), market)
+        log.fatal("stopMarketWatcher is disabeld for now.... TODO..")
+        //marketWatcheService.stopMarketWatcher(bot.getExchange(), market)
     }
 }

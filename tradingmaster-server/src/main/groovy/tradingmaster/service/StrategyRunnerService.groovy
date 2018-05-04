@@ -21,9 +21,12 @@ import tradingmaster.model.*
 import tradingmaster.strategy.*
 import tradingmaster.strategy.runner.CombinedStrategyRun
 import tradingmaster.strategy.runner.IStrategyRunner
+import tradingmaster.strategy.runner.StrategyByMarketCache
 import tradingmaster.util.DateHelper
+import tradingmaster.util.NumberHelper
 
 import javax.annotation.PostConstruct
+import java.text.DecimalFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -139,13 +142,13 @@ class StrategyRunnerService implements  MessageHandler {
         bot.config.backtest.startDate = DateHelper.toDate(start)
         bot.config.backtest.endDate = DateHelper.toDate(end)
 
-        tradeBotManager.save(bot)
-
         // update candle size
         bot.config.candleSize = config.getCandleSize()
         //bot.config.exchange = 'PaperExchange'
 
-
+        // calc start balance
+        def startBalance = bot.config.amountPerOrder * bot.config.maxOpenPositions * bot.config.assetFilter.allowed.size()
+        bot.config.backtest.startBalance = startBalance
 
         PaperExchange exchange = bot.getPaperExchange()
         exchange.config = bot.config
@@ -157,11 +160,17 @@ class StrategyRunnerService implements  MessageHandler {
         bot.setTotalBalanceDollar( null )
         bot.setFxDollar( null )
 
+        tradeBotManager.save(bot)
+
         // delete all exsisting positions
         tradeBotManager.removeAllPositions(bot.getId())
         signalRepository.deleteByBotId(bot.getId())
 
-        bot.setStrategyRunner( crerateStrategyRun(bot) )
+
+        IStrategyRunner strategyRunner = ctx.getBean(StrategyByMarketCache.class)
+        strategyRunner.init(bot)
+
+        bot.setStrategyRunner( strategyRunner )
 
        // IStrategyRunner run = crerateStrategyRun(config.strategyId, true)
        // backtestRunnerMap.put(config.id, run)
@@ -170,8 +179,11 @@ class StrategyRunnerService implements  MessageHandler {
 
             List<TimeRange> ranges = []
 
-            Candle firstCandle = null
-            Candle lastCandle = null
+            Map firstCandleCache = [:]
+            Map lastCandleCache = [:]
+
+           // Candle firstCandle = null
+           // Candle lastCandle = null
 
             // split into smaller date ranges
             Instant from = start.toInstant(ZoneOffset.UTC).truncatedTo(ChronoUnit.MINUTES)
@@ -193,10 +205,15 @@ class StrategyRunnerService implements  MessageHandler {
             BacktestRun lock = new BacktestRun(bot.getId())
             lockMap.put(config.getId(), lock)
 
+
+            List<String> markets = bot.config.assetFilter.allowed.collect { String asset ->
+                String market = "${bot.baseCurrency}-${asset}" // config.market
+                return market
+            }
+
             ranges.each { range ->
 
-                List<Candle> candles = candleStore.find( "1min", config.exchange, config.market, LocalDateTime.ofInstant(range.from, ZoneOffset.UTC), LocalDateTime.ofInstant(range.to, ZoneOffset.UTC))
-                candles = CandleAggregator.aggregate(config.candleSize, candles)
+                List<Candle> candles = getCandlesForAllMarkets( range, bot.config.exchange, markets, bot.config.candleSize )
 
                 log.info("Processing ${candles.size()} candles of size ${config.candleSize} from ${range.from} to ${range.to}")
 
@@ -209,25 +226,24 @@ class StrategyRunnerService implements  MessageHandler {
 
                     exchange.candle = c
 
-                    CryptoMarket market = c.market
-                    String currency  = market.getCurrency()
-                    String asset = market.getAsset()
-                    exchange.setTicker( c.close, currency, asset)
+                    exchange.setTicker( c.close, c.market.getCurrency(),  c.market.getAsset())
 
                     mixedCandelSizesChannel.send(MessageBuilder.withPayload( c ).build() )
 
-                    if(firstCandle == null) {
-                        firstCandle = c
+                    Candle first = firstCandleCache.get(c.getMarket().getPair())
+
+                    if(first == null) {
+                        firstCandleCache.put(c.getMarket().getPair(), c)
                     }
 
-                    lastCandle = c
+                    lastCandleCache.put(c.getMarket().getPair(), c)
                     lock.waitForUnlock() // wait till candle execution is complete
                 }
             }
 
             // update USDT values!
-            List usdtCandles = candleStore.find( "1min", config.exchange, "USDT-BTC", DateHelper.toLocalDateTime(lastCandle.start) ,DateHelper.toLocalDateTime(lastCandle.end))
-           // usdtCandles = CandleAggregator.aggregate(config.candleSize, usdtCandles)
+            List usdtCandles = candleStore.find( "1min", config.exchange, "USDT-BTC", end.minusDays(1), end)
+            // usdtCandles = CandleAggregator.aggregate(config.candleSize, usdtCandles)
 
             if(usdtCandles) {
                 Candle lastUsdt = usdtCandles.last()
@@ -235,18 +251,42 @@ class StrategyRunnerService implements  MessageHandler {
                 mixedCandelSizesChannel.send(MessageBuilder.withPayload( lastUsdt ).build() )
             }
 
-            positionUpdateHandler.processBotUpdate(bot ,lastCandle)
+            lastCandleCache.each { String market, Candle lastCandle ->
+
+                // not sure why this is needed?
+                positionUpdateHandler.processBotUpdate(bot ,lastCandle)
+            }
+
 
             // save update for open positions..
             tradeBotManager.findAllOpenPosition(bot.getId()).each {
                 positionRepository.save(it)
             }
 
-            // calc hold result
-            def startAmount = bot.config.backtest.startBalance / firstCandle.close
-            def finalCurrency = startAmount * lastCandle.close
+            def totalHoldResult = 0.0
+            def totalStart = 0.0
 
-            log.info("Hold result: ${finalCurrency}")
+            log.info("------------------ Hold Result -------------------------")
+
+
+            // calc hold result
+            lastCandleCache.each { String market, Candle lastCandle  ->
+
+                Candle firstCandle = firstCandleCache.get(market)
+
+                def startAmount = bot.config.amountPerOrder / firstCandle.close
+                def finalCurrency = startAmount * lastCandle.close
+
+                totalStart += bot.config.amountPerOrder
+                totalHoldResult += finalCurrency
+                log.info("---    ${market}: ${NumberHelper.formatNumber(finalCurrency)} ${bot.config.baseCurrency}")
+            }
+
+            def totalHoldPrc = NumberHelper.formatNumber( NumberHelper.xPercentFromBase( totalStart, totalHoldResult) )
+
+            log.info("--------------------------------------------------------")
+            log.info("---    TOTAL: ${NumberHelper.formatNumber(totalHoldResult)} ${bot.config.baseCurrency} (${totalHoldPrc}%)")
+            log.info("--------------------------------------------------------")
 
             tradeBotManager.syncBanlance(bot)
 
@@ -258,6 +298,18 @@ class StrategyRunnerService implements  MessageHandler {
 
         return config.getId()
         // ... loading
+    }
+
+    List<Candle> getCandlesForAllMarkets(TimeRange range, String exchange, List<String> markets, candleSize) {
+
+        List<Candle> result = []
+
+        markets.each { market ->
+            List<Candle> candles = candleStore.find( "1min", exchange, market, LocalDateTime.ofInstant(range.from, ZoneOffset.UTC), LocalDateTime.ofInstant(range.to, ZoneOffset.UTC))
+            result.addAll(CandleAggregator.aggregate(candleSize, candles)  )
+        }
+
+        return result.sort { a,b -> a.end <=> b.end }
     }
 
     BacktestResult getBacktestResults(String id) {

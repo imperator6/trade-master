@@ -4,7 +4,6 @@ import groovy.util.logging.Commons
 import org.springframework.stereotype.Service
 import tradingmaster.model.IMarket
 
-@Service
 @Commons
 class CacheService<T> {
 

@@ -20,7 +20,7 @@ class MariaCandleStore implements ICandleStore {
 
     private static final String TRADE_TABLE_NAME = "tm_trades"
 
-    private static final String INSERT_QUERY = "insert into candle (period, exchange, market, start, end, open, high, low, close, volume, price, trade_count) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)"
+    private static final String INSERT_QUERY = "insert into candle (period, exchange, market, start, end, open, high, low, close, volume, price, trade_count, source) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)"
 
 
     @Autowired
@@ -52,7 +52,8 @@ class MariaCandleStore implements ICandleStore {
                 c.close,
                 c.volume,
                 c.volumnWeightedPrice,
-                c.tradeCount]
+                c.tradeCount,
+                c.source]
 
         sql.executeInsert(INSERT_QUERY, data)
     }
@@ -78,7 +79,8 @@ class MariaCandleStore implements ICandleStore {
                             c.close,
                             c.volume,
                             c.volumnWeightedPrice,
-                            c.tradeCount]
+                            c.tradeCount,
+                            c.source]
 
                 ps.addBatch(data)
             }
@@ -114,6 +116,64 @@ where
         def duration = Duration.between(start, Instant.now())
 
         log.info("deleteing of ${deleteCount} candles took ${duration.getSeconds()}")
+
+    }
+
+    List<Candle> find(String period, String exchange, Collection markets, LocalDateTime startDate, LocalDateTime endDate) {
+        Sql sql = new Sql(dataSource)
+
+        def start = Instant.now()
+
+        exchange = exchange.capitalize()
+
+        def marketList = []
+
+
+        marketList.addAll(markets)
+
+        List<Candle> candles = []
+
+        // TODO: query is not perfect as avg(price) is not weighted!
+        // need to find onother solution to prevent double candles on startup
+        String query = """select 
+     start,
+     end, 
+     market,
+     min(open) as open,
+     max(high) as high,
+     min(low) as low,
+     min(close) as close,
+     sum(volume) as volume,
+     avg(price) as price
+    from candle where start >= ? and end <= ? and exchange = ? and market in (${marketList.collect {"'$it'"}. join(",")}) and period = ? 
+    group by 
+    start, end
+    order by end asc
+    """
+
+        log.info(query)
+
+        sql.eachRow(query.toString(),  [Timestamp.valueOf(startDate), Timestamp.valueOf(endDate), exchange, period]) { row ->
+            Candle c = new Candle()
+            c.start = new Date(row.start.getTime())
+            c.end = new Date(row.start.getTime())
+            c.open = row.open
+            c.high = row.high
+            c.low = row.low
+            c.close = row.close
+            c.volume = row.volume
+            c.market = new CryptoMarket(exchange, row.market)
+            c.period = period
+            c.volumnWeightedPrice = row.price
+
+            candles << c
+        }
+
+        def duration = Duration.between(start, Instant.now())
+
+        log.info("loading ${candles.size()} candles took ${duration.getSeconds()}")
+
+        return candles
 
     }
 
@@ -168,5 +228,14 @@ where
         log.info("loading ${candles.size()} candles took ${duration.getSeconds()}")
 
         return candles
+    }
+
+    Candle findLatestFromImport(String period, String exchange, String market) {
+
+        Sql sql = new Sql(dataSource)
+
+
+
+        return null
     }
 }

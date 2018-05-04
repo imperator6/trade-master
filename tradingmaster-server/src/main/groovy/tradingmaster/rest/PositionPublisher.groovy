@@ -46,7 +46,7 @@ class PositionPublisher implements MessageHandler {
             def diff = ChronoUnit.SECONDS.between( timestamps.get(p.getMarket()),  LocalDateTime.now())
 
             if(diff< 60) {
-                log.info("Skipping position publish for market ${p.getMarket()}. Diff is $diff")
+                log.debug("Skipping position publish for market ${p.getMarket()}. Diff is $diff")
                 return
             }
         }

@@ -26,5 +26,9 @@ class CryptoMarket extends DefaultMarket implements Serializable {
         this.currency = currency.toUpperCase()
     }
 
+    String getPair() {
+        return "${currency}-${asset}".toString()
+    }
+
 
 }

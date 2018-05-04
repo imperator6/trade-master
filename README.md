@@ -39,7 +39,13 @@ Contact me if you need an example file.
 
 
 
+# Stop on Server
 
+- find java process
+-- ps aux | grep -i 'java'
+
+- kill the process
+-- sudo kill #processid
 
 
 

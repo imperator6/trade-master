@@ -32,6 +32,9 @@ class Candle implements Serializable {
 
     Integer botId = null
 
+    String source = ""
+
+
     @Transient
     Boolean backtest = false  // no back
 
@@ -46,5 +49,6 @@ class Candle implements Serializable {
     transient boolean isMinuteCandle() {
         return "1min".equalsIgnoreCase(this.period)
     }
+
 
 }

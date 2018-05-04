@@ -11,6 +11,7 @@ import tradingmaster.model.Candle
 import tradingmaster.service.PositionUpdateHandler
 import tradingmaster.service.StrategyRunnerService
 import tradingmaster.service.TradeBotManager
+import tradingmaster.service.cache.CacheService
 import tradingmaster.strategy.Strategy
 import tradingmaster.strategy.StrategyResult
 
@@ -41,20 +42,18 @@ class CombinedStrategyRun implements IStrategyRunner {
 
 
     @Override
-    List<Signal> nextCandle(Candle c) {
+    synchronized List<Signal> nextCandle(Candle c) {
 
 
         boolean execute = false
 
         if(positionUpdateHandler.isValidCandleSize(this.bot, c) && !this.strategies.isEmpty()) {
 
-            candleCount++
-
-            if(bot.backtest && c.botId == this.bot.id) {
+            if(bot.config.backtest.enabled && c.botId == this.bot.id) {
                 execute = true // backtest only
             }
 
-            if (!bot.backtest && c.botId == null) {
+            if (!bot.config.backtest.enabled && c.botId == null) {
                 // execute for live trading!
                 execute = true
             }
@@ -69,7 +68,7 @@ class CombinedStrategyRun implements IStrategyRunner {
 
         if(!execute) return Collections.EMPTY_LIST
 
-        log.debug("Checking startegies for bot ${bot.id}. Candlesize ${c.period} Market: ${c.market}")
+        log.debug("Strategy Execution ${c.market.getCurrency()}-${c.market.getAsset()} (${c.end}) for bot ${bot.id}. Candlesize ${c.period}" )
 
         List signals = []
 
@@ -87,6 +86,8 @@ class CombinedStrategyRun implements IStrategyRunner {
                 shortResults.put(it.getName(), r )
             }
         }
+
+        candleCount++
 
         if(bot.config.warmup && (candleCount <= bot.config.warmup)) {
             log.debug("Skipping StrategyResult results. Warmup is not complete ${bot.config.warmup} < ${candleCount} ")
@@ -176,7 +177,7 @@ class CombinedStrategyRun implements IStrategyRunner {
 
     }
 
-    void resetStrategies() {
+    void resetStrategies(Candle c) {
 
         this.candleCount = 0
         this.strategies = this.strategyRunnerService.createStrategies(bot.config)
@@ -188,5 +189,6 @@ class CombinedStrategyRun implements IStrategyRunner {
         this.positionUpdateHandler = null
         this.tradeBotManager = null
         this.strategies = null
+        this.strategyRunnerService = null
     }
 }
