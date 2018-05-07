@@ -27,7 +27,6 @@ import tradingmaster.util.DateHelper
 import tradingmaster.util.NumberHelper
 
 import javax.annotation.PostConstruct
-import java.text.DecimalFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
