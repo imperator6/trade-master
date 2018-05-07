@@ -123,6 +123,11 @@ public class Config {
     }
 
     @Bean
+    public PublishSubscribeChannel strategyResultChannel() {
+        return MessageChannels.publishSubscribe().get();
+    }
+
+    @Bean
     public PublishSubscribeChannel executedSignalChannel() {
         return MessageChannels.publishSubscribe().get();
     }

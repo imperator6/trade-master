@@ -2,6 +2,7 @@ package tradingmaster.strategy
 
 import groovy.transform.CompileStatic
 import groovy.util.logging.Commons
+import tradingmaster.db.entity.StrategyResult
 import tradingmaster.model.Candle
 import tradingmaster.strategy.indicator.MacdIndicator
 
@@ -29,7 +30,14 @@ class Macd implements Strategy {
 
     StrategyResult execute(Candle c) {
 
-        def macddiff = this.indicator.update(c.close)
+        BigDecimal macddiff = this.indicator.update(c.close)
+
+        StrategyResult res = new StrategyResult()
+        res.setPriceDate(c.getEnd())
+        res.setMarket(c.getMarket().getPair())
+        res.setPrice(c.getClose())
+        res.setValue1(macddiff)
+        res.setName(getName())
 
         if(macddiff > this.settings.up) {
 
@@ -52,7 +60,8 @@ class Macd implements Strategy {
 
             if(this.persisted && !this.adviced) {
                 this.adviced = true
-                return StrategyResult.LONG
+                res.setAdvice("long")
+                return res
             }
 
         } else if(macddiff < this.settings.down) {
@@ -76,14 +85,15 @@ class Macd implements Strategy {
 
             if(this.persisted && !this.adviced) {
                 this.adviced = true
-                return StrategyResult.SHORT
+                res.setAdvice("short")
+                return res
             }
 
         }
 
         //log.debug('In no trend')
 
-        return StrategyResult.NEUTRAL
+        return res // neutral
 
     }
 

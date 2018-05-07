@@ -73,8 +73,6 @@ class ConfigForm extends React.Component {
 
       let botId = this.store.getSelectedBot().id
 
-     
-
       this.store.rootStore.strategyStore.backtestStrategy(botId)
 
       // reload bot list to refresh config as backtest start/end dates hav changed

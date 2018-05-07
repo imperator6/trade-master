@@ -3,17 +3,19 @@ package tradingmaster.strategy.runner
 import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Scope
+import org.springframework.integration.channel.PublishSubscribeChannel
+import org.springframework.integration.support.MessageBuilder
 import org.springframework.stereotype.Service
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.model.Candle
+import tradingmaster.service.OrderExecutorService
 import tradingmaster.service.PositionUpdateHandler
 import tradingmaster.service.StrategyRunnerService
 import tradingmaster.service.TradeBotManager
-import tradingmaster.service.cache.CacheService
 import tradingmaster.strategy.Strategy
-import tradingmaster.strategy.StrategyResult
+import tradingmaster.db.entity.StrategyResult
 
 @Service
 @Scope("prototype")
@@ -28,6 +30,12 @@ class CombinedStrategyRun implements IStrategyRunner {
 
     @Autowired
     StrategyRunnerService strategyRunnerService
+
+    @Autowired
+    PublishSubscribeChannel strategyResultChannel
+
+    @Autowired
+    OrderExecutorService orderExecutorService
 
     List<Strategy> strategies = []
 
@@ -77,12 +85,15 @@ class CombinedStrategyRun implements IStrategyRunner {
 
         strategies.each {
             StrategyResult r = it.execute( c )
+            r.setBotId(this.bot.id)
 
-            if(r == StrategyResult.LONG) {
+            strategyResultChannel.send(MessageBuilder.withPayload(r).build())
+
+            if("long".equals(r.getAdvice())) {
                 longResults.put(it.getName(), r )
             }
 
-            if(r == StrategyResult.SHORT) {
+            if("short".equals(r.getAdvice())) {
                 shortResults.put(it.getName(), r )
             }
         }
@@ -145,12 +156,8 @@ class CombinedStrategyRun implements IStrategyRunner {
             if(firstOpenPosition) {
                 s.positionId = firstOpenPosition.id
 
-                def posResult = positionUpdateHandler.calculatePositionResult(firstOpenPosition.buyRate, c.close, 0.0)
-
-                // dust trade protection
-                if(posResult.abs() < bot.config.dustTradeProtection) {
-                    log.info("Dust trade protection. Won't sell pos ${firstOpenPosition.id} result ${firstOpenPosition.result}% is within ${bot.config.dustTradeProtection}%")
-                } else {
+                // check for dust trade...
+                if(!orderExecutorService.isDustTrade(bot, firstOpenPosition, c.close)) {
                     signals.add(s)
                     log.debug("Strategy go SHORT (sell)!")
                 }

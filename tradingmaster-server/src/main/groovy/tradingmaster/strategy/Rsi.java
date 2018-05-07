@@ -1,8 +1,11 @@
 package tradingmaster.strategy;
 
 import groovy.transform.CompileStatic;
+import tradingmaster.db.entity.StrategyResult;
 import tradingmaster.model.Candle;
 import tradingmaster.strategy.indicator.RsiIndicator;
+
+import java.math.BigDecimal;
 
 @CompileStatic
 public class Rsi implements Strategy {
@@ -28,6 +31,12 @@ public class Rsi implements Strategy {
 
         double rsiVal = this.indicator.update(c.getClose()).doubleValue();
 
+        StrategyResult res = new StrategyResult();
+        res.setPriceDate(c.getEnd());
+        res.setMarket(c.getMarket().getPair());
+        res.setPrice(c.getClose());
+        res.setValue1(new BigDecimal(rsiVal));
+        res.setName(getName());
 
         if(rsiVal > settings.high) {
 
@@ -49,7 +58,8 @@ public class Rsi implements Strategy {
 
             if(this.persisted /*&& !this.adviced*/) {
                 this.adviced = true;
-                return StrategyResult.SHORT;
+                res.setAdvice("short");
+                return res;
             }
 
         } else if(rsiVal < settings.low) {
@@ -74,12 +84,13 @@ public class Rsi implements Strategy {
 
             if(this.persisted /*&& !this.adviced*/) {
                 this.adviced = true;
-                return StrategyResult.LONG;
+                res.setAdvice("long");
+                return res;
             }
 
         }
 
-        return StrategyResult.NEUTRAL;
+        return res; // neutral
 
     }
 

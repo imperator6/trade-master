@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import tradingmaster.core.CandleAggregator
 import tradingmaster.db.PositionRepository
 import tradingmaster.db.SignalRepository
+import tradingmaster.db.StrategyResultRepository
 import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.db.entity.json.Config
@@ -69,6 +70,9 @@ class StrategyRunnerService implements  MessageHandler {
     @Autowired
     PositionRepository positionRepository
 
+    @Autowired
+    StrategyResultRepository strategyResultRepository
+
     @PostConstruct
     init() {
         backtestChannel.subscribe(this)
@@ -86,7 +90,7 @@ class StrategyRunnerService implements  MessageHandler {
         }
 
         synchronized (lock) {
-            if("complete".equalsIgnoreCase(msg.action)) {
+            if("signalComplete".equalsIgnoreCase(msg.action)) {
                 lock.unlock()
             } else if ("setSignalCount".equalsIgnoreCase(msg.action)) {
                 lock.setTotalSignalCount(msg.signalCount)
@@ -165,6 +169,7 @@ class StrategyRunnerService implements  MessageHandler {
         // delete all exsisting positions
         tradeBotManager.removeAllPositions(bot.getId())
         signalRepository.deleteByBotId(bot.getId())
+        strategyResultRepository.deleteByBotId(bot.getId())
 
 
         IStrategyRunner strategyRunner = ctx.getBean(StrategyByMarketCache.class)
@@ -289,6 +294,13 @@ class StrategyRunnerService implements  MessageHandler {
             log.info("--------------------------------------------------------")
 
             tradeBotManager.syncBanlance(bot)
+
+            BacktestMessage msg = new BacktestMessage()
+            msg.backtestId = config.getId()
+            msg.action = "backtestComplete"
+
+            // no actions --> notify strategy runner to fire next candle
+            backtestChannel.send( MessageBuilder.withPayload(msg).build()  )
 
             log.info("Backtest task: all candles done!")
 

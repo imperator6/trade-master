@@ -328,9 +328,7 @@ export default class ChartStore {
   @action
   addSignal = signal => {
 
-
     let date = new Date(signal.signalDate)
-
     console.log(signal)
 
     if(signal.buySell == "buy") {
@@ -343,7 +341,6 @@ export default class ChartStore {
       
       this.buySignales.push(point)
 
-      
       this.chart.getChart().series.forEach(series => {
 
         if ((series.name === "Buy Signals")) {

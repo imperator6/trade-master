@@ -1,6 +1,7 @@
 package tradingmaster.strategy;
 
 import groovy.transform.CompileStatic;
+import tradingmaster.db.entity.StrategyResult;
 import tradingmaster.model.Candle;
 import tradingmaster.strategy.indicator.Ema;
 
@@ -39,15 +40,33 @@ public class Dema implements Strategy {
 
         double diff = 100.0 * (s.doubleValue() - l.doubleValue()) / ((s.doubleValue() + l.doubleValue()) / 2.0);
 
+        StrategyResult res = new StrategyResult();
+        res.setPriceDate(c.getEnd());
+        res.setMarket(c.getMarket().getPair());
+        res.setPrice(c.getClose());
+        res.setValue1(s);
+        res.setValue2(l);
+        res.setValue3(new BigDecimal(diff));
+        res.setName(getName());
+
         if (diff < down /*&& direction != "down"*/) {
 
             if(signalOnChange) {
                 if(direction != "down") {
                     this.direction = "down";
-                    return reverse ? StrategyResult.LONG :  StrategyResult.SHORT;
+                    if(reverse)
+                        res.setAdvice("long");
+                    else
+                        res.setAdvice("short");
+
+                    return res;
                 }
             } else {
-                return reverse ? StrategyResult.LONG :  StrategyResult.SHORT;
+                if(reverse)
+                    res.setAdvice("long");
+                else
+                    res.setAdvice("short");
+                return res;
             }
 
 
@@ -56,15 +75,26 @@ public class Dema implements Strategy {
             if(signalOnChange) {
                 if(direction != "up") {
                     this.direction = "up";
-                    return reverse ? StrategyResult.SHORT :  StrategyResult.LONG;
+
+                    if(reverse)
+                        res.setAdvice("short");
+                    else
+                        res.setAdvice("long");
+
+                    return res;
                 }
 
             } else {
-                return reverse ? StrategyResult.SHORT :  StrategyResult.LONG;
+                if(reverse)
+                    res.setAdvice("short");
+                else
+                    res.setAdvice("long");
+
+                return res;
             }
         }
 
-        return StrategyResult.NEUTRAL;
+        return res; // neutral is default
 
     }
 

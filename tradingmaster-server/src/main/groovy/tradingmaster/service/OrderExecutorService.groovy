@@ -8,6 +8,7 @@ import tradingmaster.db.entity.TradeBot
 import tradingmaster.exchange.ExchangeResponse
 import tradingmaster.exchange.IExchangeAdapter
 import tradingmaster.model.*
+import tradingmaster.util.NumberHelper
 
 @Service
 @Commons
@@ -15,6 +16,9 @@ class OrderExecutorService {
 
     @Autowired
     PushoverService pushoverService
+
+    @Autowired
+    PositionUpdateHandler positionUpdateHandler
 
     ExchangeResponse<IOrder> placeLimitOrder(TradeBot bot,
                                              IExchangeAdapter exchangeAdapter,
@@ -102,6 +106,12 @@ class OrderExecutorService {
                 def quantity = spendOrAmount
                 def price = ticker.getBid() // use the current bid to sell soon as possible
 
+                if(isDustTrade(bot, pos, price)) {
+                    orderResponse.success = false
+                    orderResponse.message = "Dust Trade! Check 'config.dustTradeProtection' buyRate ${NumberHelper.formatNumber(pos.buyRate)} ticker: ${NumberHelper.formatNumber(price)}"
+                    return orderResponse
+                }
+
                 if(priceLimit != null) {
                     log.info("SELL: Checking price limit: $priceLimit")
                     if(price < priceLimit.getPriceLimit()) {
@@ -159,6 +169,20 @@ class OrderExecutorService {
         }
 
         return orderResponse
+    }
+
+    boolean isDustTrade(TradeBot bot, Position pos, BigDecimal price) {
+
+        def posResult = positionUpdateHandler.calculatePositionResult(pos.buyRate, price, 0.0)
+
+        // dust trade protection
+        if(posResult.abs() < bot.config.dustTradeProtection) {
+            log.info("Dust trade protection. Won't sell pos ${pos.id} result ${posResult}% is within ${bot.config.dustTradeProtection}%")
+            return true
+        } else {
+            return false
+        }
+
     }
 
 

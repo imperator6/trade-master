@@ -4,7 +4,6 @@ import groovy.util.logging.Commons
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Scope
 import org.springframework.stereotype.Service
-import tradingmaster.db.entity.Position
 import tradingmaster.db.entity.Signal
 import tradingmaster.db.entity.TradeBot
 import tradingmaster.model.Candle
@@ -12,8 +11,6 @@ import tradingmaster.service.PositionUpdateHandler
 import tradingmaster.service.StrategyRunnerService
 import tradingmaster.service.TradeBotManager
 import tradingmaster.service.cache.CacheService
-import tradingmaster.strategy.Strategy
-import tradingmaster.strategy.StrategyResult
 
 @Service
 @Scope("prototype")

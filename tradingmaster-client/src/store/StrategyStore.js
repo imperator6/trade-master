@@ -167,7 +167,7 @@ export default class StrategyStore {
     this.rootStore.stompStore.subscribe( "/topic/signal" , (data) => {
       this.rootStore.chartStore.addSignal(JSON.parse(data.body));
       this.rootStore.positionStore.load();
-      this.rootStore.positionStore. syncBalance();
+      this.rootStore.positionStore.syncBalance();
     })
 
     axios

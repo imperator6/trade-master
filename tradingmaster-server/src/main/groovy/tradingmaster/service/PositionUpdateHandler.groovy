@@ -152,7 +152,7 @@ class PositionUpdateHandler implements  MessageHandler {
 
                 BacktestMessage msg = new BacktestMessage()
                 msg.backtestId = c.backtestId
-                msg.action = "complete"
+                msg.action = "signalComplete"
                 msg.signalCount = signals.size()
 
                 if(signals.isEmpty()) {
@@ -176,44 +176,49 @@ class PositionUpdateHandler implements  MessageHandler {
 
     void processBotUpdate(TradeBot bot, Candle c) {
 
-        if(!isValidCandleSize(bot, c)) {
+        // only min candle....
+        if(!c.isMinuteCandle()) {
             return
         }
 
         // Exchange check needed?
        if(bot.exchange.equalsIgnoreCase(c.getMarket().getExchange())) {
+
            boolean isUSDBase = bot.getBaseCurrency().toUpperCase().indexOf("USD") >= 0
-        if(c.getMarket().getName().equalsIgnoreCase("USDT-${bot.baseCurrency}") || isUSDBase) {
-            if(isUSDBase) {
-                bot.setFxDollar( 1 )
-            } else {
-                bot.setFxDollar( c.getClose() )
 
-                if(!bot.backtest)
-                    fxDollarChannel.send( MessageBuilder.withPayload( c ).build() )
-            }
+           if(c.getMarket().getName().equalsIgnoreCase("USDT-${bot.baseCurrency}") || isUSDBase) {
 
-            // update start fx for position if not set
-            bot.positions.findAll { p -> (p.buyFx == null || p.buyFx <= 0) && p.buyDate != null }.each {
-                log.debug("Setting buyFx for pos $it.id $it.market to ${bot.fxDollar}")
-                it.setBuyFx(bot.fxDollar)
-            }
+                if(isUSDBase) {
+                    bot.setFxDollar( 1 )
+                } else {
+                    bot.setFxDollar( c.getClose() )
 
-            bot.startBalanceDollar = bot.startBalance * bot.fxDollar
-            bot.currentBalanceDollar = bot.currentBalance * bot.fxDollar
-            bot.totalBaseCurrencyValue = bot.currentBalance
-            bot.totalBalanceDollar = bot.currentBalanceDollar
-
-            bot.getPositions().findAll { !it.closed }.each {
-                if(it.lastKnowBaseCurrencyValue != null) {
-                    bot.totalBalanceDollar += it.lastKnowBaseCurrencyValue * bot.fxDollar
+                    if(!bot.backtest)
+                        fxDollarChannel.send( MessageBuilder.withPayload( c ).build() )
                 }
-                if(it.lastKnowBaseCurrencyValue != null) {
-                    bot.totalBaseCurrencyValue += it.lastKnowBaseCurrencyValue
+
+                // update start fx for position if not set
+                bot.positions.findAll { p -> (p.buyFx == null || p.buyFx <= 0) && p.buyDate != null }.each {
+                    log.debug("Setting buyFx for pos $it.id $it.market to ${bot.fxDollar}")
+                    it.setBuyFx(bot.fxDollar)
                 }
+
+                bot.startBalanceDollar = bot.startBalance * bot.fxDollar
+                bot.currentBalanceDollar = bot.currentBalance * bot.fxDollar
+                bot.totalBaseCurrencyValue = bot.currentBalance
+                bot.totalBalanceDollar = bot.currentBalanceDollar
+
+                bot.getPositions().findAll { !it.closed }.each {
+                    if(it.lastKnowBaseCurrencyValue != null) {
+                        bot.totalBalanceDollar += it.lastKnowBaseCurrencyValue * bot.fxDollar
+                    }
+                    if(it.lastKnowBaseCurrencyValue != null) {
+                        bot.totalBaseCurrencyValue += it.lastKnowBaseCurrencyValue
+                    }
+                }
+
+                bot.result = NumberHelper.xPercentFromBase(bot.startBalanceDollar, bot.totalBalanceDollar)
             }
-            bot.result = NumberHelper.xPercentFromBase(bot.startBalanceDollar, bot.totalBalanceDollar)
-        }
        }
     }
 
