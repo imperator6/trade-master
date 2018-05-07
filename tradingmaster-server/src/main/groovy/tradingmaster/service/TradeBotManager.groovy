@@ -396,6 +396,10 @@ class TradeBotManager {
         return valid
     }
 
+    boolean isValidCurrency(TradeBot b, String currency) {
+        return b.config.baseCurrency.equalsIgnoreCase(currency)
+    }
+
     boolean isValidAssest(TradeBot b, String asset) {
 
         boolean valid = false

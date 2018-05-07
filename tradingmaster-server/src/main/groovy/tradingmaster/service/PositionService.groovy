@@ -384,6 +384,13 @@ class PositionService {
     }
 
     private void updateSellPosition(Position pos, IOrder newOrder) {
+
+        // validate order !!
+        if(!newOrder.getId()) {
+            log.error("No order id is provided! Can't update sell position!")
+            return
+        }
+
         pos.setExtSellOrderId(newOrder.getId())
         pos.setSellFee(newOrder.getCommissionPaid())
         pos.setSellDate(newOrder.getCloseDate())
@@ -490,7 +497,7 @@ class PositionService {
             updateSellPosition(pos, newOrder)
 
             log.debug "position ${pos.id} closed! ${NumberHelper.twoDigits(pos.result)}%"
-            save(pos) // save before stopping the market manager
+            positionRepository.save(pos) // save before stopping the market manager
 
             try {
                 stopMarketWatcher(bot, pos)
@@ -525,7 +532,7 @@ class PositionService {
             pos.setClosed(false)
             pos.sellInPogress = false
 
-            save(pos)
+            positionRepository.save(pos)
         }
 
         log.info("Took ${ChronoUnit.MILLIS.between(startTime, LocalDateTime.now())} ms to open the signal!")

@@ -66,6 +66,12 @@ class CombinedStrategyRun implements IStrategyRunner {
                 execute = true
             }
 
+            // check if base currency
+            if(!tradeBotManager.isValidCurrency(this.bot, c.getMarket().getCurrency())) {
+                log.debug("Skipping checking startegies for bot ${bot.id}. Currency ${c.getMarket().getCurrency()} is not allowed!")
+                execute = false
+            }
+
             // check if assed is allowed
             if(!tradeBotManager.isValidAssest(this.bot, c.getMarket().getAsset())) {
                 log.debug("Skipping checking startegies for bot ${bot.id}. Asset ${c.getMarket().getAsset()} is not allowed!")
@@ -101,7 +107,7 @@ class CombinedStrategyRun implements IStrategyRunner {
         candleCount++
 
         if(bot.config.warmup && (candleCount <= bot.config.warmup)) {
-            log.debug("Skipping StrategyResult results. Warmup is not complete ${bot.config.warmup} < ${candleCount} ")
+            log.debug("Skipping StrategyResult results. bot ${bot.id} ${c.getMarket().getPair()} Warmup is not complete ${bot.config.warmup} < ${candleCount}. ")
             return []
         }
 

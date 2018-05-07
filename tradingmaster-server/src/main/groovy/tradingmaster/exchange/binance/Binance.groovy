@@ -197,12 +197,11 @@ class Binance extends DefaultExchageAdapter implements IHistoricDataExchangeAdap
         try {
             BinanceOrder order = exchange.post("api/v3/order", params, new ParameterizedTypeReference<BinanceOrder>(){}, null)
 
-            if(order == null) {
+            if(order == null || order.getId() == null) {
                 if(res) {
                     res.setSuccess(false)
                     res.setMessage("New Order ${buySell} faild. Check log file!")
                 }
-
             }
 
             if(res) {
